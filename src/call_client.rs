@@ -161,14 +161,14 @@ impl PyCallClient {
         }
     }
 
-    pub fn set_camera_renderer(&mut self, participant: &str, callback: PyObject, ctx: PyObject) {
+    pub fn set_camera_renderer(&mut self, participant: &str, callback: PyObject) {
         unsafe {
             let participant_ptr = CString::new(participant)
                 .expect("Invalid participant ID string")
                 .into_raw();
 
             Python::with_gil(|py| {
-                let callback_ctx: PyObject = Py::new(py, PyCallbackContext { callback, ctx })
+                let callback_ctx: PyObject = Py::new(py, PyCallbackContext { callback })
                     .unwrap()
                     .into_py(py);
 
@@ -200,7 +200,6 @@ struct PyVideoFrame {
 #[pyclass(name = "CallbackContext", module = "daily")]
 struct PyCallbackContext {
     pub callback: PyObject,
-    pub ctx: PyObject,
 }
 
 unsafe extern "C" fn on_video_frame(
@@ -228,14 +227,7 @@ unsafe extern "C" fn on_video_frame(
             timestamp_us: (*frame).timestamp_us,
         };
 
-        let args = PyTuple::new(
-            py,
-            &[
-                callback_ctx.ctx.clone_ref(py),
-                peer_id.into_py(py),
-                video_frame.into_py(py),
-            ],
-        );
+        let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
 
         let _ = callback_ctx.callback.call1(py, args);
     });
