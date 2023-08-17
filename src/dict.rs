@@ -20,7 +20,7 @@ impl DictValue {
                 let oi64 = n.as_i64().map(|i| i.to_object(py));
                 let ou64 = n.as_u64().map(|i| i.to_object(py));
                 let of64 = n.as_f64().map(|i| i.to_object(py));
-                oi64.or(ou64).or(of64).expect("invalid number")
+                oi64.or(ou64).or(of64).expect("Invalid number")
             }
             Value::String(s) => s.to_object(py),
             Value::Array(v) => {
@@ -61,7 +61,7 @@ impl<'a> FromPyObject<'a> for DictValue {
             let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
             Ok(DictValue(Value::Object(map)))
         } else {
-            Err(PyErr::new::<PyTypeError, _>("invalid dictionary"))
+            Err(PyErr::new::<PyTypeError, _>("Invalid dictionary"))
         }
     }
 }

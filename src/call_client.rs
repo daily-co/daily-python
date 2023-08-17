@@ -17,7 +17,7 @@ use daily_core::prelude::{
 
 use pyo3::ffi::Py_IncRef;
 use pyo3::prelude::*;
-use pyo3::types::PyTuple;
+use pyo3::types::{PyBytes, PyTuple};
 
 #[pyclass(name = "CallClient", module = "daily")]
 pub(crate) struct PyCallClient {
@@ -189,6 +189,14 @@ impl PyCallClient {
     }
 }
 
+#[pyclass(name = "VideoFrame", module = "daily", get_all, unsendable)]
+struct PyVideoFrame {
+    pub buffer: PyObject,
+    pub width: i32,
+    pub height: i32,
+    pub timestamp_us: i64,
+}
+
 #[pyclass(name = "CallbackContext", module = "daily")]
 struct PyCallbackContext {
     pub callback: PyObject,
@@ -213,7 +221,21 @@ unsafe extern "C" fn on_video_frame(
 
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
-        let args = PyTuple::new(py, &[callback_ctx.ctx.clone_ref(py), peer_id.into_py(py)]);
+        let video_frame = PyVideoFrame {
+            buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
+            width: (*frame).width,
+            height: (*frame).height,
+            timestamp_us: (*frame).timestamp_us,
+        };
+
+        let args = PyTuple::new(
+            py,
+            &[
+                callback_ctx.ctx.clone_ref(py),
+                peer_id.into_py(py),
+                video_frame.into_py(py),
+            ],
+        );
 
         let _ = callback_ctx.callback.call1(py, args);
     });
