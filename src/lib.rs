@@ -19,7 +19,7 @@ use daily_core::prelude::{
 use pyo3::prelude::*;
 
 const DAILY_PYTHON_NAME: &str = "daily-python";
-const DAILY_PYTHON_VERSION: &str = "0.10.0";
+const DAILY_PYTHON_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,
