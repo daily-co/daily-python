@@ -3,7 +3,7 @@ pub mod context;
 pub mod dict;
 
 use call_client::PyCallClient;
-use context::DailyContext;
+use context::{DailyContext, GLOBAL_CONTEXT};
 use dict::DictValue;
 
 use std::env;
@@ -20,8 +20,6 @@ use pyo3::prelude::*;
 
 const DAILY_PYTHON_NAME: &str = "daily-python";
 const DAILY_PYTHON_VERSION: &str = "0.10.0";
-
-static mut GLOBAL_CONTEXT: Option<DailyContext> = None;
 
 unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,
@@ -45,7 +43,7 @@ unsafe extern "C" fn get_user_media(
     _network_thread: *mut WebrtcThread,
     _constraints: *const libc::c_char,
 ) -> *mut libc::c_void {
-    GLOBAL_CONTEXT.as_ref().unwrap().media_stream.as_ptr() as *mut libc::c_void
+    GLOBAL_CONTEXT.as_ref().unwrap().media_stream().as_ptr() as *mut libc::c_void
 }
 
 #[pyclass(name = "Daily", module = "daily")]

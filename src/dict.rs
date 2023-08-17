@@ -61,7 +61,7 @@ impl<'a> FromPyObject<'a> for DictValue {
             let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
             Ok(DictValue(Value::Object(map)))
         } else {
-            Err(PyErr::new::<PyTypeError, _>("Invalid dictionary"))
+            Err(PyErr::new::<PyTypeError, _>("invalid dictionary"))
         }
     }
 }

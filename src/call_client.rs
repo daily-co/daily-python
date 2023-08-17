@@ -4,6 +4,7 @@ use std::ffi::{CStr, CString};
 use std::ptr;
 
 use crate::DictValue;
+use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_join, daily_core_call_client_leave,
@@ -57,7 +58,13 @@ impl PyCallClient {
                     .into_raw()
             };
 
-            daily_core_call_client_join(self.call_client.as_mut(), 0, url, token, settings);
+            daily_core_call_client_join(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                url,
+                token,
+                settings,
+            );
 
             let _ = CString::from_raw(url);
             if !token.is_null() {
@@ -71,7 +78,10 @@ impl PyCallClient {
 
     pub fn leave(&mut self) {
         unsafe {
-            daily_core_call_client_leave(self.call_client.as_mut(), 1);
+            daily_core_call_client_leave(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+            );
         }
     }
 
@@ -107,7 +117,7 @@ impl PyCallClient {
 
                 daily_core_call_client_update_subscriptions(
                     self.call_client.as_mut(),
-                    2,
+                    GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                     CString::new(participant_settings_string)
                         .expect("Invalid participant settings string")
                         .into_raw(),
@@ -142,7 +152,7 @@ impl PyCallClient {
 
                 daily_core_call_client_update_subscription_profiles(
                     self.call_client.as_mut(),
-                    3,
+                    GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                     CString::new(profile_settings_string)
                         .expect("Invalid profile settings string")
                         .into_raw(),
