@@ -1,0 +1,23 @@
+[package]
+name = "daily-python"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "daily"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.19.0"
+daily-core = { path = "../daily-core" }
+futures = { version = "0.3.23", default_features = false, features = [
+  "std",
+  "executor",
+] }
+libc = "0.2.132"
+serde = { version = "1.0.143", default_features = false, features = ["derive"] }
+serde_json = "1.0.83"
+thiserror = "1.0.38"
+tracing = "0.1.37"
+webrtc-daily = { path = "../webrtc-daily" }
