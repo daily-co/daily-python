@@ -8,7 +8,7 @@ use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_join, daily_core_call_client_leave,
-    daily_core_call_client_set_participant_camera_renderer,
+    daily_core_call_client_set_participant_video_renderer,
     daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
     daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
@@ -161,16 +161,21 @@ impl PyCallClient {
         }
     }
 
-    #[pyo3(signature = (participant_id, callback, color_format = "RGBA32"))]
-    pub fn set_camera_renderer(
+    #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA32"))]
+    pub fn set_video_renderer(
         &mut self,
         participant_id: &str,
         callback: PyObject,
+        video_source: &str,
         color_format: &str,
     ) {
         unsafe {
             let participant_ptr = CString::new(participant_id)
                 .expect("Invalid participant ID string")
+                .into_raw();
+
+            let video_source_ptr = CString::new(video_source)
+                .expect("Invalid video source string")
                 .into_raw();
 
             let color_format_ptr = CString::new(color_format)
@@ -187,9 +192,10 @@ impl PyCallClient {
                     fns: NativeCallClientVideoRendererFns { on_video_frame },
                 };
 
-                daily_core_call_client_set_participant_camera_renderer(
+                daily_core_call_client_set_participant_video_renderer(
                     self.call_client.as_mut(),
                     participant_ptr,
+                    video_source_ptr,
                     color_format_ptr,
                     video_renderer,
                 );
