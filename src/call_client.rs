@@ -161,10 +161,20 @@ impl PyCallClient {
         }
     }
 
-    pub fn set_camera_renderer(&mut self, participant: &str, callback: PyObject) {
+    #[pyo3(signature = (participant_id, callback, color_format = "RGBA32"))]
+    pub fn set_camera_renderer(
+        &mut self,
+        participant_id: &str,
+        callback: PyObject,
+        color_format: &str,
+    ) {
         unsafe {
-            let participant_ptr = CString::new(participant)
+            let participant_ptr = CString::new(participant_id)
                 .expect("Invalid participant ID string")
+                .into_raw();
+
+            let color_format_ptr = CString::new(color_format)
+                .expect("Invalid color format string")
                 .into_raw();
 
             Python::with_gil(|py| {
@@ -180,6 +190,7 @@ impl PyCallClient {
                 daily_core_call_client_set_participant_camera_renderer(
                     self.call_client.as_mut(),
                     participant_ptr,
+                    color_format_ptr,
                     video_renderer,
                 );
 
