@@ -9,6 +9,9 @@ use dict::DictValue;
 use std::env;
 use std::ptr;
 
+use webrtc_daily::media_stream::MediaStream;
+use webrtc_daily::sys::rtc_refcount_interface_addref;
+
 use daily_core::prelude::{
     daily_core_context_create_with_threads, daily_core_context_destroy, daily_core_set_log_level,
     LogLevel, NativeAboutClient, NativeContextDelegate, NativeContextDelegatePtr,
@@ -43,7 +46,14 @@ unsafe extern "C" fn get_user_media(
     _network_thread: *mut WebrtcThread,
     _constraints: *const libc::c_char,
 ) -> *mut libc::c_void {
-    GLOBAL_CONTEXT.as_ref().unwrap().media_stream().as_ptr() as *mut libc::c_void
+    if let Ok(mut media_stream) = MediaStream::new() {
+        // Increase the reference count because it's decremented on drop and we
+        // want to return a valid pointer.
+        rtc_refcount_interface_addref(media_stream.as_mut_ptr());
+        media_stream.as_mut_ptr() as *mut libc::c_void
+    } else {
+        ptr::null_mut()
+    }
 }
 
 #[pyclass(name = "Daily", module = "daily")]
@@ -89,10 +99,8 @@ impl PyDaily {
             worker_threads,
         );
 
-        if let Ok(context) = DailyContext::new() {
-            unsafe {
-                GLOBAL_CONTEXT = Some(context);
-            }
+        unsafe {
+            GLOBAL_CONTEXT = Some(DailyContext::new());
         }
     }
 
