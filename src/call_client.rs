@@ -269,3 +269,9 @@ unsafe extern "C" fn on_video_frame(
         let _ = callback_ctx.callback.call1(py, args);
     });
 }
+
+impl Drop for PyCallClient {
+    fn drop(&mut self) {
+        self.leave();
+    }
+}
