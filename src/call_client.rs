@@ -37,20 +37,44 @@ impl PyCallClient {
         }
     }
 
-    #[pyo3(signature = (meeting_url, meeting_token = "", client_settings = ""))]
-    pub fn join(&mut self, meeting_url: &str, meeting_token: &str, client_settings: &str) {
+    #[pyo3(signature = (meeting_url, py_meeting_token = None, py_client_settings = None))]
+    pub fn join(
+        &mut self,
+        meeting_url: &str,
+        py_meeting_token: Option<PyObject>,
+        py_client_settings: Option<PyObject>,
+    ) {
         unsafe {
-            let url = CString::new(meeting_url)
+            // Meeting URL
+            let meeting_url_string = CString::new(meeting_url)
                 .expect("Invalid meeting URL string")
                 .into_raw();
-            let token = if meeting_token.is_empty() {
+
+            // Meeting token
+            let meeting_token: String = if let Some(py_meeting_token) = py_meeting_token {
+                Python::with_gil(|py| py_meeting_token.extract(py).unwrap())
+            } else {
+                "".to_string()
+            };
+            let meeting_token_string = if meeting_token.is_empty() {
                 ptr::null_mut()
             } else {
                 CString::new(meeting_token)
                     .expect("Invalid meeting token string")
                     .into_raw()
             };
-            let settings = if client_settings.is_empty() {
+
+            // Client settings
+            let client_settings: String = if let Some(py_client_settings) = py_client_settings {
+                Python::with_gil(|py| {
+                    let client_settings: HashMap<String, DictValue> =
+                        py_client_settings.extract(py).unwrap();
+                    serde_json::to_string(&client_settings).unwrap()
+                })
+            } else {
+                "".to_string()
+            };
+            let client_settings_string = if client_settings.is_empty() {
                 ptr::null_mut()
             } else {
                 CString::new(client_settings)
@@ -58,20 +82,21 @@ impl PyCallClient {
                     .into_raw()
             };
 
+            // Join
             daily_core_call_client_join(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                url,
-                token,
-                settings,
+                meeting_url_string,
+                meeting_token_string,
+                client_settings_string,
             );
 
-            let _ = CString::from_raw(url);
-            if !token.is_null() {
-                let _ = CString::from_raw(token);
+            let _ = CString::from_raw(meeting_url_string);
+            if !meeting_token_string.is_null() {
+                let _ = CString::from_raw(meeting_token_string);
             }
-            if !settings.is_null() {
-                let _ = CString::from_raw(settings);
+            if !client_settings_string.is_null() {
+                let _ = CString::from_raw(client_settings_string);
             }
         }
     }
@@ -105,27 +130,24 @@ impl PyCallClient {
         py_profile_settings: PyObject,
     ) {
         unsafe {
-            Python::with_gil(|py| {
-                let participant_settings: HashMap<String, DictValue> =
-                    py_participant_settings.extract(py).unwrap();
-                let profile_settings: HashMap<String, DictValue> =
-                    py_profile_settings.extract(py).unwrap();
+            let participant_settings: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_participant_settings.extract(py).unwrap());
+            let profile_settings: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
 
-                let participant_settings_string =
-                    serde_json::to_string(&participant_settings).unwrap();
-                let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+            let participant_settings_string = serde_json::to_string(&participant_settings).unwrap();
+            let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
 
-                daily_core_call_client_update_subscriptions(
-                    self.call_client.as_mut(),
-                    GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                    CString::new(participant_settings_string)
-                        .expect("Invalid participant settings string")
-                        .into_raw(),
-                    CString::new(profile_settings_string)
-                        .expect("Invalid profile settings string")
-                        .into_raw(),
-                );
-            });
+            daily_core_call_client_update_subscriptions(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                CString::new(participant_settings_string)
+                    .expect("Invalid participant settings string")
+                    .into_raw(),
+                CString::new(profile_settings_string)
+                    .expect("Invalid profile settings string")
+                    .into_raw(),
+            );
         }
     }
 
@@ -144,20 +166,18 @@ impl PyCallClient {
 
     pub fn update_subscription_profiles(&mut self, py_profile_settings: PyObject) {
         unsafe {
-            Python::with_gil(|py| {
-                let profile_settings: HashMap<String, DictValue> =
-                    py_profile_settings.extract(py).unwrap();
+            let profile_settings: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
 
-                let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+            let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
 
-                daily_core_call_client_update_subscription_profiles(
-                    self.call_client.as_mut(),
-                    GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                    CString::new(profile_settings_string)
-                        .expect("Invalid profile settings string")
-                        .into_raw(),
-                );
-            });
+            daily_core_call_client_update_subscription_profiles(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                CString::new(profile_settings_string)
+                    .expect("Invalid profile settings string")
+                    .into_raw(),
+            );
         }
     }
 
@@ -182,26 +202,26 @@ impl PyCallClient {
                 .expect("Invalid color format string")
                 .into_raw();
 
-            Python::with_gil(|py| {
-                let callback_ctx: PyObject = Py::new(py, PyCallbackContext { callback })
+            let callback_ctx: PyObject = Python::with_gil(|py| {
+                Py::new(py, PyCallbackContext { callback })
                     .unwrap()
-                    .into_py(py);
+                    .into_py(py)
+            });
 
-                let video_renderer = NativeCallClientVideoRenderer {
-                    ptr: NativeCallClientDelegatePtr(callback_ctx.into_ptr() as *mut libc::c_void),
-                    fns: NativeCallClientVideoRendererFns { on_video_frame },
-                };
+            let video_renderer = NativeCallClientVideoRenderer {
+                ptr: NativeCallClientDelegatePtr(callback_ctx.into_ptr() as *mut libc::c_void),
+                fns: NativeCallClientVideoRendererFns { on_video_frame },
+            };
 
-                daily_core_call_client_set_participant_video_renderer(
-                    self.call_client.as_mut(),
-                    participant_ptr,
-                    video_source_ptr,
-                    color_format_ptr,
-                    video_renderer,
-                );
+            daily_core_call_client_set_participant_video_renderer(
+                self.call_client.as_mut(),
+                participant_ptr,
+                video_source_ptr,
+                color_format_ptr,
+                video_renderer,
+            );
 
-                let _ = CString::from_raw(participant_ptr);
-            })
+            let _ = CString::from_raw(participant_ptr);
         }
     }
 }
