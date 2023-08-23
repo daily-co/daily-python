@@ -7,10 +7,10 @@ use crate::DictValue;
 use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
-    daily_core_call_client_create, daily_core_call_client_join, daily_core_call_client_leave,
-    daily_core_call_client_set_participant_video_renderer,
+    daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
+    daily_core_call_client_leave, daily_core_call_client_set_participant_video_renderer,
     daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
-    daily_core_call_client_update_subscription_profiles,
+    daily_core_call_client_update_inputs, daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
     NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
@@ -106,6 +106,35 @@ impl PyCallClient {
             daily_core_call_client_leave(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+            );
+        }
+    }
+
+    pub fn inputs(&mut self) -> PyObject {
+        unsafe {
+            let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
+            let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
+
+            let inputs: HashMap<String, DictValue> =
+                serde_json::from_str(inputs_string.as_str()).unwrap();
+
+            Python::with_gil(|py| inputs.to_object(py))
+        }
+    }
+
+    pub fn update_inputs(&mut self, py_input_settings: PyObject) {
+        unsafe {
+            let input_settings: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_input_settings.extract(py).unwrap());
+
+            let input_settings_string = serde_json::to_string(&input_settings).unwrap();
+
+            daily_core_call_client_update_inputs(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                CString::new(input_settings_string)
+                    .expect("Invalid input settings string")
+                    .into_raw(),
             );
         }
     }
