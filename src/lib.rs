@@ -1,22 +1,22 @@
 pub mod call_client;
 pub mod context;
+pub mod custom_audio_device;
 pub mod dict;
 
 use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
+use custom_audio_device::PyCustomAudioDevice;
 use dict::DictValue;
 
 use std::env;
 use std::ptr;
 
-use webrtc_daily::media_stream::MediaStream;
-use webrtc_daily::sys::rtc_refcount_interface_addref;
-
 use daily_core::prelude::{
     daily_core_context_create_with_threads, daily_core_context_destroy, daily_core_set_log_level,
     LogLevel, NativeAboutClient, NativeContextDelegate, NativeContextDelegatePtr,
-    NativeWebRtcContextDelegate, NativeWebRtcContextDelegateFns, NativeWebRtcContextDelegatePtr,
-    WebrtcPeerConnectionFactory, WebrtcThread,
+    NativeRawWebRtcContextDelegate, NativeWebRtcContextDelegate, NativeWebRtcContextDelegateFns,
+    NativeWebRtcContextDelegatePtr, WebrtcAudioDeviceModule, WebrtcPeerConnectionFactory,
+    WebrtcTaskQueueFactory, WebrtcThread,
 };
 
 use pyo3::prelude::*;
@@ -40,20 +40,29 @@ unsafe extern "C" fn get_enumerated_devices(_delegate: *mut libc::c_void) -> *mu
 
 unsafe extern "C" fn get_user_media(
     _delegate: *mut libc::c_void,
-    _peer_connection_factory: *mut WebrtcPeerConnectionFactory,
-    _signaling_thread: *mut WebrtcThread,
-    _worker_thread: *mut WebrtcThread,
-    _network_thread: *mut WebrtcThread,
-    _constraints: *const libc::c_char,
+    peer_connection_factory: *mut WebrtcPeerConnectionFactory,
+    signaling_thread: *mut WebrtcThread,
+    worker_thread: *mut WebrtcThread,
+    network_thread: *mut WebrtcThread,
+    constraints: *const libc::c_char,
 ) -> *mut libc::c_void {
-    if let Ok(mut media_stream) = MediaStream::new() {
-        // Increase the reference count because it's decremented on drop and we
-        // want to return a valid pointer.
-        rtc_refcount_interface_addref(media_stream.as_mut_ptr());
-        media_stream.as_mut_ptr() as *mut libc::c_void
-    } else {
-        ptr::null_mut()
-    }
+    GLOBAL_CONTEXT.as_mut().unwrap().get_user_media(
+        peer_connection_factory,
+        signaling_thread,
+        worker_thread,
+        network_thread,
+        constraints,
+    )
+}
+
+unsafe extern "C" fn create_audio_device_module(
+    _delegate: *mut NativeRawWebRtcContextDelegate,
+    task_queue_factory: *mut WebrtcTaskQueueFactory,
+) -> *mut WebrtcAudioDeviceModule {
+    GLOBAL_CONTEXT
+        .as_mut()
+        .unwrap()
+        .create_audio_device_module(task_queue_factory)
 }
 
 #[pyclass(name = "Daily", module = "daily")]
@@ -62,9 +71,12 @@ struct PyDaily;
 #[pymethods]
 impl PyDaily {
     #[staticmethod]
-    #[pyo3(signature = (worker_threads = 2))]
-    pub fn init(worker_threads: usize) {
-        unsafe { daily_core_set_log_level(LogLevel::Off) };
+    #[pyo3(signature = (custom_audio_devices = false, worker_threads = 2))]
+    pub fn init(custom_audio_devices: bool, worker_threads: usize) {
+        unsafe {
+            GLOBAL_CONTEXT = Some(DailyContext::new());
+            daily_core_set_log_level(LogLevel::Off);
+        }
 
         let about_client = NativeAboutClient {
             library: DAILY_PYTHON_NAME.as_ptr() as *const libc::c_char,
@@ -84,7 +96,11 @@ impl PyDaily {
                 set_audio_device,
                 get_enumerated_devices,
                 get_user_media,
-                create_audio_device_module: None,
+                create_audio_device_module: if custom_audio_devices {
+                    Some(create_audio_device_module)
+                } else {
+                    None
+                },
                 create_video_decoder_factory: None,
                 create_video_encoder_factory: None,
                 create_audio_decoder_factory: None,
@@ -98,9 +114,35 @@ impl PyDaily {
             about_client,
             worker_threads,
         );
+    }
 
+    #[staticmethod]
+    #[pyo3(signature = (device_name, play_sample_rate = 16000, play_channels = 2, recording_sample_rate = 16000, recording_channels = 2))]
+    pub fn create_custom_audio_device(
+        device_name: &str,
+        play_sample_rate: u32,
+        play_channels: u8,
+        recording_sample_rate: u32,
+        recording_channels: u8,
+    ) -> PyResult<PyCustomAudioDevice> {
         unsafe {
-            GLOBAL_CONTEXT = Some(DailyContext::new());
+            GLOBAL_CONTEXT.as_mut().unwrap().create_custom_audio_device(
+                device_name,
+                play_sample_rate,
+                play_channels,
+                recording_sample_rate,
+                recording_channels,
+            )
+        }
+    }
+
+    #[staticmethod]
+    pub fn select_custom_audio_device(device_name: &str) -> PyResult<()> {
+        unsafe {
+            GLOBAL_CONTEXT
+                .as_mut()
+                .unwrap()
+                .select_custom_audio_device(device_name)
         }
     }
 

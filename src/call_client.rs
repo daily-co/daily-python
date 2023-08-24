@@ -19,8 +19,13 @@ use pyo3::ffi::Py_IncRef;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
 
+#[pyclass(name = "CallClientCallbackContext", module = "daily")]
+pub struct PyCallClientCallbackContext {
+    pub callback: PyObject,
+}
+
 #[pyclass(name = "CallClient", module = "daily")]
-pub(crate) struct PyCallClient {
+pub struct PyCallClient {
     call_client: Box<CallClient>,
 }
 
@@ -47,7 +52,7 @@ impl PyCallClient {
         unsafe {
             // Meeting URL
             let meeting_url_string = CString::new(meeting_url)
-                .expect("Invalid meeting URL string")
+                .expect("invalid meeting URL string")
                 .into_raw();
 
             // Meeting token
@@ -60,7 +65,7 @@ impl PyCallClient {
                 ptr::null_mut()
             } else {
                 CString::new(meeting_token)
-                    .expect("Invalid meeting token string")
+                    .expect("invalid meeting token string")
                     .into_raw()
             };
 
@@ -78,7 +83,7 @@ impl PyCallClient {
                 ptr::null_mut()
             } else {
                 CString::new(client_settings)
-                    .expect("Invalid client settings string")
+                    .expect("invalid client settings string")
                     .into_raw()
             };
 
@@ -133,7 +138,7 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                 CString::new(input_settings_string)
-                    .expect("Invalid input settings string")
+                    .expect("invalid input settings string")
                     .into_raw(),
             );
         }
@@ -171,10 +176,10 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                 CString::new(participant_settings_string)
-                    .expect("Invalid participant settings string")
+                    .expect("invalid participant settings string")
                     .into_raw(),
                 CString::new(profile_settings_string)
-                    .expect("Invalid profile settings string")
+                    .expect("invalid profile settings string")
                     .into_raw(),
             );
         }
@@ -204,7 +209,7 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                 CString::new(profile_settings_string)
-                    .expect("Invalid profile settings string")
+                    .expect("invalid profile settings string")
                     .into_raw(),
             );
         }
@@ -220,19 +225,19 @@ impl PyCallClient {
     ) {
         unsafe {
             let participant_ptr = CString::new(participant_id)
-                .expect("Invalid participant ID string")
+                .expect("invalid participant ID string")
                 .into_raw();
 
             let video_source_ptr = CString::new(video_source)
-                .expect("Invalid video source string")
+                .expect("invalid video source string")
                 .into_raw();
 
             let color_format_ptr = CString::new(color_format)
-                .expect("Invalid color format string")
+                .expect("invalid color format string")
                 .into_raw();
 
             let callback_ctx: PyObject = Python::with_gil(|py| {
-                Py::new(py, PyCallbackContext { callback })
+                Py::new(py, PyCallClientCallbackContext { callback })
                     .unwrap()
                     .into_py(py)
             });
@@ -251,6 +256,8 @@ impl PyCallClient {
             );
 
             let _ = CString::from_raw(participant_ptr);
+            let _ = CString::from_raw(video_source_ptr);
+            let _ = CString::from_raw(color_format_ptr);
         }
     }
 }
@@ -261,11 +268,6 @@ struct PyVideoFrame {
     pub width: i32,
     pub height: i32,
     pub timestamp_us: i64,
-}
-
-#[pyclass(name = "CallbackContext", module = "daily")]
-struct PyCallbackContext {
-    pub callback: PyObject,
 }
 
 unsafe extern "C" fn on_video_frame(
@@ -282,7 +284,8 @@ unsafe extern "C" fn on_video_frame(
 
         let py_callback_ctx = PyObject::from_owned_ptr(py, py_callback_ctx_ptr);
 
-        let callback_ctx: PyRefMut<'_, PyCallbackContext> = py_callback_ctx.extract(py).unwrap();
+        let callback_ctx: PyRefMut<'_, PyCallClientCallbackContext> =
+            py_callback_ctx.extract(py).unwrap();
 
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
