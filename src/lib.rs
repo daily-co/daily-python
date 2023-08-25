@@ -71,8 +71,8 @@ struct PyDaily;
 #[pymethods]
 impl PyDaily {
     #[staticmethod]
-    #[pyo3(signature = (custom_audio_devices = false, worker_threads = 2))]
-    pub fn init(custom_audio_devices: bool, worker_threads: usize) {
+    #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
+    pub fn init(custom_devices: bool, worker_threads: usize) {
         unsafe {
             GLOBAL_CONTEXT = Some(DailyContext::new());
             daily_core_set_log_level(LogLevel::Off);
@@ -96,7 +96,7 @@ impl PyDaily {
                 set_audio_device,
                 get_enumerated_devices,
                 get_user_media,
-                create_audio_device_module: if custom_audio_devices {
+                create_audio_device_module: if custom_devices {
                     Some(create_audio_device_module)
                 } else {
                     None
