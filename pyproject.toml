@@ -3,14 +3,18 @@ requires = ["maturin>=1.2,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "daily"
+name = "daily-python"
+description = "Daily Client SDK for Python"
+license = { text = "BSD 2-Clause License" }
+readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+    "Development Status :: 4 - Beta",
+    "Topic :: Communications :: Conferencing"
 ]
 
+[project.urls]
+Homepage = "https://daily.co"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
