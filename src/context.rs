@@ -6,6 +6,7 @@ use crate::PyCustomAudioDevice;
 
 use webrtc_daily::sys::{
     audio_device_module::NativeAudioDeviceModule, custom_audio_device::NativeCustomAudioDevice,
+    media_stream::MediaStream, rtc_refcount_interface_addref,
 };
 
 use daily_core::prelude::{
@@ -55,7 +56,17 @@ impl DailyContext {
                 constraints,
             )
         } else {
-            ptr::null_mut()
+            if let Ok(mut media_stream) = MediaStream::new() {
+                // Increase the reference count because it's decremented on drop
+                // and we want to return a valid pointer.
+                unsafe {
+                    rtc_refcount_interface_addref(media_stream.as_mut_ptr());
+                }
+
+                media_stream.as_mut_ptr() as *mut _
+            } else {
+                ptr::null_mut()
+            }
         }
     }
 
