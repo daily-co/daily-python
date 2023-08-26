@@ -15,6 +15,7 @@ use daily_core::prelude::{
     NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
 
+use pyo3::exceptions;
 use pyo3::ffi::Py_IncRef;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
@@ -115,7 +116,7 @@ impl PyCallClient {
         }
     }
 
-    pub fn inputs(&mut self) -> PyObject {
+    pub fn inputs(&mut self) -> PyResult<PyObject> {
         unsafe {
             let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
             let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
@@ -123,7 +124,7 @@ impl PyCallClient {
             let inputs: HashMap<String, DictValue> =
                 serde_json::from_str(inputs_string.as_str()).unwrap();
 
-            Python::with_gil(|py| inputs.to_object(py))
+            Ok(Python::with_gil(|py| inputs.to_object(py)))
         }
     }
 
@@ -144,7 +145,7 @@ impl PyCallClient {
         }
     }
 
-    pub fn subscriptions(&mut self) -> PyObject {
+    pub fn subscriptions(&mut self) -> PyResult<PyObject> {
         unsafe {
             let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
             let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
@@ -154,7 +155,7 @@ impl PyCallClient {
             let subscriptions: HashMap<String, DictValue> =
                 serde_json::from_str(subscriptions_string.as_str()).unwrap();
 
-            Python::with_gil(|py| subscriptions.to_object(py))
+            Ok(Python::with_gil(|py| subscriptions.to_object(py)))
         }
     }
 
@@ -185,7 +186,7 @@ impl PyCallClient {
         }
     }
 
-    pub fn subscription_profiles(&mut self) -> PyObject {
+    pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
         unsafe {
             let profiles_ptr =
                 daily_core_call_client_subscription_profiles(self.call_client.as_mut());
@@ -194,7 +195,7 @@ impl PyCallClient {
             let profiles: HashMap<String, DictValue> =
                 serde_json::from_str(profiles_string.as_str()).unwrap();
 
-            Python::with_gil(|py| profiles.to_object(py))
+            Ok(Python::with_gil(|py| profiles.to_object(py)))
         }
     }
 
@@ -222,7 +223,7 @@ impl PyCallClient {
         callback: PyObject,
         video_source: &str,
         color_format: &str,
-    ) {
+    ) -> PyResult<()> {
         unsafe {
             let participant_ptr = CString::new(participant_id)
                 .expect("invalid participant ID string")
@@ -247,7 +248,7 @@ impl PyCallClient {
                 fns: NativeCallClientVideoRendererFns { on_video_frame },
             };
 
-            daily_core_call_client_set_participant_video_renderer(
+            let result = daily_core_call_client_set_participant_video_renderer(
                 self.call_client.as_mut(),
                 participant_ptr,
                 video_source_ptr,
@@ -258,6 +259,14 @@ impl PyCallClient {
             let _ = CString::from_raw(participant_ptr);
             let _ = CString::from_raw(video_source_ptr);
             let _ = CString::from_raw(color_format_ptr);
+
+            if result {
+                Ok(())
+            } else {
+                Err(exceptions::PyRuntimeError::new_err(
+                    "unable to set video renderer",
+                ))
+            }
         }
     }
 }
@@ -298,7 +307,9 @@ unsafe extern "C" fn on_video_frame(
 
         let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
 
-        let _ = callback_ctx.callback.call1(py, args);
+        if let Err(error) = callback_ctx.callback.call1(py, args) {
+            error.write_unraisable(py, None);
+        }
     });
 }
 
