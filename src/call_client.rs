@@ -8,10 +8,12 @@ use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
-    daily_core_call_client_leave, daily_core_call_client_set_participant_video_renderer,
+    daily_core_call_client_leave, daily_core_call_client_participant_counts,
+    daily_core_call_client_participants, daily_core_call_client_set_participant_video_renderer,
     daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
     daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
-    daily_core_call_client_update_permissions, daily_core_call_client_update_subscription_profiles,
+    daily_core_call_client_update_permissions, daily_core_call_client_update_remote_participants,
+    daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
     NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
@@ -130,6 +132,56 @@ impl PyCallClient {
             );
 
             let _ = CString::from_raw(user_name_ptr);
+        }
+    }
+
+    pub fn participants(&mut self) -> PyResult<PyObject> {
+        unsafe {
+            let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
+            let participants_string = CStr::from_ptr(participants_ptr)
+                .to_string_lossy()
+                .into_owned();
+
+            let participants: HashMap<String, DictValue> =
+                serde_json::from_str(participants_string.as_str()).unwrap();
+
+            Ok(Python::with_gil(|py| participants.to_object(py)))
+        }
+    }
+
+    pub fn participant_counts(&mut self) -> PyResult<PyObject> {
+        unsafe {
+            let participant_counts_ptr =
+                daily_core_call_client_participant_counts(self.call_client.as_mut());
+            let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
+                .to_string_lossy()
+                .into_owned();
+
+            let participant_counts: HashMap<String, DictValue> =
+                serde_json::from_str(participant_counts_string.as_str()).unwrap();
+
+            Ok(Python::with_gil(|py| participant_counts.to_object(py)))
+        }
+    }
+
+    pub fn update_remote_participants(&mut self, py_remote_participants: PyObject) {
+        unsafe {
+            let remote_participants: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_remote_participants.extract(py).unwrap());
+
+            let remote_participants_string = serde_json::to_string(&remote_participants).unwrap();
+
+            let remote_participants_ptr = CString::new(remote_participants_string)
+                .expect("invalid remote participants string")
+                .into_raw();
+
+            daily_core_call_client_update_remote_participants(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                remote_participants_ptr,
+            );
+
+            let _ = CString::from_raw(remote_participants_ptr);
         }
     }
 
