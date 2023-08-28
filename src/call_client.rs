@@ -36,12 +36,17 @@ pub struct PyCallClient {
 #[pymethods]
 impl PyCallClient {
     #[new]
-    pub fn new() -> Self {
+    pub fn new() -> PyResult<Self> {
         unsafe {
             let call_client = daily_core_call_client_create();
-
-            Self {
-                call_client: Box::from_raw(call_client),
+            if !call_client.is_null() {
+                Ok(Self {
+                    call_client: Box::from_raw(call_client),
+                })
+            } else {
+                Err(exceptions::PyRuntimeError::new_err(
+                    "unable to create a CallClient() object",
+                ))
             }
         }
     }
