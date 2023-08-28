@@ -9,9 +9,9 @@ use crate::GLOBAL_CONTEXT;
 use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
     daily_core_call_client_leave, daily_core_call_client_set_participant_video_renderer,
-    daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
-    daily_core_call_client_update_inputs, daily_core_call_client_update_permissions,
-    daily_core_call_client_update_subscription_profiles,
+    daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
+    daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
+    daily_core_call_client_update_permissions, daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
     NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
@@ -114,6 +114,22 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
             );
+        }
+    }
+
+    pub fn set_user_name(&mut self, user_name: &str) {
+        unsafe {
+            let user_name_string = CString::new(user_name)
+                .expect("invalid user name string")
+                .into_raw();
+
+            daily_core_call_client_set_user_name(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                user_name_string,
+            );
+
+            let _ = CString::from_raw(user_name_string);
         }
     }
 
