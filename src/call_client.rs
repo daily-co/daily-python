@@ -53,7 +53,7 @@ impl PyCallClient {
     ) {
         unsafe {
             // Meeting URL
-            let meeting_url_string = CString::new(meeting_url)
+            let meeting_url_ptr = CString::new(meeting_url)
                 .expect("invalid meeting URL string")
                 .into_raw();
 
@@ -63,7 +63,7 @@ impl PyCallClient {
             } else {
                 "".to_string()
             };
-            let meeting_token_string = if meeting_token.is_empty() {
+            let meeting_token_ptr = if meeting_token.is_empty() {
                 ptr::null_mut()
             } else {
                 CString::new(meeting_token)
@@ -81,7 +81,7 @@ impl PyCallClient {
             } else {
                 "".to_string()
             };
-            let client_settings_string = if client_settings.is_empty() {
+            let client_settings_ptr = if client_settings.is_empty() {
                 ptr::null_mut()
             } else {
                 CString::new(client_settings)
@@ -93,17 +93,17 @@ impl PyCallClient {
             daily_core_call_client_join(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                meeting_url_string,
-                meeting_token_string,
-                client_settings_string,
+                meeting_url_ptr,
+                meeting_token_ptr,
+                client_settings_ptr,
             );
 
-            let _ = CString::from_raw(meeting_url_string);
-            if !meeting_token_string.is_null() {
-                let _ = CString::from_raw(meeting_token_string);
+            let _ = CString::from_raw(meeting_url_ptr);
+            if !meeting_token_ptr.is_null() {
+                let _ = CString::from_raw(meeting_token_ptr);
             }
-            if !client_settings_string.is_null() {
-                let _ = CString::from_raw(client_settings_string);
+            if !client_settings_ptr.is_null() {
+                let _ = CString::from_raw(client_settings_ptr);
             }
         }
     }
@@ -119,17 +119,17 @@ impl PyCallClient {
 
     pub fn set_user_name(&mut self, user_name: &str) {
         unsafe {
-            let user_name_string = CString::new(user_name)
+            let user_name_ptr = CString::new(user_name)
                 .expect("invalid user name string")
                 .into_raw();
 
             daily_core_call_client_set_user_name(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                user_name_string,
+                user_name_ptr,
             );
 
-            let _ = CString::from_raw(user_name_string);
+            let _ = CString::from_raw(user_name_ptr);
         }
     }
 
@@ -152,13 +152,17 @@ impl PyCallClient {
 
             let input_settings_string = serde_json::to_string(&input_settings).unwrap();
 
+            let input_settings_ptr = CString::new(input_settings_string)
+                .expect("invalid input settings string")
+                .into_raw();
+
             daily_core_call_client_update_inputs(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                CString::new(input_settings_string)
-                    .expect("invalid input settings string")
-                    .into_raw(),
+                input_settings_ptr,
             );
+
+            let _ = CString::from_raw(input_settings_ptr);
         }
     }
 
@@ -188,18 +192,24 @@ impl PyCallClient {
                 Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
 
             let participant_settings_string = serde_json::to_string(&participant_settings).unwrap();
+            let participant_settings_ptr = CString::new(participant_settings_string)
+                .expect("invalid participant settings string")
+                .into_raw();
+
             let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+            let profile_settings_ptr = CString::new(profile_settings_string)
+                .expect("invalid profile settings string")
+                .into_raw();
 
             daily_core_call_client_update_subscriptions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                CString::new(participant_settings_string)
-                    .expect("invalid participant settings string")
-                    .into_raw(),
-                CString::new(profile_settings_string)
-                    .expect("invalid profile settings string")
-                    .into_raw(),
+                participant_settings_ptr,
+                profile_settings_ptr,
             );
+
+            let _ = CString::from_raw(participant_settings_ptr);
+            let _ = CString::from_raw(profile_settings_ptr);
         }
     }
 
@@ -222,14 +232,17 @@ impl PyCallClient {
                 Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
 
             let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+            let profile_settings_ptr = CString::new(profile_settings_string)
+                .expect("invalid profile settings string")
+                .into_raw();
 
             daily_core_call_client_update_subscription_profiles(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                CString::new(profile_settings_string)
-                    .expect("invalid profile settings string")
-                    .into_raw(),
+                profile_settings_ptr,
             );
+
+            let _ = CString::from_raw(profile_settings_ptr);
         }
     }
 
@@ -239,14 +252,17 @@ impl PyCallClient {
                 Python::with_gil(|py| py_permissions.extract(py).unwrap());
 
             let permissions_string = serde_json::to_string(&permissions).unwrap();
+            let permissions_ptr = CString::new(permissions_string)
+                .expect("invalid permissions string")
+                .into_raw();
 
             daily_core_call_client_update_permissions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                CString::new(permissions_string)
-                    .expect("invalid permissions string")
-                    .into_raw(),
+                permissions_ptr,
             );
+
+            let _ = CString::from_raw(permissions_ptr);
         }
     }
 
