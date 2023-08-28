@@ -9,6 +9,7 @@ use custom_audio_device::PyCustomAudioDevice;
 use dict::DictValue;
 
 use std::env;
+use std::ffi::CString;
 use std::ptr;
 
 use daily_core::prelude::{
@@ -78,11 +79,21 @@ impl PyDaily {
             daily_core_set_log_level(LogLevel::Off);
         }
 
+        let library_ptr = CString::new(DAILY_PYTHON_NAME)
+            .expect("invalid library string")
+            .into_raw();
+        let version_ptr = CString::new(DAILY_PYTHON_VERSION)
+            .expect("invalid version string")
+            .into_raw();
+        let os_ptr = CString::new(env::consts::OS)
+            .expect("invalid OS string")
+            .into_raw();
+
         let about_client = NativeAboutClient {
-            library: DAILY_PYTHON_NAME.as_ptr() as *const libc::c_char,
-            version: DAILY_PYTHON_VERSION.as_ptr() as *const libc::c_char,
-            operating_system: env::consts::OS.as_ptr() as *const libc::c_char,
-            operating_system_version: "".as_ptr() as *const libc::c_char,
+            library: library_ptr,
+            version: version_ptr,
+            operating_system: os_ptr,
+            operating_system_version: ptr::null(),
         };
 
         let context_delegate = NativeContextDelegate {
@@ -114,6 +125,12 @@ impl PyDaily {
             about_client,
             worker_threads,
         );
+
+        unsafe {
+            let _ = CString::from_raw(library_ptr);
+            let _ = CString::from_raw(version_ptr);
+            let _ = CString::from_raw(os_ptr);
+        }
     }
 
     #[staticmethod]
