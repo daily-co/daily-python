@@ -10,7 +10,8 @@ use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
     daily_core_call_client_leave, daily_core_call_client_set_participant_video_renderer,
     daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
-    daily_core_call_client_update_inputs, daily_core_call_client_update_subscription_profiles,
+    daily_core_call_client_update_inputs, daily_core_call_client_update_permissions,
+    daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
     NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
@@ -211,6 +212,23 @@ impl PyCallClient {
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                 CString::new(profile_settings_string)
                     .expect("invalid profile settings string")
+                    .into_raw(),
+            );
+        }
+    }
+
+    pub fn update_permissions(&mut self, py_permissions: PyObject) {
+        unsafe {
+            let permissions: HashMap<String, DictValue> =
+                Python::with_gil(|py| py_permissions.extract(py).unwrap());
+
+            let permissions_string = serde_json::to_string(&permissions).unwrap();
+
+            daily_core_call_client_update_permissions(
+                self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                CString::new(permissions_string)
+                    .expect("invalid permissions string")
                     .into_raw(),
             );
         }
