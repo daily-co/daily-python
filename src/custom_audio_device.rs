@@ -43,23 +43,28 @@ impl PyCustomAudioDevice {
 
 #[pymethods]
 impl PyCustomAudioDevice {
-    pub fn name(&self) -> String {
+    #[getter]
+    fn name(&self) -> String {
         self.device_name.clone()
     }
 
-    pub fn play_sample_rate(&self) -> u32 {
+    #[getter]
+    fn play_sample_rate(&self) -> u32 {
         self.play_sample_rate
     }
 
-    pub fn play_channels(&self) -> u8 {
+    #[getter]
+    fn play_channels(&self) -> u8 {
         self.play_channels
     }
 
-    pub fn recording_sample_rate(&self) -> u32 {
+    #[getter]
+    fn recording_sample_rate(&self) -> u32 {
         self.rec_sample_rate
     }
 
-    pub fn recording_channels(&self) -> u8 {
+    #[getter]
+    fn recording_channels(&self) -> u8 {
         self.rec_channels
     }
 
