@@ -176,5 +176,6 @@ impl PyDaily {
 fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyDaily>()?;
     m.add_class::<PyCallClient>()?;
+    m.add_class::<PyCustomAudioDevice>()?;
     Ok(())
 }
