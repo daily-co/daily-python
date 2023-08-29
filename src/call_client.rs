@@ -58,45 +58,44 @@ impl PyCallClient {
         py_meeting_token: Option<PyObject>,
         py_client_settings: Option<PyObject>,
     ) {
+        // Meeting URL
+        let meeting_url_ptr = CString::new(meeting_url)
+            .expect("invalid meeting URL string")
+            .into_raw();
+
+        // Meeting token
+        let meeting_token: String = if let Some(py_meeting_token) = py_meeting_token {
+            Python::with_gil(|py| py_meeting_token.extract(py).unwrap())
+        } else {
+            "".to_string()
+        };
+        let meeting_token_ptr = if meeting_token.is_empty() {
+            ptr::null_mut()
+        } else {
+            CString::new(meeting_token)
+                .expect("invalid meeting token string")
+                .into_raw()
+        };
+
+        // Client settings
+        let client_settings: String = if let Some(py_client_settings) = py_client_settings {
+            Python::with_gil(|py| {
+                let client_settings: HashMap<String, DictValue> =
+                    py_client_settings.extract(py).unwrap();
+                serde_json::to_string(&client_settings).unwrap()
+            })
+        } else {
+            "".to_string()
+        };
+        let client_settings_ptr = if client_settings.is_empty() {
+            ptr::null_mut()
+        } else {
+            CString::new(client_settings)
+                .expect("invalid client settings string")
+                .into_raw()
+        };
+
         unsafe {
-            // Meeting URL
-            let meeting_url_ptr = CString::new(meeting_url)
-                .expect("invalid meeting URL string")
-                .into_raw();
-
-            // Meeting token
-            let meeting_token: String = if let Some(py_meeting_token) = py_meeting_token {
-                Python::with_gil(|py| py_meeting_token.extract(py).unwrap())
-            } else {
-                "".to_string()
-            };
-            let meeting_token_ptr = if meeting_token.is_empty() {
-                ptr::null_mut()
-            } else {
-                CString::new(meeting_token)
-                    .expect("invalid meeting token string")
-                    .into_raw()
-            };
-
-            // Client settings
-            let client_settings: String = if let Some(py_client_settings) = py_client_settings {
-                Python::with_gil(|py| {
-                    let client_settings: HashMap<String, DictValue> =
-                        py_client_settings.extract(py).unwrap();
-                    serde_json::to_string(&client_settings).unwrap()
-                })
-            } else {
-                "".to_string()
-            };
-            let client_settings_ptr = if client_settings.is_empty() {
-                ptr::null_mut()
-            } else {
-                CString::new(client_settings)
-                    .expect("invalid client settings string")
-                    .into_raw()
-            };
-
-            // Join
             daily_core_call_client_join(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -170,16 +169,16 @@ impl PyCallClient {
     }
 
     pub fn update_remote_participants(&mut self, py_remote_participants: PyObject) {
+        let remote_participants: HashMap<String, DictValue> =
+            Python::with_gil(|py| py_remote_participants.extract(py).unwrap());
+
+        let remote_participants_string = serde_json::to_string(&remote_participants).unwrap();
+
+        let remote_participants_ptr = CString::new(remote_participants_string)
+            .expect("invalid remote participants string")
+            .into_raw();
+
         unsafe {
-            let remote_participants: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_remote_participants.extract(py).unwrap());
-
-            let remote_participants_string = serde_json::to_string(&remote_participants).unwrap();
-
-            let remote_participants_ptr = CString::new(remote_participants_string)
-                .expect("invalid remote participants string")
-                .into_raw();
-
             daily_core_call_client_update_remote_participants(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -203,16 +202,16 @@ impl PyCallClient {
     }
 
     pub fn update_inputs(&mut self, py_input_settings: PyObject) {
+        let input_settings: HashMap<String, DictValue> =
+            Python::with_gil(|py| py_input_settings.extract(py).unwrap());
+
+        let input_settings_string = serde_json::to_string(&input_settings).unwrap();
+
+        let input_settings_ptr = CString::new(input_settings_string)
+            .expect("invalid input settings string")
+            .into_raw();
+
         unsafe {
-            let input_settings: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_input_settings.extract(py).unwrap());
-
-            let input_settings_string = serde_json::to_string(&input_settings).unwrap();
-
-            let input_settings_ptr = CString::new(input_settings_string)
-                .expect("invalid input settings string")
-                .into_raw();
-
             daily_core_call_client_update_inputs(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -237,27 +236,41 @@ impl PyCallClient {
         }
     }
 
+    #[pyo3(signature = (py_participant_settings = None, py_profile_settings = None))]
     pub fn update_subscriptions(
         &mut self,
-        py_participant_settings: PyObject,
-        py_profile_settings: PyObject,
+        py_participant_settings: Option<PyObject>,
+        py_profile_settings: Option<PyObject>,
     ) {
-        unsafe {
+        let participant_settings_ptr = if let Some(py_participant_settings) =
+            py_participant_settings
+        {
             let participant_settings: HashMap<String, DictValue> =
                 Python::with_gil(|py| py_participant_settings.extract(py).unwrap());
+
+            let participant_settings_string = serde_json::to_string(&participant_settings).unwrap();
+
+            CString::new(participant_settings_string)
+                .expect("invalid participant settings string")
+                .into_raw()
+        } else {
+            ptr::null_mut()
+        };
+
+        let profile_settings_ptr = if let Some(py_profile_settings) = py_profile_settings {
             let profile_settings: HashMap<String, DictValue> =
                 Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
 
-            let participant_settings_string = serde_json::to_string(&participant_settings).unwrap();
-            let participant_settings_ptr = CString::new(participant_settings_string)
-                .expect("invalid participant settings string")
-                .into_raw();
-
             let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
-            let profile_settings_ptr = CString::new(profile_settings_string)
-                .expect("invalid profile settings string")
-                .into_raw();
 
+            CString::new(profile_settings_string)
+                .expect("invalid profile settings string")
+                .into_raw()
+        } else {
+            ptr::null_mut()
+        };
+
+        unsafe {
             daily_core_call_client_update_subscriptions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -265,8 +278,12 @@ impl PyCallClient {
                 profile_settings_ptr,
             );
 
-            let _ = CString::from_raw(participant_settings_ptr);
-            let _ = CString::from_raw(profile_settings_ptr);
+            if !participant_settings_ptr.is_null() {
+                let _ = CString::from_raw(participant_settings_ptr);
+            }
+            if !profile_settings_ptr.is_null() {
+                let _ = CString::from_raw(profile_settings_ptr);
+            }
         }
     }
 
@@ -284,15 +301,15 @@ impl PyCallClient {
     }
 
     pub fn update_subscription_profiles(&mut self, py_profile_settings: PyObject) {
+        let profile_settings: HashMap<String, DictValue> =
+            Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
+
+        let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+        let profile_settings_ptr = CString::new(profile_settings_string)
+            .expect("invalid profile settings string")
+            .into_raw();
+
         unsafe {
-            let profile_settings: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
-
-            let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
-            let profile_settings_ptr = CString::new(profile_settings_string)
-                .expect("invalid profile settings string")
-                .into_raw();
-
             daily_core_call_client_update_subscription_profiles(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -304,15 +321,15 @@ impl PyCallClient {
     }
 
     pub fn update_permissions(&mut self, py_permissions: PyObject) {
+        let permissions: HashMap<String, DictValue> =
+            Python::with_gil(|py| py_permissions.extract(py).unwrap());
+
+        let permissions_string = serde_json::to_string(&permissions).unwrap();
+        let permissions_ptr = CString::new(permissions_string)
+            .expect("invalid permissions string")
+            .into_raw();
+
         unsafe {
-            let permissions: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_permissions.extract(py).unwrap());
-
-            let permissions_string = serde_json::to_string(&permissions).unwrap();
-            let permissions_ptr = CString::new(permissions_string)
-                .expect("invalid permissions string")
-                .into_raw();
-
             daily_core_call_client_update_permissions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
@@ -331,30 +348,30 @@ impl PyCallClient {
         video_source: &str,
         color_format: &str,
     ) -> PyResult<()> {
+        let participant_ptr = CString::new(participant_id)
+            .expect("invalid participant ID string")
+            .into_raw();
+
+        let video_source_ptr = CString::new(video_source)
+            .expect("invalid video source string")
+            .into_raw();
+
+        let color_format_ptr = CString::new(color_format)
+            .expect("invalid color format string")
+            .into_raw();
+
+        let callback_ctx: PyObject = Python::with_gil(|py| {
+            Py::new(py, PyCallClientCallbackContext { callback })
+                .unwrap()
+                .into_py(py)
+        });
+
+        let video_renderer = NativeCallClientVideoRenderer {
+            ptr: NativeCallClientDelegatePtr(callback_ctx.into_ptr() as *mut libc::c_void),
+            fns: NativeCallClientVideoRendererFns { on_video_frame },
+        };
+
         unsafe {
-            let participant_ptr = CString::new(participant_id)
-                .expect("invalid participant ID string")
-                .into_raw();
-
-            let video_source_ptr = CString::new(video_source)
-                .expect("invalid video source string")
-                .into_raw();
-
-            let color_format_ptr = CString::new(color_format)
-                .expect("invalid color format string")
-                .into_raw();
-
-            let callback_ctx: PyObject = Python::with_gil(|py| {
-                Py::new(py, PyCallClientCallbackContext { callback })
-                    .unwrap()
-                    .into_py(py)
-            });
-
-            let video_renderer = NativeCallClientVideoRenderer {
-                ptr: NativeCallClientDelegatePtr(callback_ctx.into_ptr() as *mut libc::c_void),
-                fns: NativeCallClientVideoRendererFns { on_video_frame },
-            };
-
             let result = daily_core_call_client_set_participant_video_renderer(
                 self.call_client.as_mut(),
                 participant_ptr,
