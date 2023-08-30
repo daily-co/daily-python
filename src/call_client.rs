@@ -220,7 +220,73 @@ impl PyCallClient {
         }
     }
 
-    /// Returns the current client inputs.
+    /// Returns the current client inputs. The inputs define the call client
+    /// video and audio sources (i.e. cameras and microphones).
+    ///
+    /// The following tables define the fields of the inputs dictionary:
+    ///
+    /// .. list-table:: **InputSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "camera"
+    ///      - CameraInputSettings
+    ///    * - "microphone"
+    ///      - MicrophoneInputSettings
+    ///
+    /// .. list-table:: **CameraInputSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "isEnabled"
+    ///      - true | false
+    ///    * - "settings"
+    ///      - VideoInputSettings
+    ///
+    /// .. list-table:: **VideoInputSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "deviceId"
+    ///      - DEVICE_ID (e.g. "my-video-camera")
+    ///    * - "width"
+    ///      - number
+    ///    * - "height"
+    ///      - number
+    ///    * - "frameRate"
+    ///      - number
+    ///    * - "facingMode"
+    ///      - "user" | "environment" | "left" | "right"
+    ///    * - "customConstraints"
+    ///      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
+    ///
+    /// .. list-table:: **MicrophoneInputSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "isEnabled"
+    ///      - true | false
+    ///    * - "settings"
+    ///      - AudioInputSettings
+    ///
+    /// .. list-table:: **AudioInputSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "deviceId"
+    ///      - DEVICE_ID (e.g. "my-audio-device")
+    ///    * - "customConstraints"
+    ///      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
     ///
     /// :return: The current inputs
     /// :rtype: dict
@@ -236,7 +302,10 @@ impl PyCallClient {
         }
     }
 
-    /// Updates input settings.
+    /// Updates input settings. This function allows you to update the call
+    /// client video and audio inputs.
+    ///
+    /// See :func:`inputs` for more details.
     ///
     /// :param dict input_settings: A dictionary with inputs information
     pub fn update_inputs(&mut self, input_settings: PyObject) {
@@ -263,7 +332,7 @@ impl PyCallClient {
     /// Returns the current client subscriptions. The client subscriptions is a
     /// dictionary containing specific subscriptions per remote participant.
     ///
-    /// The following tables define the fields of the dictionary:
+    /// The following tables define the fields of the subscriptions dictionary:
     ///
     /// .. list-table:: **ParticipantSubscription**
     ///    :widths: 25 75
@@ -400,7 +469,8 @@ impl PyCallClient {
     /// Returns the current client subscription profiles. A subscription profile
     /// gives a set of subscription media settings a name.
     ///
-    /// The following tables define the fields of the dictionary:
+    /// The following tables define the fields of the subscription profiles
+    /// dictionary:
     ///
     /// .. list-table:: **SubscriptionSettings**
     ///    :widths: 25 75

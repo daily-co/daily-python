@@ -78,3 +78,6 @@ html_favicon = "favicon.ico"
 
 # Don't show "Video page source" link
 html_show_sourcelink = False
+
+# Don't show "Built with Sphinx"
+html_show_sphinx = False

@@ -9,11 +9,12 @@ The first thing we need to do before using the SDK is to initialize the
     from daily import *
     Daily.init()
 
+See :func:`daily.Daily.init` for more details.
 
 Creating a call client
 --------------------------------------------------------
 
-Most of the functionality of the SDK lies into the :class:`daily.CallClient`
+Most of the functionality of the SDK lies in the :class:`daily.CallClient`
 class. A call client is used to join a meeting, handle meeting events,
 sending/receiving audio and video, etc.
 
@@ -22,6 +23,8 @@ In order to create a client (after the SDK is initialized) we can simply do:
 .. code-block:: python
 
     client = CallClient()
+
+See :class:`daily.CallClient` for more details.
 
 Joining a meeting
 --------------------------------------------------------
@@ -39,6 +42,7 @@ specified during join:
 
     client.join("https://my.daily.co/meeting", meeting_token = "MY_TOKEN")
 
+See :func:`daily.CallClient.join` for more details.
 
 Leaving a meeting
 --------------------------------------------------------
@@ -50,8 +54,7 @@ connections).
 
     client.leave()
 
-.. _Daily: https://daily.co
-
+See :func:`daily.CallClient.leave` for more details.
 
 Setting the user name
 --------------------------------------------------------
@@ -64,25 +67,27 @@ you (e.g. Jane Doe).
 
     client.set_user_name("Jane Doe")
 
+See :func:`daily.CallClient.set_user_name` for more details.
+
 Subscriptions and subscription profiles
 --------------------------------------------------------
 
 It is possible to receive both audio and video from all the participants or for
 individual participants. This is done via the subscriptions and subscription
-profiles API.
+profiles functionality.
 
-A **subscription** defines how we want to receive media. For example, what
+A **subscription** defines how we want to receive media. For example, at which
 quality do we want to receive video.
 
 A **subscription profile** gives a set of subscription media settings a
-name. There is a pre-defined `base` subscription profile. Subscriptions profiles
+name. There is a predefined `base` subscription profile. Subscriptions profiles
 can be assigned to participants and can be even updated for a specific
 participant.
 
 Updating subscription profiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We can update the pre-defined `base` profile to subscribe to both camera and
+We can update the predefined `base` profile to subscribe to both camera and
 microphone streams:
 
 .. code-block:: python
@@ -94,12 +99,12 @@ microphone streams:
         }
     })
 
-Unless otherwise specified (i.e. for each participant) this will apply to all
+Unless otherwise specified (i.e. for each participant), this will apply to all
 participants.
 
-A more complicated example would be to define two profiles `lower` and `higher`.
-The `lower` profile can be used to receive the lowest video quality and the
-`higher` to receive the maximum video quality:
+A more complicated example would be to define two profiles: `lower` and
+`higher`.  The `lower` profile can be used to receive the lowest video quality
+and the `higher` to receive the maximum video quality:
 
 .. code-block:: python
 
@@ -128,6 +133,8 @@ These profiles can then be assigned to particular participants. For example, the
 participants that are shown as thumbnails can use the `lower` profile and the
 active speaker can use the `higher` profile.
 
+See :func:`daily.CallClient.subscription_profiles` for more details.
+
 Assigning subscription profiles to participants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -155,6 +162,43 @@ both camera and microphone. Then, we have assigned the `base` profile to
 participant `eb762a39-1850-410e-9b31-92d7b21d515c` and subscribed to the camera
 stream only for that participant.
 
+See :func:`daily.CallClient.subscriptions` for more details.
+
+Video and audio inputs
+--------------------------------------------------------
+
+A call client can specify video and audio inputs. Those inputs can then be used
+as the participant camera or microphone.
+
+In the following example we will create a new :class:`daily.CustomAudioDevice`
+(i.e. a simulated speaker and microphone):
+
+.. code-block:: python
+
+    audio_device = Daily.create_custom_audio_device("my-audio-device")
+
+and we will set it as our call client microphone:
+
+.. code-block:: python
+
+    client.update_inputs({
+        "camera": False,
+        "microphone": {
+            "isEnabled": True,
+            "settings": {
+                "deviceId": "my-audio-device"
+            }
+        }
+    })
+
+The created `audio_device` can now be used as a microphone and audio samples
+need to be written into it (see
+:func:`daily.CustomAudioDevice.write_samples`). Those audio samples will be sent
+as the call client participant audio.
+
+See :func:`daily.CallClient.inputs` for more details.
+
+
 Sending and receiving raw media
 --------------------------------------------------------
 
@@ -181,17 +225,19 @@ where `on_video_frame` must be a function or a class method such as:
 
 and where `video_frame` is a :class:`daily.VideoFrame`.
 
+See :func:`daily.CallClient.set_video_renderer` for more details.
+
 Receiving audio from a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Audio works a little bit different than video. It is not possible to receive
-audio for a single participant instead all the audio of the meeting will be
+Audio works a little bit differently than video. It is not possible to receive
+audio for a single participant; instead, all the audio of the meeting will be
 received.
 
-In order to receive audio from the meeting we need to create a
-:class:`daily.CustomAudioDevice`, think of it as a system speaker.
+In order to receive audio from the meeting, we need to create a
+:class:`daily.CustomAudioDevice`. Think of it as a system speaker.
 
-To create a custom audio device we need to initialize the SDK as follows:
+To create a custom audio device, we need to initialize the SDK as follows:
 
 .. code-block:: python
 
@@ -203,7 +249,7 @@ Then, we can create an audio device:
 
     audio_device = Daily.create_custom_audio_device("my-audio-device")
 
-It is possible to create multiple audio devices but only one can be selected at
+It is possible to create multiple audio devices, but only one can be selected at
 a time:
 
 .. code-block:: python
@@ -221,14 +267,16 @@ device (e.g. every 10ms):
 
 The audio format is 16-bit linear PCM.
 
+See :func:`daily.CustomAudioDevice.read_samples` for more details.
+
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As we have seen in the previous section audio is a bit particular. In the case
+As we have seen in the previous section, audio is a bit particular. In the case
 of sending, think of a custom audio device as a system microphone.
 
-To send audio to a meeting we also need to create a
-:class:`daily.CustomAudioDevice` and therefore initialize the SDK as before:
+To send audio into a meeting we also need to create a
+:class:`daily.CustomAudioDevice` and initialize the SDK as before:
 
 .. code-block:: python
 
@@ -242,8 +290,8 @@ Then, create and select the audio device:
     Daily.select_custom_audio_device("my-audio-device")
 
 The next step is to tell our client that we will be using our device
-`my-audio-device` as the microphone. In order to do this we will use the inputs
-API:
+`my-audio-device` as the microphone. In order to do this, we will use the
+:func:`daily.CallClient.inputs` method:
 
 .. code-block:: python
 
@@ -268,3 +316,7 @@ Finally, after joining a meeting, we can write samples to the audio device
     audio_device.write_samples(samples)
 
 The audio format is 16-bit linear PCM.
+
+See :func:`daily.CustomAudioDevice.write_samples` for more details.
+
+.. _Daily: https://daily.co
