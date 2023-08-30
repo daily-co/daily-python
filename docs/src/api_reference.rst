@@ -1,20 +1,14 @@
 API Reference
 ====================================
 
-Daily
-----------
-
-.. automodule:: daily.Daily
+.. autoclass:: daily.Daily
     :members:
 
-CallClient
--------------------
-
-.. automodule:: daily.CallClient
+.. autoclass:: daily.CallClient
     :members:
 
-CustomAudioDevice
--------------------
+.. autoclass:: daily.CustomAudioDevice
+    :members:
 
-.. automodule:: daily.CustomAudioDevice
+.. autoclass:: daily.VideoFrame
     :members:

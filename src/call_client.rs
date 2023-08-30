@@ -29,6 +29,10 @@ pub struct PyCallClientCallbackContext {
     pub callback: PyObject,
 }
 
+/// This class represents a call client. A call client is a participant of a
+/// Daily meeting and it can receive audio and video from other participants in
+/// the meeting as well as send audio and video. Multiple instances of call
+/// clients can be created in the same application.
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     call_client: Box<CallClient>,
@@ -36,6 +40,10 @@ pub struct PyCallClient {
 
 #[pymethods]
 impl PyCallClient {
+    /// Create a new call client.
+    ///
+    /// :return: A new call client
+    /// :rtype: :class:`daily.CallClient`
     #[new]
     pub fn new() -> PyResult<Self> {
         unsafe {
@@ -52,12 +60,18 @@ impl PyCallClient {
         }
     }
 
-    #[pyo3(signature = (meeting_url, py_meeting_token = None, py_client_settings = None))]
+    /// Join a meeting given the `meeting_url` and the optional `meeting_token`
+    /// and `client_settings`.
+    ///
+    /// :param str meeting_url: The URL of the Daily meeting to join
+    /// :param str meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
+    /// :param dict client_settings: Client settings
+    #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None))]
     pub fn join(
         &mut self,
         meeting_url: &str,
-        py_meeting_token: Option<PyObject>,
-        py_client_settings: Option<PyObject>,
+        meeting_token: Option<PyObject>,
+        client_settings: Option<PyObject>,
     ) {
         // Meeting URL
         let meeting_url_ptr = CString::new(meeting_url)
@@ -65,33 +79,33 @@ impl PyCallClient {
             .into_raw();
 
         // Meeting token
-        let meeting_token: String = if let Some(py_meeting_token) = py_meeting_token {
-            Python::with_gil(|py| py_meeting_token.extract(py).unwrap())
+        let meeting_token_string: String = if let Some(meeting_token) = meeting_token {
+            Python::with_gil(|py| meeting_token.extract(py).unwrap())
         } else {
             "".to_string()
         };
-        let meeting_token_ptr = if meeting_token.is_empty() {
+        let meeting_token_ptr = if meeting_token_string.is_empty() {
             ptr::null_mut()
         } else {
-            CString::new(meeting_token)
+            CString::new(meeting_token_string)
                 .expect("invalid meeting token string")
                 .into_raw()
         };
 
         // Client settings
-        let client_settings: String = if let Some(py_client_settings) = py_client_settings {
+        let client_settings_string: String = if let Some(client_settings) = client_settings {
             Python::with_gil(|py| {
                 let client_settings: HashMap<String, DictValue> =
-                    py_client_settings.extract(py).unwrap();
+                    client_settings.extract(py).unwrap();
                 serde_json::to_string(&client_settings).unwrap()
             })
         } else {
             "".to_string()
         };
-        let client_settings_ptr = if client_settings.is_empty() {
+        let client_settings_ptr = if client_settings_string.is_empty() {
             ptr::null_mut()
         } else {
-            CString::new(client_settings)
+            CString::new(client_settings_string)
                 .expect("invalid client settings string")
                 .into_raw()
         };
@@ -115,6 +129,7 @@ impl PyCallClient {
         }
     }
 
+    /// Leave a previsouly joined meeting.
     pub fn leave(&mut self) {
         unsafe {
             daily_core_call_client_leave(
@@ -124,6 +139,10 @@ impl PyCallClient {
         }
     }
 
+    /// Sets this client's user name. The user name is what other participants
+    /// might be able to see as a description of this client.
+    ///
+    /// :param str user_name: This client's user name
     pub fn set_user_name(&mut self, user_name: &str) {
         unsafe {
             let user_name_ptr = CString::new(user_name)
@@ -140,6 +159,10 @@ impl PyCallClient {
         }
     }
 
+    /// Returns the current participants in the meeting.
+    ///
+    /// :return: The current participants in the meeting
+    /// :rtype: dict
     pub fn participants(&mut self) -> PyResult<PyObject> {
         unsafe {
             let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
@@ -154,6 +177,10 @@ impl PyCallClient {
         }
     }
 
+    /// Returns the number of hidden and non-hidden participants in the meeting.
+    ///
+    /// :return: The number of participants in the meeting
+    /// :rtype: dict
     pub fn participant_counts(&mut self) -> PyResult<PyObject> {
         unsafe {
             let participant_counts_ptr =
@@ -169,11 +196,14 @@ impl PyCallClient {
         }
     }
 
-    pub fn update_remote_participants(&mut self, py_remote_participants: PyObject) {
-        let remote_participants: HashMap<String, DictValue> =
-            Python::with_gil(|py| py_remote_participants.extract(py).unwrap());
+    /// Updates remote participants.
+    ///
+    /// :param dict remote_participants: A dictionary with remote participants update information
+    pub fn update_remote_participants(&mut self, remote_participants: PyObject) {
+        let remote_participants_map: HashMap<String, DictValue> =
+            Python::with_gil(|py| remote_participants.extract(py).unwrap());
 
-        let remote_participants_string = serde_json::to_string(&remote_participants).unwrap();
+        let remote_participants_string = serde_json::to_string(&remote_participants_map).unwrap();
 
         let remote_participants_ptr = CString::new(remote_participants_string)
             .expect("invalid remote participants string")
@@ -190,6 +220,10 @@ impl PyCallClient {
         }
     }
 
+    /// Returns the current client inputs.
+    ///
+    /// :return: The current inputs
+    /// :rtype: dict
     pub fn inputs(&mut self) -> PyResult<PyObject> {
         unsafe {
             let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
@@ -202,11 +236,14 @@ impl PyCallClient {
         }
     }
 
-    pub fn update_inputs(&mut self, py_input_settings: PyObject) {
-        let input_settings: HashMap<String, DictValue> =
-            Python::with_gil(|py| py_input_settings.extract(py).unwrap());
+    /// Updates input settings.
+    ///
+    /// :param dict input_settings: A dictionary with inputs information
+    pub fn update_inputs(&mut self, input_settings: PyObject) {
+        let input_settings_map: HashMap<String, DictValue> =
+            Python::with_gil(|py| input_settings.extract(py).unwrap());
 
-        let input_settings_string = serde_json::to_string(&input_settings).unwrap();
+        let input_settings_string = serde_json::to_string(&input_settings_map).unwrap();
 
         let input_settings_ptr = CString::new(input_settings_string)
             .expect("invalid input settings string")
@@ -223,6 +260,69 @@ impl PyCallClient {
         }
     }
 
+    /// Returns the current client subscriptions. The client subscriptions is a
+    /// dictionary containing specific subscriptions per remote participant.
+    ///
+    /// The following tables define the fields of the dictionary:
+    ///
+    /// .. list-table:: **ParticipantSubscription**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - PARTICIPANT_ID
+    ///      - ParticipantSubscriptionSettings
+    ///
+    /// .. list-table:: **ParticipantSubscriptionSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "profile"
+    ///      - PROFILE_NAME (e.g. "base")
+    ///    * - "media"
+    ///      - SubscriptionMediaSettings
+    ///
+    ///
+    /// .. list-table:: **SubscriptionMediaSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "camera"
+    ///      - "subscribed" | "unsubscribed" | SubscriptionVideoSettings
+    ///    * - "microphone"
+    ///      - "subscribed" | "unsubscribed"
+    ///    * - "screenVideo"
+    ///      - "subscribed" | "unsubscribed" | SubscriptionVideoSettings
+    ///    * - "screenAudio"
+    ///      - "subscribed" | "unsubscribed"
+    ///
+    /// .. list-table:: **SubscriptionVideoSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "subscriptionState"
+    ///      - "subscribed" | "unsubscribed"
+    ///    * - "settings"
+    ///      - ReceiveVideoSettings
+    ///
+    /// .. list-table:: **ReceiveVideoSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - "maxQuality"
+    ///      - "low" | "medium" | "high"
+    ///
+    /// :return: The current subscriptions
+    /// :rtype: dict
     pub fn subscriptions(&mut self) -> PyResult<PyObject> {
         unsafe {
             let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
@@ -237,19 +337,28 @@ impl PyCallClient {
         }
     }
 
-    #[pyo3(signature = (py_participant_settings = None, py_profile_settings = None))]
+    /// Updates subscriptions and subscription profiles. This function allows
+    /// you to update subscription profiles and at the same time assign specific
+    /// subscription profiles to a participant and even change specific settings
+    /// for some participants.
+    ///
+    /// See :func:`subscriptions` and :func:`subscription_profiles` for more
+    /// details.
+    ///
+    /// :param dict participant_settings: A dictionary with subscription updates for specific participants
+    /// :param dict profile_settings: A dictionary with subscription profiles updates
+    #[pyo3(signature = (participant_settings = None, profile_settings = None))]
     pub fn update_subscriptions(
         &mut self,
-        py_participant_settings: Option<PyObject>,
-        py_profile_settings: Option<PyObject>,
+        participant_settings: Option<PyObject>,
+        profile_settings: Option<PyObject>,
     ) {
-        let participant_settings_ptr = if let Some(py_participant_settings) =
-            py_participant_settings
-        {
-            let participant_settings: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_participant_settings.extract(py).unwrap());
+        let participant_settings_ptr = if let Some(participant_settings) = participant_settings {
+            let participant_settings_map: HashMap<String, DictValue> =
+                Python::with_gil(|py| participant_settings.extract(py).unwrap());
 
-            let participant_settings_string = serde_json::to_string(&participant_settings).unwrap();
+            let participant_settings_string =
+                serde_json::to_string(&participant_settings_map).unwrap();
 
             CString::new(participant_settings_string)
                 .expect("invalid participant settings string")
@@ -258,11 +367,11 @@ impl PyCallClient {
             ptr::null_mut()
         };
 
-        let profile_settings_ptr = if let Some(py_profile_settings) = py_profile_settings {
-            let profile_settings: HashMap<String, DictValue> =
-                Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
+        let profile_settings_ptr = if let Some(profile_settings) = profile_settings {
+            let profile_settings_map: HashMap<String, DictValue> =
+                Python::with_gil(|py| profile_settings.extract(py).unwrap());
 
-            let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+            let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
 
             CString::new(profile_settings_string)
                 .expect("invalid profile settings string")
@@ -288,6 +397,24 @@ impl PyCallClient {
         }
     }
 
+    /// Returns the current client subscription profiles. A subscription profile
+    /// gives a set of subscription media settings a name.
+    ///
+    /// The following tables define the fields of the dictionary:
+    ///
+    /// .. list-table:: **SubscriptionSettings**
+    ///    :widths: 25 75
+    ///    :header-rows: 1
+    ///
+    ///    * - Key
+    ///      - Value
+    ///    * - PROFILE_NAME
+    ///      - SubscriptionMediaSettings
+    ///
+    /// See :func:`subscriptions` for more details.
+    ///
+    /// :return: The current subscription profiles
+    /// :rtype: dict
     pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
         unsafe {
             let profiles_ptr =
@@ -301,11 +428,16 @@ impl PyCallClient {
         }
     }
 
-    pub fn update_subscription_profiles(&mut self, py_profile_settings: PyObject) {
-        let profile_settings: HashMap<String, DictValue> =
-            Python::with_gil(|py| py_profile_settings.extract(py).unwrap());
+    /// Updates subscription profiles.
+    ///
+    /// See :func:`subscription_profiles` for more details.
+    ///
+    /// :param dict profile_settings: A dictionary with subscription profiles updates
+    pub fn update_subscription_profiles(&mut self, profile_settings: PyObject) {
+        let profile_settings_map: HashMap<String, DictValue> =
+            Python::with_gil(|py| profile_settings.extract(py).unwrap());
 
-        let profile_settings_string = serde_json::to_string(&profile_settings).unwrap();
+        let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
         let profile_settings_ptr = CString::new(profile_settings_string)
             .expect("invalid profile settings string")
             .into_raw();
@@ -321,11 +453,12 @@ impl PyCallClient {
         }
     }
 
-    pub fn update_permissions(&mut self, py_permissions: PyObject) {
-        let permissions: HashMap<String, DictValue> =
-            Python::with_gil(|py| py_permissions.extract(py).unwrap());
+    /// Missing docs
+    pub fn update_permissions(&mut self, permissions: PyObject) {
+        let permissions_map: HashMap<String, DictValue> =
+            Python::with_gil(|py| permissions.extract(py).unwrap());
 
-        let permissions_string = serde_json::to_string(&permissions).unwrap();
+        let permissions_string = serde_json::to_string(&permissions_map).unwrap();
         let permissions_ptr = CString::new(permissions_string)
             .expect("invalid permissions string")
             .into_raw();
@@ -341,6 +474,13 @@ impl PyCallClient {
         }
     }
 
+    /// Registers a video renderer for the given video source of the provided
+    /// participant. The color format of the received frames can be chosen.
+    ///
+    /// :param str participant_id: The ID of the participant to receive video from
+    /// :param function callback: A function or class method to be called on every received frame
+    /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
+    /// :param str color_format: The color format that frames should be received. Available formats: ABGR32, ARGB32, BGRA32, RGB24, RGBA32, I420
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA32"))]
     pub fn set_video_renderer(
         &mut self,

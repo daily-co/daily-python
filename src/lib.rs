@@ -68,11 +68,17 @@ unsafe extern "C" fn create_audio_device_module(
         .create_audio_device_module(task_queue_factory)
 }
 
+/// This class is used to initialize the SDK and create custom devices.
 #[pyclass(name = "Daily", module = "daily")]
 struct PyDaily;
 
 #[pymethods]
 impl PyDaily {
+    /// Initializes the SDK. This function needs to be called before anything
+    /// else, usually done at the application startup.
+    ///
+    /// :param bool custom_devices: If True the system devices (camera, microphone) will be used. Otherwise, custom  devices can be registered (see :func:`create_custom_audio_device`)
+    /// :param int worker_threads: Number of internal worker threads. Increasing this number might be needed if the application needs to create a large number of concurrent call clients
     #[staticmethod]
     #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
     pub fn init(custom_devices: bool, worker_threads: usize) {
@@ -135,8 +141,31 @@ impl PyDaily {
         }
     }
 
+    /// Deallocates SDK resources. This is usually called when shutting down the
+    /// application.
     #[staticmethod]
-    #[pyo3(signature = (device_name, play_sample_rate = 16000, play_channels = 2, recording_sample_rate = 16000, recording_channels = 2))]
+    pub fn deinit() {
+        // TODO(aleix): We need to make sure all clients leave before doing this
+        // otherwise we might crash.
+        unsafe { daily_core_context_destroy() };
+    }
+
+    /// Creates a new custom audio device. New custom audio devices can only be
+    /// created if `custom_devices` was set to True when calling :func:`init`,
+    /// otherwise the system audio devices will be used. This new custom audio
+    /// device can then be used to receive and play out audio samples or to send
+    /// recorded audio samples.
+    ///
+    /// :param str device_name: The custom aduio device name. This can be used as a deviceId when setting call client inputs
+    /// :param int play_sample_rate: Play out frequency (e.g. with a 16000 sample rate every 10ms 160 samples will be generated)
+    /// :param int play_channels: Number of channels for playing (2 for stereo, 1 for mono)
+    /// :param int recording_sample_rate: Recording frequency (i.e. with a 16000 sample rate every 10ms 160 samples should be provided)
+    /// :param int recording_channels: Number of channels for recording (2 for stereo, 1 for mono)
+    ///
+    /// :return: A new custom audio device
+    /// :rtype: :class:`daily.CustomAudioDevice`
+    #[staticmethod]
+    #[pyo3(signature = (device_name, play_sample_rate = 48000, play_channels = 2, recording_sample_rate = 48000, recording_channels = 2))]
     pub fn create_custom_audio_device(
         device_name: &str,
         play_sample_rate: u32,
@@ -155,6 +184,14 @@ impl PyDaily {
         }
     }
 
+    /// Selects one of the previously created custom audio devices to be the
+    /// main system audio device. Note that there can only be one system audio
+    /// device at a time. Selected devices can send or receive audio
+    /// samples. Note however that even if there are multiple participants the
+    /// audio from all the participants will be mixed and that's the audio that
+    /// is received.
+    ///
+    /// :param str device_name: The name of the custom audio device to select
     #[staticmethod]
     pub fn select_custom_audio_device(device_name: &str) -> PyResult<()> {
         unsafe {
@@ -163,13 +200,6 @@ impl PyDaily {
                 .unwrap()
                 .select_custom_audio_device(device_name)
         }
-    }
-
-    #[staticmethod]
-    pub fn deinit() {
-        // TODO(aleix): We need to make sure all clients leave before doing this
-        // otherwise we might crash.
-        unsafe { daily_core_context_destroy() };
     }
 }
 

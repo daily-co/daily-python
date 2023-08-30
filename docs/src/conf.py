@@ -59,6 +59,10 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# If true, the current module name will be prepended to all description
+# unit titles (such as .. function::).
+add_module_names = False
+
 # HTML output
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

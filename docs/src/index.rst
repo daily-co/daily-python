@@ -1,7 +1,7 @@
 Daily Client SDK for Python
 =======================================
 
-Welcome to `Daily`_'s Python SDK documentation!
+Welcome to `Daily`_'s Python client SDK documentation!
 
 The Daily Client SDK for Python allows you to build video and audio calling into
 your native desktop and server applications.
