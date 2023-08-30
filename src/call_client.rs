@@ -4,6 +4,7 @@ use std::ffi::{CStr, CString};
 use std::ptr;
 
 use crate::DictValue;
+use crate::PyVideoFrame;
 use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
@@ -393,14 +394,6 @@ impl PyCallClient {
             }
         }
     }
-}
-
-#[pyclass(name = "VideoFrame", module = "daily", get_all, unsendable)]
-struct PyVideoFrame {
-    pub buffer: PyObject,
-    pub width: i32,
-    pub height: i32,
-    pub timestamp_us: i64,
 }
 
 unsafe extern "C" fn on_video_frame(

@@ -2,11 +2,13 @@ pub mod call_client;
 pub mod context;
 pub mod custom_audio_device;
 pub mod dict;
+pub mod video_frame;
 
 use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
 use custom_audio_device::PyCustomAudioDevice;
 use dict::DictValue;
+use video_frame::PyVideoFrame;
 
 use std::env;
 use std::ffi::CString;
@@ -177,5 +179,6 @@ fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyDaily>()?;
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyCustomAudioDevice>()?;
+    m.add_class::<PyVideoFrame>()?;
     Ok(())
 }
