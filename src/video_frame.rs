@@ -12,4 +12,6 @@ pub struct PyVideoFrame {
     pub height: i32,
     /// The time in microseconds that the frame was received
     pub timestamp_us: i64,
+    /// The frame's color format
+    pub color_format: PyObject,
 }

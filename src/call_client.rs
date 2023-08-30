@@ -555,11 +555,16 @@ unsafe extern "C" fn on_video_frame(
 
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
+        let color_format = CStr::from_ptr((*frame).color_format)
+            .to_string_lossy()
+            .into_owned();
+
         let video_frame = PyVideoFrame {
             buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
             width: (*frame).width,
             height: (*frame).height,
             timestamp_us: (*frame).timestamp_us,
+            color_format: color_format.into_py(py),
         };
 
         let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
