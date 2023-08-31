@@ -69,6 +69,24 @@ you (e.g. Jane Doe).
 
 See :func:`daily.CallClient.set_user_name` for more details.
 
+Inputs and publishing settings
+--------------------------------------------------------
+
+Inputs and publishing settings specify if media can be sent and how it has to be
+sent but, even if they are related, they are different.
+
+**Inputs** deal with video and audio devices. With inputs we can update the
+desired resolution of a camera or if the camera should be enabled or not. We can
+also select our desired microphone.
+
+With **publishing settings** we can specify if the video from the input camera
+is being sent or not, and also the quality (e.g. bitrate) of the video we are
+sending. Note however, that a camera can be enabled via inputs but it not be
+published (i.e. sent).
+
+See :func:`daily.CallClient.inputs` and :func:`daily.CallClient.publishing` for
+more details.
+
 Subscriptions and subscription profiles
 --------------------------------------------------------
 

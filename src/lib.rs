@@ -97,8 +97,8 @@ impl PyDaily {
     /// Initializes the SDK. This function needs to be called before anything
     /// else, usually done at the application startup.
     ///
-    /// :param bool custom_devices: If True the system devices (camera, microphone) will be used. Otherwise, custom  devices can be registered (see :func:`create_custom_audio_device`)
-    /// :param int worker_threads: Number of internal worker threads. Increasing this number might be needed if the application needs to create a large number of concurrent call clients
+    /// :param bool custom_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, custom  devices can be registered (see :func:`create_custom_audio_device`)
+    /// :param int worker_threads: Number of internal worker threads. Increasing this number might be necessary if the application needs to create a large number of concurrent call clients
     #[staticmethod]
     #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
     pub fn init(custom_devices: bool, worker_threads: usize) {
@@ -176,7 +176,7 @@ impl PyDaily {
     /// device can then be used to receive and play out audio samples or to send
     /// recorded audio samples.
     ///
-    /// :param str device_name: The custom aduio device name. This can be used as a deviceId when setting call client inputs
+    /// :param str device_name: The custom audio device name. This can be used as a `deviceId` when configuring the call client inputs
     /// :param int play_sample_rate: Play out frequency (e.g. with a 16000 sample rate every 10ms 160 samples will be generated)
     /// :param int play_channels: Number of channels for playing (2 for stereo, 1 for mono)
     /// :param int recording_sample_rate: Recording frequency (i.e. with a 16000 sample rate every 10ms 160 samples should be provided)
