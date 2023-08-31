@@ -7,7 +7,8 @@ The Daily Client SDK for Python allows you to build video and audio calling into
 your native desktop and server applications.
 
 This SDK is well suited to build AI applications on the server side as it can be
-easily integrated with well-known Python libraries like `numpy`_ and `PyTorch`_.
+easily integrated with well-known Python libraries such as `YOLOv5`_,
+`PyTorch`_, `OpenCV`_ or `numpy`_.
 
 The core features of the SDK include:
 
@@ -32,7 +33,9 @@ This functionality can be applied to several AI use cases, including:
 
 .. _Daily: https://daily.co
 .. _numpy: https://numpy.org
+.. _OpenCV: https://opencv.org/
 .. _PyTorch: https://pytorch.org
+.. _YOLOv5: https://github.com/ultralytics/yolov5
 
 .. toctree::
    :maxdepth: 2
