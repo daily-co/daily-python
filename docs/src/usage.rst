@@ -133,7 +133,7 @@ These profiles can then be assigned to particular participants. For example, the
 participants that are shown as thumbnails can use the `lower` profile and the
 active speaker can use the `higher` profile.
 
-See :func:`daily.CallClient.subscription_profiles` for more details.
+See :func:`daily.CallClient.update_subscription_profiles` for more details.
 
 Assigning subscription profiles to participants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,13 +162,16 @@ both camera and microphone. Then, we have assigned the `base` profile to
 participant `eb762a39-1850-410e-9b31-92d7b21d515c` and subscribed to the camera
 stream only for that participant.
 
-See :func:`daily.CallClient.subscriptions` for more details.
+See :func:`daily.CallClient.update_subscriptions` for more details.
 
-Video and audio inputs
+Video and audio devices
 --------------------------------------------------------
 
-A call client can specify video and audio inputs. Those inputs can then be used
-as the participant camera or microphone.
+A call client can specify custom video and audio devices which can then be used
+as simulated cameras, speakers or microphones.
+
+Speakers and microphones
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the following example we will create a new :class:`daily.CustomAudioDevice`
 (i.e. a simulated speaker and microphone):
@@ -182,7 +185,6 @@ and we will set it as our call client microphone:
 .. code-block:: python
 
     client.update_inputs({
-        "camera": False,
         "microphone": {
             "isEnabled": True,
             "settings": {
@@ -191,12 +193,56 @@ and we will set it as our call client microphone:
         }
     })
 
-The created `audio_device` can now be used as a microphone and audio samples
-need to be written into it (see
-:func:`daily.CustomAudioDevice.write_samples`). Those audio samples will be sent
-as the call client participant audio.
+The created `audio_device` can now be used as a microphone and audio samples can
+to be written into it (see :func:`daily.CustomAudioDevice.write_samples`). Those
+audio samples will be sent as the call client participant audio.
 
-See :func:`daily.CallClient.inputs` for more details.
+As we just saw, we can select an audio input (i.e. a microphone) through
+:func:`daily.CallClient.update_inputs`. However, it is important to understand
+that audio inputs also act as audio output.
+
+For example, we might want to write an application that only receives audio. In
+this case, we still need to select the audio device through the `microphone`
+input settings:
+
+.. code-block:: python
+
+    client.update_inputs({
+        "microphone": {
+            "isEnabled": False,
+            "settings": {
+                "deviceId": "my-audio-device"
+            }
+        }
+    })
+
+Note that in this case we have just disabled (`isEnabled` set to `False`) the
+microphone, but `my-audio-device` will still be used as a speaker and,
+therefore, audio sample can be read from it.
+
+See :func:`daily.Daily.create_custom_audio_device` and
+ :func:`daily.CallClient.update_inputs` for more details.
+
+Multiple custom audio devices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Multiple custom audio devices can be created, but only one can be active at the
+same time. With a single call client this is easy to achieve, since we can
+simply set it as the call client audio input as we saw before:
+
+.. code-block:: python
+
+    client.update_inputs({
+        "microphone": {
+            "isEnabled": True,
+            "settings": {
+                "deviceId": "my-audio-device"
+            }
+        }
+    })
+
+However, if multiple custom audio devices are created and different call clients
+select different custom audio devices, we will certainly get undesired behavior.
 
 
 Sending and receiving raw media
@@ -249,12 +295,8 @@ Then, we can create an audio device:
 
     audio_device = Daily.create_custom_audio_device("my-audio-device")
 
-It is possible to create multiple audio devices, but only one can be selected at
-a time:
-
-.. code-block:: python
-
-    Daily.select_custom_audio_device("my-audio-device")
+It is possible to create multiple audio devices, but all call clients will need
+to configure the same device as an audio input.
 
 Finally, after we have joined a meeting, we can read samples from the audio
 device (e.g. every 10ms):
@@ -272,7 +314,7 @@ See :func:`daily.CustomAudioDevice.read_samples` for more details.
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As we have seen in the previous section, audio is a bit particular. In the case
+As we have seen in the previous sections, audio is a bit particular. In the case
 of sending, think of a custom audio device as a system microphone.
 
 To send audio into a meeting we also need to create a

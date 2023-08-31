@@ -29,16 +29,36 @@ const DAILY_PYTHON_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,
-    _device_id: *const libc::c_char,
+    device_id: *const libc::c_char,
 ) {
+    let device_cstr = CString::from_raw(device_id as *mut _);
+
+    let device = device_cstr.clone().into_string().unwrap();
+
+    let result = GLOBAL_CONTEXT
+        .as_mut()
+        .unwrap()
+        .select_custom_audio_device(device.as_str());
+
+    Python::with_gil(|py| {
+        if let Err(error) = result {
+            error.write_unraisable(py, None);
+        }
+    });
+
+    // Release pointer and avoid double-free.
+    let _ = device_cstr.into_raw();
 }
 
 unsafe extern "C" fn get_audio_device(_delegate: *mut libc::c_void) -> *const libc::c_char {
-    concat!("", "\0").as_ptr() as *const libc::c_char
+    GLOBAL_CONTEXT
+        .as_ref()
+        .unwrap()
+        .get_selected_custom_audio_device()
 }
 
 unsafe extern "C" fn get_enumerated_devices(_delegate: *mut libc::c_void) -> *mut libc::c_char {
-    concat!("[]", "\0").as_ptr() as *mut libc::c_char
+    GLOBAL_CONTEXT.as_ref().unwrap().get_enumerated_devices()
 }
 
 unsafe extern "C" fn get_user_media(
@@ -181,24 +201,6 @@ impl PyDaily {
                 recording_sample_rate,
                 recording_channels,
             )
-        }
-    }
-
-    /// Selects one of the previously created custom audio devices to be the
-    /// main system audio device. Note that there can only be one system audio
-    /// device at a time. Selected devices can send or receive audio
-    /// samples. Note however that even if there are multiple participants the
-    /// audio from all the participants will be mixed and that's the audio that
-    /// is received.
-    ///
-    /// :param str device_name: The name of the custom audio device to select
-    #[staticmethod]
-    pub fn select_custom_audio_device(device_name: &str) -> PyResult<()> {
-        unsafe {
-            GLOBAL_CONTEXT
-                .as_mut()
-                .unwrap()
-                .select_custom_audio_device(device_name)
         }
     }
 }

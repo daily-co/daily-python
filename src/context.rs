@@ -11,8 +11,9 @@ use webrtc_daily::sys::{
 
 use daily_core::prelude::{
     daily_core_context_create_audio_device_module, daily_core_context_create_custom_audio_device,
-    daily_core_context_custom_get_user_media, daily_core_context_select_custom_audio_device,
-    WebrtcAudioDeviceModule, WebrtcPeerConnectionFactory, WebrtcTaskQueueFactory, WebrtcThread,
+    daily_core_context_custom_get_user_media, daily_core_context_get_selected_custom_audio_device,
+    daily_core_context_select_custom_audio_device, WebrtcAudioDeviceModule,
+    WebrtcPeerConnectionFactory, WebrtcTaskQueueFactory, WebrtcThread,
 };
 
 use pyo3::exceptions;
@@ -36,6 +37,21 @@ impl DailyContext {
 
     pub fn next_request_id(&self) -> u64 {
         self.request_id.fetch_add(1, Ordering::SeqCst)
+    }
+
+    pub fn get_enumerated_devices(&self) -> *mut libc::c_char {
+        if let Some(adm) = self.audio_device_module.as_ref() {
+            let devices = unsafe {
+                webrtc_daily::sys::webrtc_daily_custom_audio_enumerated_devices(
+                    adm.as_ptr() as *mut _
+                )
+            };
+
+            // TODO(aleix): leaking?
+            devices as *mut _
+        } else {
+            concat!("[]", "\0").as_ptr() as *mut _
+        }
     }
 
     pub fn get_user_media(
@@ -158,6 +174,15 @@ impl DailyContext {
             Err(exceptions::PyRuntimeError::new_err(
                 "custom audio module not created",
             ))
+        }
+    }
+
+    pub fn get_selected_custom_audio_device(&self) -> *const libc::c_char {
+        if let Some(adm) = self.audio_device_module.as_ref() {
+            // TODO(aleix): leaking?
+            daily_core_context_get_selected_custom_audio_device(adm.as_ptr() as *mut _)
+        } else {
+            concat!("", "\0").as_ptr() as *const _
         }
     }
 }
