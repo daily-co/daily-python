@@ -47,8 +47,12 @@ impl DailyContext {
                 )
             };
 
-            // TODO(aleix): leaking?
-            devices as *mut _
+            if devices.is_null() {
+                concat!("[]", "\0").as_ptr() as *mut _
+            } else {
+                // TODO(aleix): leaking?
+                devices as *mut _
+            }
         } else {
             concat!("[]", "\0").as_ptr() as *mut _
         }
@@ -179,8 +183,14 @@ impl DailyContext {
 
     pub fn get_selected_custom_audio_device(&self) -> *const libc::c_char {
         if let Some(adm) = self.audio_device_module.as_ref() {
-            // TODO(aleix): leaking?
-            daily_core_context_get_selected_custom_audio_device(adm.as_ptr() as *mut _)
+            let device =
+                daily_core_context_get_selected_custom_audio_device(adm.as_ptr() as *mut _);
+            if device.is_null() {
+                concat!("", "\0").as_ptr() as *const _
+            } else {
+                // TODO(aleix): leaking?
+                device
+            }
         } else {
             concat!("", "\0").as_ptr() as *const _
         }
