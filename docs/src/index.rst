@@ -11,18 +11,19 @@ easily integrated with well-known Python libraries like `numpy`_ and `PyTorch`_.
 
 The core features of the SDK include:
 
-* Join a `Daily`_ meeting as a participant with the ability to receive media
-  from and send media to other participants.
-* Simulate local cameras and send video content.
-* Send and receive audio to and from the meeting.
+* Join a Daily meeting as a participant
+* As a meeting participant, configure inputs, publishing, and subscription settings
+* Receive video frames from other participants
+* Receive raw audio from all participants in the meeting
+* Send raw audio into a meeting
 
-This could be applied to several AI uses cases, for example:
+This functionality can be applied to several AI use cases, including:
 
-* Perform object or face detection on the server side.
-* Generative AI for video content.
-* Process audio with a Speech-To-Text platform.
-* Send audio coming from a Text-To-Speech platform.
-* Send video to third-party services for processing.
+* Perform object or face detection on the server side
+* Process audio from a Speech-To-Text platform into a meeting
+* Send audio from a Text-To-Speech platform into a meeting
+* Send video and audio tracks to a content moderation platform
+* Use generative AI to inject video content into a meeting
 
 .. note::
 
