@@ -234,10 +234,10 @@ impl PyDaily {
     }
 
     /// Selects one of the previously created custom speaker devices to be the
-    /// main system speaker. Note that there can only be one speaker. Note
-    /// however that even if there are multiple participants the audio from all
-    /// the participants will be mixed and that's the audio that is received in
-    /// the speaker.
+    /// main system speaker. Note that there can only be one speaker selected at
+    /// a time. Also, if there are multiple participants in the meeting, the
+    /// audio from all the participants will be mixed and that's the audio that
+    /// is received in the speaker.
     ///
     /// :param str device_name: The name of the custom speaker device to select
     #[staticmethod]
