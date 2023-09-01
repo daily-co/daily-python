@@ -1,6 +1,6 @@
 [package]
 name = "daily-python"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "LicenseRef-Daily-co-Proprietary"
 
