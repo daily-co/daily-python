@@ -7,7 +7,10 @@ API Reference
 .. autoclass:: daily.CallClient
     :members:
 
-.. autoclass:: daily.CustomAudioDevice
+.. autoclass:: daily.CustomSpeakerDevice
+    :members:
+
+.. autoclass:: daily.CustomMicrophoneDevice
     :members:
 
 .. autoclass:: daily.VideoFrame

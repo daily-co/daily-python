@@ -2,17 +2,23 @@ use std::ffi::CString;
 use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::PyCustomAudioDevice;
+use crate::PyCustomMicrophoneDevice;
+use crate::PyCustomSpeakerDevice;
 
 use webrtc_daily::sys::{
-    audio_device_module::NativeAudioDeviceModule, custom_audio_device::NativeCustomAudioDevice,
-    media_stream::MediaStream, rtc_refcount_interface_addref,
+    audio_device_module::NativeAudioDeviceModule,
+    custom_microphone_device::NativeCustomMicrophoneDevice,
+    custom_speaker_device::NativeCustomSpeakerDevice, media_stream::MediaStream,
+    rtc_refcount_interface_addref,
 };
 
 use daily_core::prelude::{
-    daily_core_context_create_audio_device_module, daily_core_context_create_custom_audio_device,
-    daily_core_context_custom_get_user_media, daily_core_context_get_selected_custom_audio_device,
-    daily_core_context_select_custom_audio_device, WebrtcAudioDeviceModule,
+    daily_core_context_create_audio_device_module,
+    daily_core_context_create_custom_microphone_device,
+    daily_core_context_create_custom_speaker_device, daily_core_context_custom_get_user_media,
+    daily_core_context_get_selected_custom_microphone_device,
+    daily_core_context_select_custom_microphone_device,
+    daily_core_context_select_custom_speaker_device, WebrtcAudioDeviceModule,
     WebrtcPeerConnectionFactory, WebrtcTaskQueueFactory, WebrtcThread,
 };
 
@@ -104,45 +110,35 @@ impl DailyContext {
         }
     }
 
-    pub fn create_custom_audio_device(
+    pub fn create_speaker_device(
         &mut self,
         device_name: &str,
-        play_sample_rate: u32,
-        play_channels: u8,
-        rec_sample_rate: u32,
-        rec_channels: u8,
-    ) -> PyResult<PyCustomAudioDevice> {
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyCustomSpeakerDevice> {
         if let Some(adm) = self.audio_device_module.as_mut() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid device name string")
+                .expect("invalid speaker device name string")
                 .into_raw();
 
-            let mut device = PyCustomAudioDevice::new(
-                device_name,
-                play_sample_rate,
-                play_channels,
-                rec_sample_rate,
-                rec_channels,
-            );
+            let mut py_device = PyCustomSpeakerDevice::new(device_name, sample_rate, channels);
 
             unsafe {
-                let audio_device = daily_core_context_create_custom_audio_device(
+                let speaker_device = daily_core_context_create_custom_speaker_device(
                     adm.as_mut_ptr() as *mut _,
                     device_name_ptr,
-                    play_sample_rate,
-                    play_channels,
-                    rec_sample_rate,
-                    rec_channels,
+                    sample_rate,
+                    channels,
                 );
 
-                device.attach_audio_device(NativeCustomAudioDevice::from_unretained(
-                    audio_device as *mut _,
+                py_device.attach_audio_device(NativeCustomSpeakerDevice::from_unretained(
+                    speaker_device as *mut _,
                 ));
 
                 let _ = CString::from_raw(device_name_ptr);
             }
 
-            Ok(device)
+            Ok(py_device)
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "custom audio module not created",
@@ -150,14 +146,50 @@ impl DailyContext {
         }
     }
 
-    pub fn select_custom_audio_device(&mut self, device_name: &str) -> PyResult<()> {
+    pub fn create_microphone_device(
+        &mut self,
+        device_name: &str,
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyCustomMicrophoneDevice> {
+        if let Some(adm) = self.audio_device_module.as_mut() {
+            let device_name_ptr = CString::new(device_name)
+                .expect("invalid microphone device name string")
+                .into_raw();
+
+            let mut py_device = PyCustomMicrophoneDevice::new(device_name, sample_rate, channels);
+
+            unsafe {
+                let microphone_device = daily_core_context_create_custom_microphone_device(
+                    adm.as_mut_ptr() as *mut _,
+                    device_name_ptr,
+                    sample_rate,
+                    channels,
+                );
+
+                py_device.attach_audio_device(NativeCustomMicrophoneDevice::from_unretained(
+                    microphone_device as *mut _,
+                ));
+
+                let _ = CString::from_raw(device_name_ptr);
+            }
+
+            Ok(py_device)
+        } else {
+            Err(exceptions::PyRuntimeError::new_err(
+                "custom audio module not created",
+            ))
+        }
+    }
+
+    pub fn select_speaker_device(&mut self, device_name: &str) -> PyResult<()> {
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid device name string")
+                .expect("invalid speaker device name string")
                 .into_raw();
 
             let selected = unsafe {
-                let selected = daily_core_context_select_custom_audio_device(
+                let selected = daily_core_context_select_custom_speaker_device(
                     adm.as_ptr() as *mut _,
                     device_name_ptr,
                 );
@@ -171,7 +203,7 @@ impl DailyContext {
                 Ok(())
             } else {
                 Err(exceptions::PyRuntimeError::new_err(
-                    "unable to select custom audio device",
+                    "unable to select custom speaker device",
                 ))
             }
         } else {
@@ -181,10 +213,41 @@ impl DailyContext {
         }
     }
 
-    pub fn get_selected_custom_audio_device(&self) -> *const libc::c_char {
+    pub fn select_microphone_device(&mut self, device_name: &str) -> PyResult<()> {
+        if let Some(adm) = self.audio_device_module.as_ref() {
+            let device_name_ptr = CString::new(device_name)
+                .expect("invalid microphone device name string")
+                .into_raw();
+
+            let selected = unsafe {
+                let selected = daily_core_context_select_custom_microphone_device(
+                    adm.as_ptr() as *mut _,
+                    device_name_ptr,
+                );
+
+                let _ = CString::from_raw(device_name_ptr);
+
+                selected
+            };
+
+            if selected {
+                Ok(())
+            } else {
+                Err(exceptions::PyRuntimeError::new_err(
+                    "unable to select custom microphone device",
+                ))
+            }
+        } else {
+            Err(exceptions::PyRuntimeError::new_err(
+                "custom audio module not created",
+            ))
+        }
+    }
+
+    pub fn get_selected_microphone_device(&self) -> *const libc::c_char {
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device =
-                daily_core_context_get_selected_custom_audio_device(adm.as_ptr() as *mut _);
+                daily_core_context_get_selected_custom_microphone_device(adm.as_ptr() as *mut _);
             if device.is_null() {
                 concat!("", "\0").as_ptr() as *const _
             } else {

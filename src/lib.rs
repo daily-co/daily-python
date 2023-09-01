@@ -1,12 +1,14 @@
 pub mod call_client;
 pub mod context;
-pub mod custom_audio_device;
+pub mod custom_microphone_device;
+pub mod custom_speaker_device;
 pub mod dict;
 pub mod video_frame;
 
 use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
-use custom_audio_device::PyCustomAudioDevice;
+use custom_microphone_device::PyCustomMicrophoneDevice;
+use custom_speaker_device::PyCustomSpeakerDevice;
 use dict::DictValue;
 use video_frame::PyVideoFrame;
 
@@ -38,7 +40,7 @@ unsafe extern "C" fn set_audio_device(
     let result = GLOBAL_CONTEXT
         .as_mut()
         .unwrap()
-        .select_custom_audio_device(device.as_str());
+        .select_microphone_device(device.as_str());
 
     Python::with_gil(|py| {
         if let Err(error) = result {
@@ -54,7 +56,7 @@ unsafe extern "C" fn get_audio_device(_delegate: *mut libc::c_void) -> *const li
     GLOBAL_CONTEXT
         .as_ref()
         .unwrap()
-        .get_selected_custom_audio_device()
+        .get_selected_microphone_device()
 }
 
 unsafe extern "C" fn get_enumerated_devices(_delegate: *mut libc::c_void) -> *mut libc::c_char {
@@ -97,7 +99,7 @@ impl PyDaily {
     /// Initializes the SDK. This function needs to be called before anything
     /// else, usually done at the application startup.
     ///
-    /// :param bool custom_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, custom  devices can be registered (see :func:`create_custom_audio_device`)
+    /// :param bool custom_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, custom  devices can be registered
     /// :param int worker_threads: Number of internal worker threads. Increasing this number might be necessary if the application needs to create a large number of concurrent call clients
     #[staticmethod]
     #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
@@ -170,37 +172,81 @@ impl PyDaily {
         unsafe { daily_core_context_destroy() };
     }
 
-    /// Creates a new custom audio device. New custom audio devices can only be
-    /// created if `custom_devices` was set to True when calling :func:`init`,
-    /// otherwise the system audio devices will be used. This new custom audio
-    /// device can then be used to receive and play out audio samples or to send
-    /// recorded audio samples.
+    /// Creates a new custom speaker device. New custom speaker devices can only
+    /// be created if `custom_devices` was set to True when calling
+    /// :func:`init`, otherwise the system audio devices will be used. Speaker
+    /// devices are used to receive audio (i.e. read audio samples) from the
+    /// meeting.
     ///
-    /// :param str device_name: The custom audio device name. This can be used as a `deviceId` when configuring the call client inputs
-    /// :param int play_sample_rate: Play out frequency (e.g. with a 16000 sample rate every 10ms 160 samples will be generated)
-    /// :param int play_channels: Number of channels for playing (2 for stereo, 1 for mono)
-    /// :param int recording_sample_rate: Recording frequency (i.e. with a 16000 sample rate every 10ms 160 samples should be provided)
-    /// :param int recording_channels: Number of channels for recording (2 for stereo, 1 for mono)
+    /// There can only be one speaker device per application and it needs to be
+    /// set with :func:`select_custom_speaker_device`.
     ///
-    /// :return: A new custom audio device
-    /// :rtype: :class:`daily.CustomAudioDevice`
+    /// :param str device_name: The custom speaker device name
+    /// :param int sample_rate: Sample rate
+    /// :param int channels: Number of channels (2 for stereo, 1 for mono)
+    ///
+    /// :return: A new custom speaker device
+    /// :rtype: :class:`daily.CustomSpeakerDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, play_sample_rate = 48000, play_channels = 2, recording_sample_rate = 48000, recording_channels = 2))]
-    pub fn create_custom_audio_device(
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
+    pub fn create_speaker_device(
         device_name: &str,
-        play_sample_rate: u32,
-        play_channels: u8,
-        recording_sample_rate: u32,
-        recording_channels: u8,
-    ) -> PyResult<PyCustomAudioDevice> {
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyCustomSpeakerDevice> {
         unsafe {
-            GLOBAL_CONTEXT.as_mut().unwrap().create_custom_audio_device(
+            GLOBAL_CONTEXT.as_mut().unwrap().create_speaker_device(
                 device_name,
-                play_sample_rate,
-                play_channels,
-                recording_sample_rate,
-                recording_channels,
+                sample_rate,
+                channels,
             )
+        }
+    }
+
+    /// Creates a new custom microphone device. New custom microphone devices
+    /// can only be created if `custom_devices` was set to True when calling
+    /// :func:`init`, otherwise the system audio devices will be
+    /// used. Microphone devices are used to send audio (i.e. write audio
+    /// samples) to the meeting.
+    ///
+    /// Microphone devices are selected with :func:`CallClient.update_inputs`.
+    ///
+    /// :param str device_name: The custom microphone device name. This can be used as a `deviceId` when configuring the call client inputs
+    /// :param int sample_rate: Sample rate
+    /// :param int channels: Number of channels (2 for stereo, 1 for mono)
+    ///
+    /// :return: A new custom microphone device
+    /// :rtype: :class:`daily.CustomMicrophoneDevice`
+    #[staticmethod]
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
+    pub fn create_microphone_device(
+        device_name: &str,
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyCustomMicrophoneDevice> {
+        unsafe {
+            GLOBAL_CONTEXT.as_mut().unwrap().create_microphone_device(
+                device_name,
+                sample_rate,
+                channels,
+            )
+        }
+    }
+
+    /// Selects one of the previously created custom speaker devices to be the
+    /// main system speaker. Note that there can only be one speaker. Note
+    /// however that even if there are multiple participants the audio from all
+    /// the participants will be mixed and that's the audio that is received in
+    /// the speaker.
+    ///
+    /// :param str device_name: The name of the custom speaker device to select
+    #[staticmethod]
+    pub fn select_speaker_device(device_name: &str) -> PyResult<()> {
+        unsafe {
+            GLOBAL_CONTEXT
+                .as_mut()
+                .unwrap()
+                .select_speaker_device(device_name)
         }
     }
 }
@@ -210,7 +256,8 @@ impl PyDaily {
 fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyDaily>()?;
     m.add_class::<PyCallClient>()?;
-    m.add_class::<PyCustomAudioDevice>()?;
+    m.add_class::<PyCustomSpeakerDevice>()?;
+    m.add_class::<PyCustomMicrophoneDevice>()?;
     m.add_class::<PyVideoFrame>()?;
     Ok(())
 }

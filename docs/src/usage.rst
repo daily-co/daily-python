@@ -191,14 +191,33 @@ as simulated cameras, speakers or microphones.
 Speakers and microphones
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the following example we will create a new :class:`daily.CustomAudioDevice`
-(i.e. a simulated speaker and microphone):
+We can create speaker and microphone devices. Speakers are used to receive audio
+from the meeting and microphones are used to send data to the
+meeting. Currently, the audio from all the participants will be received mixed
+into a speaker device.
+
+In the following example we will create a new speaker device:
 
 .. code-block:: python
 
-    audio_device = Daily.create_custom_audio_device("my-audio-device")
+    speaker = Daily.create_speaker_device("my-speaker")
 
-and we will set it as our call client microphone:
+and we will set it as our default speaker:
+
+.. code-block:: python
+
+    Daily.select_speaker_device("my-speaker")
+
+After selecting the speaker device we will be able to receive audio from the
+meeting by reading audio samples from the device.
+
+Microphones are created in a similar way:
+
+.. code-block:: python
+
+    microphone = Daily.create_microphone_device("my-mic")
+
+but they are differently via the call client input settings:
 
 .. code-block:: python
 
@@ -206,47 +225,26 @@ and we will set it as our call client microphone:
         "microphone": {
             "isEnabled": True,
             "settings": {
-                "deviceId": "my-audio-device"
+                "deviceId": "my-mic"
             }
         }
     })
 
-The created `audio_device` can now be used as a microphone and audio samples can
-to be written into it (see :func:`daily.CustomAudioDevice.write_samples`). Those
-audio samples will be sent as the call client participant audio.
+Once a microphone has been selected as an audio input (and we have joined a
+meeting) we can send audio by writing audio samples to it. Those audio samples
+will be sent as the call client participant audio.
 
-As we just saw, we can select an audio input (i.e. a microphone) through
-:func:`daily.CallClient.update_inputs`. However, it is important to understand
-that audio inputs also act as audio output.
+See :func:`daily.Daily.create_speaker_device`,
+:func:`daily.Daily.create_microphone_device`,
+:func:`daily.Daily.select_speaker_device` and
+:func:`daily.CallClient.update_inputs` for more details.
 
-For example, we might want to write an application that only receives audio. In
-this case, we still need to select the audio device through the `microphone`
-input settings:
-
-.. code-block:: python
-
-    client.update_inputs({
-        "microphone": {
-            "isEnabled": False,
-            "settings": {
-                "deviceId": "my-audio-device"
-            }
-        }
-    })
-
-Note that in this case we have just disabled (`isEnabled` set to `False`) the
-microphone, but `my-audio-device` will still be used as a speaker and,
-therefore, audio sample can be read from it.
-
-See :func:`daily.Daily.create_custom_audio_device` and
- :func:`daily.CallClient.update_inputs` for more details.
-
-Multiple custom audio devices
+Multiple microphone devices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Multiple custom audio devices can be created, but only one can be active at the
-same time. With a single call client this is easy to achieve, since we can
-simply set it as the call client audio input as we saw before:
+Multiple microphones can be created, but only one can be active at the same
+time. With a single call client this is easy to achieve, since we can simply set
+it as the call client audio input as we saw before:
 
 .. code-block:: python
 
@@ -254,14 +252,14 @@ simply set it as the call client audio input as we saw before:
         "microphone": {
             "isEnabled": True,
             "settings": {
-                "deviceId": "my-audio-device"
+                "deviceId": "my-mic"
             }
         }
     })
 
-However, if multiple custom audio devices are created and different call clients
-select different custom audio devices, we will certainly get undesired behavior.
-
+However, if multiple microphones are created and different call clients select
+different microphones (all in the same application), we will certainly get
+undesired behavior.
 
 Sending and receiving raw media
 --------------------------------------------------------
@@ -298,60 +296,57 @@ Audio works a little bit differently than video. It is not possible to receive
 audio for a single participant; instead, all the audio of the meeting will be
 received.
 
-In order to receive audio from the meeting, we need to create a
-:class:`daily.CustomAudioDevice`. Think of it as a system speaker.
-
-To create a custom audio device, we need to initialize the SDK as follows:
+In order to receive audio from the meeting, we need to create a speaker
+device. To create a custom speaker device, we need to initialize the SDK as
+follows:
 
 .. code-block:: python
 
     Daily.init(custom_devices = True)
 
-Then, we can create an audio device:
+Then, we can create the device:
 
 .. code-block:: python
 
-    audio_device = Daily.create_custom_audio_device("my-audio-device")
+    speaker = Daily.create_speaker_device("my-speaker")
 
-It is possible to create multiple audio devices, but all call clients will need
-to configure the same device as an audio input.
+and we need to select it before using it:
 
-Finally, after we have joined a meeting, we can read samples from the audio
-device (e.g. every 10ms):
+.. code-block:: python
+
+    Daily.select_speaker_device("my-speaker")
+
+Finally, after having joined a meeting, we can read samples from the speaker
+(e.g. every 100ms assuming a sample rate of 16000):
 
 .. code-block:: python
 
     while True:
-        buffer = audio_device.read_samples(160)
-        time.sleep(0.01)
+        buffer = speaker.read_samples(1600)
+        time.sleep(0.1)
 
 The audio format is 16-bit linear PCM.
 
-See :func:`daily.CustomAudioDevice.read_samples` for more details.
+See :func:`daily.CustomSpeakerDevice.read_samples` for more details.
 
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As we have seen in the previous sections, audio is a bit particular. In the case
-of sending, think of a custom audio device as a system microphone.
-
-To send audio into a meeting we also need to create a
-:class:`daily.CustomAudioDevice` and initialize the SDK as before:
+To send audio into a meeting we need to create a microphone device and
+initialize the SDK as before:
 
 .. code-block:: python
 
     Daily.init(custom_devices = True)
 
-Then, create and select the audio device:
+Then, create the microphone device:
 
 .. code-block:: python
 
-    audio_device = Daily.create_custom_audio_device("my-audio-device")
-    Daily.select_custom_audio_device("my-audio-device")
+    microphone = Daily.create_microphone_device("my-mic")
 
-The next step is to tell our client that we will be using our device
-`my-audio-device` as the microphone. In order to do this, we will use the
-:func:`daily.CallClient.inputs` method:
+The next step is to tell our client that we will be using our new microphone
+device as the audio input:
 
 .. code-block:: python
 
@@ -360,23 +355,19 @@ The next step is to tell our client that we will be using our device
         "microphone": {
             "isEnabled": True,
             "settings": {
-                "deviceId": "my-audio-device"
+                "deviceId": "my-mic"
             }
         }
     })
 
-The above is necessary because otherwise our client will not know which audio
-device to use as a microphone.
-
-Finally, after joining a meeting, we can write samples to the audio device
-(e.g. every 10ms):
+Finally, after joining a meeting, we can write samples to the microphone device:
 
 .. code-block:: python
 
-    audio_device.write_samples(samples)
+    microphone.write_samples(samples)
 
 The audio format is 16-bit linear PCM.
 
-See :func:`daily.CustomAudioDevice.write_samples` for more details.
+See :func:`daily.CustomMicrophoneDevice.write_samples` for more details.
 
 .. _Daily: https://daily.co
