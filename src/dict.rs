@@ -9,7 +9,7 @@ use pyo3::types::{PyBool, PyDict, PyFloat, PyLong, PyString};
 
 #[repr(transparent)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub(crate) struct DictValue(Value);
+pub(crate) struct DictValue(pub Value);
 
 impl DictValue {
     fn value_to_object(val: &Value, py: Python<'_>) -> PyObject {

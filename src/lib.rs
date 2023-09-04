@@ -3,13 +3,15 @@ pub mod context;
 pub mod custom_microphone_device;
 pub mod custom_speaker_device;
 pub mod dict;
+pub mod event;
+pub mod event_handler;
 pub mod video_frame;
 
 use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
 use custom_microphone_device::PyCustomMicrophoneDevice;
 use custom_speaker_device::PyCustomSpeakerDevice;
-use dict::DictValue;
+use event_handler::PyEventHandler;
 use video_frame::PyVideoFrame;
 
 use std::env;
@@ -258,6 +260,7 @@ fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyCustomSpeakerDevice>()?;
     m.add_class::<PyCustomMicrophoneDevice>()?;
+    m.add_class::<PyEventHandler>()?;
     m.add_class::<PyVideoFrame>()?;
     Ok(())
 }

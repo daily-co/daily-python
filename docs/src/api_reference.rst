@@ -13,5 +13,8 @@ API Reference
 .. autoclass:: daily.CustomMicrophoneDevice
     :members:
 
+.. autoclass:: daily.EventHandler
+    :members:
+
 .. autoclass:: daily.VideoFrame
     :members:

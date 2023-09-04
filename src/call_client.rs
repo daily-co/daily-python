@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::ptr;
 
-use crate::DictValue;
+use crate::dict::DictValue;
+use crate::event::{args_from_event, method_name_from_event, Event};
 use crate::PyVideoFrame;
 use crate::GLOBAL_CONTEXT;
 
@@ -11,13 +12,15 @@ use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
     daily_core_call_client_leave, daily_core_call_client_participant_counts,
     daily_core_call_client_participants, daily_core_call_client_publishing,
-    daily_core_call_client_set_participant_video_renderer, daily_core_call_client_set_user_name,
-    daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
-    daily_core_call_client_update_inputs, daily_core_call_client_update_permissions,
-    daily_core_call_client_update_publishing, daily_core_call_client_update_remote_participants,
+    daily_core_call_client_set_delegate, daily_core_call_client_set_participant_video_renderer,
+    daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
+    daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
+    daily_core_call_client_update_permissions, daily_core_call_client_update_publishing,
+    daily_core_call_client_update_remote_participants,
     daily_core_call_client_update_subscription_profiles,
-    daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegatePtr,
-    NativeCallClientVideoRenderer, NativeCallClientVideoRendererFns, NativeVideoFrame,
+    daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegate,
+    NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeCallClientVideoRenderer,
+    NativeCallClientVideoRendererFns, NativeVideoFrame,
 };
 
 use pyo3::exceptions;
@@ -41,15 +44,40 @@ pub struct PyCallClient {
 
 #[pymethods]
 impl PyCallClient {
-    /// Create a new call client.
+    /// Create a new call client. The new call client can receive meeting events
+    /// through an event handler.
+    ///
+    /// :param function event_handler: An event handler for receiving meeting events
     ///
     /// :return: A new call client
     /// :rtype: :class:`daily.CallClient`
     #[new]
-    pub fn new() -> PyResult<Self> {
+    pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
         unsafe {
             let call_client = daily_core_call_client_create();
             if !call_client.is_null() {
+                if let Some(event_handler) = event_handler {
+                    let callback_ctx: PyObject = Python::with_gil(|py| {
+                        Py::new(
+                            py,
+                            PyCallClientCallbackContext {
+                                callback: event_handler,
+                            },
+                        )
+                        .unwrap()
+                        .into_py(py)
+                    });
+
+                    let client_delegate = NativeCallClientDelegate {
+                        ptr: NativeCallClientDelegatePtr(
+                            callback_ctx.into_ptr() as *mut libc::c_void
+                        ),
+                        fns: NativeCallClientDelegateFns { on_event },
+                    };
+
+                    daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
+                }
+
                 Ok(Self {
                     call_client: Box::from_raw(call_client),
                 })
@@ -757,6 +785,47 @@ impl PyCallClient {
     }
 }
 
+impl Drop for PyCallClient {
+    fn drop(&mut self) {
+        self.leave();
+    }
+}
+
+unsafe extern "C" fn on_event(
+    delegate: *mut libc::c_void,
+    event_json: *const libc::c_char,
+    _json_len: isize,
+) {
+    Python::with_gil(|py| {
+        let py_callback_ctx_ptr = delegate as *mut pyo3::ffi::PyObject;
+
+        // PyObject below will decrease the reference counter and we need to
+        // always keep a reference.
+        Py_IncRef(py_callback_ctx_ptr);
+
+        let py_callback_ctx = PyObject::from_owned_ptr(py, py_callback_ctx_ptr);
+
+        let callback_ctx: PyRefMut<'_, PyCallClientCallbackContext> =
+            py_callback_ctx.extract(py).unwrap();
+
+        let event_string = CStr::from_ptr(event_json).to_string_lossy().into_owned();
+
+        println!("EVENT: {event_string}");
+
+        let event = serde_json::from_str::<Event>(event_string.as_str()).unwrap();
+
+        if let Some(method_name) = method_name_from_event(&event) {
+            if let Some(args) = args_from_event(&event) {
+                let py_args = PyTuple::new(py, args);
+
+                if let Err(error) = callback_ctx.callback.call_method1(py, method_name, py_args) {
+                    error.write_unraisable(py, None);
+                }
+            }
+        }
+    });
+}
+
 unsafe extern "C" fn on_video_frame(
     delegate: *mut libc::c_void,
     peer_id: *const libc::c_char,
@@ -794,10 +863,4 @@ unsafe extern "C" fn on_video_frame(
             error.write_unraisable(py, None);
         }
     });
-}
-
-impl Drop for PyCallClient {
-    fn drop(&mut self) {
-        self.leave();
-    }
 }
