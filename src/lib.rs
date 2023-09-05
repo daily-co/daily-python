@@ -121,35 +121,29 @@ impl PyDaily {
             .expect("invalid OS string")
             .into_raw();
 
-        let about_client = NativeAboutClient {
-            library: library_ptr,
-            version: version_ptr,
-            operating_system: os_ptr,
-            operating_system_version: ptr::null(),
-        };
+        let about_client = NativeAboutClient::new(library_ptr, version_ptr, os_ptr, ptr::null());
 
-        let context_delegate = NativeContextDelegate {
-            ptr: NativeContextDelegatePtr(ptr::null_mut()),
-        };
+        let context_delegate =
+            NativeContextDelegate::new(NativeContextDelegatePtr::new(ptr::null_mut()));
 
-        let webrtc_delegate = NativeWebRtcContextDelegate {
-            ptr: NativeWebRtcContextDelegatePtr(ptr::null_mut()),
-            fns: NativeWebRtcContextDelegateFns {
-                get_audio_device,
-                set_audio_device,
-                get_enumerated_devices,
+        let webrtc_delegate = NativeWebRtcContextDelegate::new(
+            NativeWebRtcContextDelegatePtr::new(ptr::null_mut()),
+            NativeWebRtcContextDelegateFns::new(
                 get_user_media,
-                create_audio_device_module: if custom_devices {
+                get_enumerated_devices,
+                if custom_devices {
                     Some(create_audio_device_module)
                 } else {
                     None
                 },
-                create_video_decoder_factory: None,
-                create_video_encoder_factory: None,
-                create_audio_decoder_factory: None,
-                create_audio_encoder_factory: None,
-            },
-        };
+                None,
+                None,
+                None,
+                None,
+                get_audio_device,
+                set_audio_device,
+            ),
+        );
 
         daily_core_context_create_with_threads(
             context_delegate,
