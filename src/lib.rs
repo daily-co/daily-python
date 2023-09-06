@@ -184,7 +184,7 @@ impl PyDaily {
     /// :return: A new virtual speaker device
     /// :rtype: :class:`daily.VirtualSpeakerDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1))]
     pub fn create_speaker_device(
         device_name: &str,
         sample_rate: u32,
@@ -214,7 +214,7 @@ impl PyDaily {
     /// :return: A new virtual microphone device
     /// :rtype: :class:`daily.VirtualMicrophoneDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1))]
     pub fn create_microphone_device(
         device_name: &str,
         sample_rate: u32,
