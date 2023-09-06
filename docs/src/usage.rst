@@ -70,6 +70,43 @@ other participants might see as a description of you (e.g. Jane Doe).
 
 See :func:`daily.CallClient.set_user_name` for more details.
 
+Handling events
+--------------------------------------------------------
+
+During a meeting (or even before) events can be generated, for example when a
+participant joins or leaves a meeting, when a participant changes their tracks
+or when an app message is received.
+
+To subscribe to events we need to subclass :class:`daily.EventHandler`. This can
+be done by the main application class (if there's one) or by simply creating a
+new class.
+
+.. code-block:: python
+
+    class MyApp(EventHandler):
+
+We can then implement any of the event handlers defined by
+:class:`daily.EventHandler` that we are interested in. For example, we could
+handle the event when a participant joins by using
+:func:`daily.EventHandler.on_participant_joined`:
+
+.. code-block:: python
+
+    class MyApp(EventHandler):
+
+        def on_participant_joined(participant):
+            print("New participant joined!")
+
+Finally, we need to register the event handler when creating a
+:class:`daily.CallClient`. For example:
+
+.. code-block:: python
+
+    class MyApp(EventHandler):
+
+        def __init__(self):
+            self.client = CallClient(event_handler = self)
+
 Inputs and publishing settings
 --------------------------------------------------------
 
@@ -186,7 +223,7 @@ See :func:`daily.CallClient.update_subscriptions` for more details.
 Video and audio devices
 --------------------------------------------------------
 
-A call client can specify custom video and audio devices which can then be used
+A call client can specify virtual video and audio devices which can then be used
 as simulated cameras, speakers or microphones.
 
 Speakers and microphones
@@ -298,7 +335,7 @@ audio for a single participant; instead, all the audio of the meeting will be
 received.
 
 In order to receive audio from the meeting, we need to create a speaker
-device. To create a custom speaker device, we need to initialize the SDK as
+device. To create a virtual speaker device, we need to initialize the SDK as
 follows:
 
 .. code-block:: python
@@ -328,7 +365,7 @@ Finally, after having joined a meeting, we can read samples from the speaker
 
 The audio format is 16-bit linear PCM.
 
-See :func:`daily.CustomSpeakerDevice.read_samples` for more details.
+See :func:`daily.SpeakerDevice.read_samples` for more details.
 
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
