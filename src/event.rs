@@ -43,179 +43,97 @@ pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
 pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
     let object = event.data.0.as_object().unwrap();
     match event.action.as_str() {
-        "active-speaker-changed" => {
-            if let Some(participant) = object.get("participant") {
-                Some(vec![DictValue(participant.clone())])
-            } else {
-                None
-            }
-        }
+        "active-speaker-changed" => object
+            .get("participant")
+            .map(|participant| vec![DictValue(participant.clone())]),
         "app-message" => {
             if let Some(from) = object.get("from") {
-                if let Some(message) = object.get("msgData") {
-                    Some(vec![DictValue(from.clone()), DictValue(message.clone())])
-                } else {
-                    None
-                }
+                object
+                    .get("msgData")
+                    .map(|message| vec![DictValue(from.clone()), DictValue(message.clone())])
             } else {
                 None
             }
         }
-        "available-devices-updated" => {
-            if let Some(devices) = object.get("availableDevices") {
-                Some(vec![DictValue(devices.clone())])
-            } else {
-                None
-            }
-        }
-        "call-state-updated" => {
-            if let Some(state) = object.get("state") {
-                Some(vec![DictValue(state.clone())])
-            } else {
-                None
-            }
-        }
-        "error" => {
-            if let Some(message) = object.get("message") {
-                Some(vec![DictValue(message.clone())])
-            } else {
-                None
-            }
-        }
-        "inputs-updated" => {
-            if let Some(inputs) = object.get("inputs") {
-                Some(vec![DictValue(inputs.clone())])
-            } else {
-                None
-            }
-        }
+        "available-devices-updated" => object
+            .get("availableDevices")
+            .map(|devices| vec![DictValue(devices.clone())]),
+        "call-state-updated" => object
+            .get("state")
+            .map(|state| vec![DictValue(state.clone())]),
+
+        "error" => object
+            .get("message")
+            .map(|message| vec![DictValue(message.clone())]),
+
+        "inputs-updated" => object
+            .get("inputs")
+            .map(|inputs| vec![DictValue(inputs.clone())]),
         "live-stream-error" => {
             if let Some(stream_id) = object.get("streamId") {
-                if let Some(message) = object.get("message") {
-                    Some(vec![
-                        DictValue(stream_id.clone()),
-                        DictValue(message.clone()),
-                    ])
-                } else {
-                    None
-                }
+                object
+                    .get("message")
+                    .map(|message| vec![DictValue(stream_id.clone()), DictValue(message.clone())])
             } else {
                 None
             }
         }
-        "live-stream-started" => {
-            if let Some(status) = object.get("status") {
-                Some(vec![DictValue(status.clone())])
-            } else {
-                None
-            }
-        }
-        "live-stream-stopped" => {
-            if let Some(stream_id) = object.get("streamId") {
-                Some(vec![DictValue(stream_id.clone())])
-            } else {
-                None
-            }
-        }
+        "live-stream-started" => object
+            .get("status")
+            .map(|status| vec![DictValue(status.clone())]),
+        "live-stream-stopped" => object
+            .get("streamId")
+            .map(|stream_id| vec![DictValue(stream_id.clone())]),
         "live-stream-warning" => {
             if let Some(stream_id) = object.get("streamId") {
-                if let Some(message) = object.get("message") {
-                    Some(vec![
-                        DictValue(stream_id.clone()),
-                        DictValue(message.clone()),
-                    ])
-                } else {
-                    None
-                }
+                object
+                    .get("message")
+                    .map(|message| vec![DictValue(stream_id.clone()), DictValue(message.clone())])
             } else {
                 None
             }
         }
-        "network-stats-updated" => {
-            if let Some(inputs) = object.get("inputs") {
-                Some(vec![DictValue(inputs.clone())])
-            } else {
-                None
-            }
-        }
+        "network-stats-updated" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "participant-counts-updated" => Some(vec![DictValue(Value::Object(object.clone()))]),
-        "participant-joined" => {
-            if let Some(participant) = object.get("participant") {
-                Some(vec![DictValue(participant.clone())])
-            } else {
-                None
-            }
-        }
+        "participant-joined" => object
+            .get("participant")
+            .map(|participant| vec![DictValue(participant.clone())]),
         "participant-left" => {
             if let Some(participant) = object.get("participant") {
-                if let Some(reason) = object.get("leftReason") {
-                    Some(vec![
-                        DictValue(participant.clone()),
-                        DictValue(reason.clone()),
-                    ])
-                } else {
-                    None
-                }
+                object
+                    .get("leftReason")
+                    .map(|reason| vec![DictValue(participant.clone()), DictValue(reason.clone())])
             } else {
                 None
             }
         }
-        "participant-updated" => {
-            if let Some(participant) = object.get("participant") {
-                Some(vec![DictValue(participant.clone())])
-            } else {
-                None
-            }
-        }
-        "publishing-updated" => {
-            if let Some(publishing) = object.get("publishing") {
-                Some(vec![DictValue(publishing.clone())])
-            } else {
-                None
-            }
-        }
+        "participant-updated" => object
+            .get("participant")
+            .map(|participant| vec![DictValue(participant.clone())]),
+        "publishing-updated" => object
+            .get("publishing")
+            .map(|publishing| vec![DictValue(publishing.clone())]),
         "recording-error" => {
             if let Some(stream_id) = object.get("streamId") {
-                if let Some(message) = object.get("message") {
-                    Some(vec![
-                        DictValue(stream_id.clone()),
-                        DictValue(message.clone()),
-                    ])
-                } else {
-                    None
-                }
+                object
+                    .get("message")
+                    .map(|message| vec![DictValue(stream_id.clone()), DictValue(message.clone())])
             } else {
                 None
             }
         }
-        "recording-started" => {
-            if let Some(status) = object.get("status") {
-                Some(vec![DictValue(status.clone())])
-            } else {
-                None
-            }
-        }
-        "recording-stopped" => {
-            if let Some(stream_id) = object.get("streamId") {
-                Some(vec![DictValue(stream_id.clone())])
-            } else {
-                None
-            }
-        }
-        "subscription-profiles-updated" => {
-            if let Some(profiles) = object.get("profiles") {
-                Some(vec![DictValue(profiles.clone())])
-            } else {
-                None
-            }
-        }
-        "subscriptions-updated" => {
-            if let Some(subscriptions) = object.get("subscriptions") {
-                Some(vec![DictValue(subscriptions.clone())])
-            } else {
-                None
-            }
-        }
+        "recording-started" => object
+            .get("status")
+            .map(|status| vec![DictValue(status.clone())]),
+        "recording-stopped" => object
+            .get("streamId")
+            .map(|stream_id| vec![DictValue(stream_id.clone())]),
+        "subscription-profiles-updated" => object
+            .get("profiles")
+            .map(|profiles| vec![DictValue(profiles.clone())]),
+        "subscriptions-updated" => object
+            .get("subscriptions")
+            .map(|subscriptions| vec![DictValue(subscriptions.clone())]),
         a => panic!("args for event {a} not supported"),
     }
 }

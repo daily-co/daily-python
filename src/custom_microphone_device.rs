@@ -89,9 +89,7 @@ impl PyCustomMicrophoneDevice {
                     )
                 };
 
-                if samples_written == num_samples as i32 {
-                    Ok(samples_written.into_py(py))
-                } else if samples_written == 0 {
+                if samples_written == num_samples as i32 || samples_written == 0 {
                     Ok(samples_written.into_py(py))
                 } else {
                     Err(exceptions::PyIOError::new_err(

@@ -107,7 +107,7 @@ impl PyDaily {
     #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
     pub fn init(custom_devices: bool, worker_threads: usize) {
         unsafe {
-            GLOBAL_CONTEXT = Some(DailyContext::new());
+            GLOBAL_CONTEXT = Some(DailyContext::default());
             daily_core_set_log_level(LogLevel::Off);
         }
 

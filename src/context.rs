@@ -28,19 +28,13 @@ use pyo3::prelude::*;
 // This should be initialized from Daily.init().
 pub static mut GLOBAL_CONTEXT: Option<DailyContext> = None;
 
+#[derive(Default)]
 pub struct DailyContext {
     request_id: AtomicU64,
     audio_device_module: Option<NativeAudioDeviceModule>,
 }
 
 impl DailyContext {
-    pub fn new() -> Self {
-        Self {
-            request_id: AtomicU64::new(0),
-            audio_device_module: None,
-        }
-    }
-
     pub fn next_request_id(&self) -> u64 {
         self.request_id.fetch_add(1, Ordering::SeqCst)
     }
@@ -64,7 +58,8 @@ impl DailyContext {
         }
     }
 
-    pub fn get_user_media(
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn get_user_media(
         &mut self,
         peer_connection_factory: *mut WebrtcPeerConnectionFactory,
         signaling_thread: *mut WebrtcThread,
@@ -73,26 +68,26 @@ impl DailyContext {
         constraints: *const libc::c_char,
     ) -> *mut libc::c_void {
         if let Some(adm) = self.audio_device_module.as_mut() {
-            daily_core_context_custom_get_user_media(
-                adm.as_mut_ptr() as *mut _,
-                peer_connection_factory,
-                signaling_thread,
-                worker_thread,
-                network_thread,
-                constraints,
-            )
-        } else {
-            if let Ok(mut media_stream) = MediaStream::new() {
-                // Increase the reference count because it's decremented on drop
-                // and we want to return a valid pointer.
-                unsafe {
-                    rtc_refcount_interface_addref(media_stream.as_mut_ptr());
-                }
-
-                media_stream.as_mut_ptr() as *mut _
-            } else {
-                ptr::null_mut()
+            unsafe {
+                daily_core_context_custom_get_user_media(
+                    adm.as_mut_ptr() as *mut _,
+                    peer_connection_factory,
+                    signaling_thread,
+                    worker_thread,
+                    network_thread,
+                    constraints,
+                )
             }
+        } else if let Ok(mut media_stream) = MediaStream::new() {
+            // Increase the reference count because it's decremented on drop
+            // and we want to return a valid pointer.
+            unsafe {
+                rtc_refcount_interface_addref(media_stream.as_mut_ptr());
+            }
+
+            media_stream.as_mut_ptr() as *mut _
+        } else {
+            ptr::null_mut()
         }
     }
 
