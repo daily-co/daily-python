@@ -36,9 +36,9 @@ The next step is to join a `Daily`_ meeting using a Daily meeting URL:
     client.join("https://my.daily.co/meeting")
 
 You might also need to pass a meeting token, for example, to join a private
-room, or if you are the meeting owner. [Meeting
-tokens](https://docs.daily.co/reference/rest-api/meeting-tokens) provide access
-to private rooms, and can pass some user-specific properties into the room.
+room, or if you are the meeting owner. `Meeting tokens
+<https://docs.daily.co/reference/rest-api/meeting-tokens>`_ provide access to
+private rooms, and can pass some user-specific properties into the room.
 
 .. code-block:: python
 
@@ -220,7 +220,7 @@ stream only for that participant.
 
 See :func:`daily.CallClient.update_subscriptions` for more details.
 
-Video and audio devices
+Video and audio virtual devices
 --------------------------------------------------------
 
 A call client can specify virtual video and audio devices which can then be used
@@ -238,7 +238,7 @@ In the following example we will create a new speaker device:
 
 .. code-block:: python
 
-    speaker = Daily.create_speaker_device("my-speaker")
+    speaker = Daily.create_speaker_device("my-speaker", sample_rate = 16000, channels = 1)
 
 and we will set it as our default speaker:
 
@@ -253,7 +253,7 @@ Microphones are created in a similar way:
 
 .. code-block:: python
 
-    microphone = Daily.create_microphone_device("my-mic")
+    microphone = Daily.create_microphone_device("my-mic", sample_rate = 16000, channels = 1)
 
 but they are differently via the call client input settings:
 
@@ -346,7 +346,7 @@ Then, we can create the device:
 
 .. code-block:: python
 
-    speaker = Daily.create_speaker_device("my-speaker")
+    speaker = Daily.create_speaker_device("my-speaker", sample_rate = 16000, channels = 1)
 
 and we need to select it before using it:
 
@@ -355,13 +355,13 @@ and we need to select it before using it:
     Daily.select_speaker_device("my-speaker")
 
 Finally, after having joined a meeting, we can read samples from the speaker
-(e.g. every 100ms assuming a sample rate of 16000):
+(e.g. every 10ms):
 
 .. code-block:: python
 
     while True:
-        buffer = speaker.read_samples(1600)
-        time.sleep(0.1)
+        buffer = speaker.read_samples(160)
+        time.sleep(0.01)
 
 The audio format is 16-bit linear PCM.
 
@@ -381,7 +381,7 @@ Then, create the microphone device:
 
 .. code-block:: python
 
-    microphone = Daily.create_microphone_device("my-mic")
+    microphone = Daily.create_microphone_device("my-mic", sample_rate = 16000, channels = 1)
 
 The next step is to tell our client that we will be using our new microphone
 device as the audio input:
