@@ -35,8 +35,10 @@ The next step is to join a `Daily`_ meeting using a Daily meeting URL:
 
     client.join("https://my.daily.co/meeting")
 
-If you are the meeting owner you will need a meeting token that can be also
-specified during join:
+You might also need to pass a meeting token, for example, to join a private
+room, or if you are the meeting owner. [Meeting
+tokens](https://docs.daily.co/reference/rest-api/meeting-tokens) provide access
+to private rooms, and can pass some user-specific properties into the room.
 
 .. code-block:: python
 
@@ -59,9 +61,8 @@ See :func:`daily.CallClient.leave` for more details.
 Setting the user name
 --------------------------------------------------------
 
-After joining a meeting it is possible to change the user name of our
-client. The user name is what other participants might see as a description of
-you (e.g. Jane Doe).
+It is also possible to change the user name of our client. The user name is what
+other participants might see as a description of you (e.g. Jane Doe).
 
 .. code-block:: python
 
