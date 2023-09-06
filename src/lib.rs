@@ -1,18 +1,18 @@
 pub mod call_client;
 pub mod context;
-pub mod custom_microphone_device;
-pub mod custom_speaker_device;
 pub mod dict;
 pub mod event;
 pub mod event_handler;
 pub mod video_frame;
+pub mod virtual_microphone_device;
+pub mod virtual_speaker_device;
 
 use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
-use custom_microphone_device::PyCustomMicrophoneDevice;
-use custom_speaker_device::PyCustomSpeakerDevice;
 use event_handler::PyEventHandler;
 use video_frame::PyVideoFrame;
+use virtual_microphone_device::PyVirtualMicrophoneDevice;
+use virtual_speaker_device::PyVirtualSpeakerDevice;
 
 use std::env;
 use std::ffi::CString;
@@ -92,7 +92,7 @@ unsafe extern "C" fn create_audio_device_module(
         .create_audio_device_module(task_queue_factory)
 }
 
-/// This class is used to initialize the SDK and create custom devices.
+/// This class is used to initialize the SDK and create virtual devices.
 #[pyclass(name = "Daily", module = "daily")]
 struct PyDaily;
 
@@ -101,11 +101,11 @@ impl PyDaily {
     /// Initializes the SDK. This function needs to be called before anything
     /// else, usually done at the application startup.
     ///
-    /// :param bool custom_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, custom  devices can be registered
+    /// :param bool virtual_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, virtual devices can be registered
     /// :param int worker_threads: Number of internal worker threads. Increasing this number might be necessary if the application needs to create a large number of concurrent call clients
     #[staticmethod]
-    #[pyo3(signature = (custom_devices = false, worker_threads = 2))]
-    pub fn init(custom_devices: bool, worker_threads: usize) {
+    #[pyo3(signature = (virtual_devices = false, worker_threads = 2))]
+    pub fn init(virtual_devices: bool, worker_threads: usize) {
         unsafe {
             GLOBAL_CONTEXT = Some(DailyContext::default());
             daily_core_set_log_level(LogLevel::Off);
@@ -131,7 +131,7 @@ impl PyDaily {
             NativeWebRtcContextDelegateFns::new(
                 get_user_media,
                 get_enumerated_devices,
-                if custom_devices {
+                if virtual_devices {
                     Some(create_audio_device_module)
                 } else {
                     None
@@ -168,28 +168,28 @@ impl PyDaily {
         unsafe { daily_core_context_destroy() };
     }
 
-    /// Creates a new custom speaker device. New custom speaker devices can only
-    /// be created if `custom_devices` was set to True when calling
+    /// Creates a new virtual speaker device. New virtual speaker devices can only
+    /// be created if `virtual_devices` was set to True when calling
     /// :func:`init`, otherwise the system audio devices will be used. Speaker
     /// devices are used to receive audio (i.e. read audio samples) from the
     /// meeting.
     ///
     /// There can only be one speaker device per application and it needs to be
-    /// set with :func:`select_custom_speaker_device`.
+    /// set with :func:`select_speaker_device`.
     ///
-    /// :param str device_name: The custom speaker device name
+    /// :param str device_name: The virtual speaker device name
     /// :param int sample_rate: Sample rate
     /// :param int channels: Number of channels (2 for stereo, 1 for mono)
     ///
-    /// :return: A new custom speaker device
-    /// :rtype: :class:`daily.CustomSpeakerDevice`
+    /// :return: A new virtual speaker device
+    /// :rtype: :class:`daily.VirtualSpeakerDevice`
     #[staticmethod]
     #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
     pub fn create_speaker_device(
         device_name: &str,
         sample_rate: u32,
         channels: u8,
-    ) -> PyResult<PyCustomSpeakerDevice> {
+    ) -> PyResult<PyVirtualSpeakerDevice> {
         unsafe {
             GLOBAL_CONTEXT.as_mut().unwrap().create_speaker_device(
                 device_name,
@@ -199,27 +199,27 @@ impl PyDaily {
         }
     }
 
-    /// Creates a new custom microphone device. New custom microphone devices
-    /// can only be created if `custom_devices` was set to True when calling
+    /// Creates a new virtual microphone device. New virtual microphone devices
+    /// can only be created if `virtual_devices` was set to True when calling
     /// :func:`init`, otherwise the system audio devices will be
     /// used. Microphone devices are used to send audio (i.e. write audio
     /// samples) to the meeting.
     ///
     /// Microphone devices are selected with :func:`CallClient.update_inputs`.
     ///
-    /// :param str device_name: The custom microphone device name. This can be used as a `deviceId` when configuring the call client inputs
+    /// :param str device_name: The virtual microphone device name. This can be used as a `deviceId` when configuring the call client inputs
     /// :param int sample_rate: Sample rate
     /// :param int channels: Number of channels (2 for stereo, 1 for mono)
     ///
-    /// :return: A new custom microphone device
-    /// :rtype: :class:`daily.CustomMicrophoneDevice`
+    /// :return: A new virtual microphone device
+    /// :rtype: :class:`daily.VirtualMicrophoneDevice`
     #[staticmethod]
     #[pyo3(signature = (device_name, sample_rate = 16000, channels = 2))]
     pub fn create_microphone_device(
         device_name: &str,
         sample_rate: u32,
         channels: u8,
-    ) -> PyResult<PyCustomMicrophoneDevice> {
+    ) -> PyResult<PyVirtualMicrophoneDevice> {
         unsafe {
             GLOBAL_CONTEXT.as_mut().unwrap().create_microphone_device(
                 device_name,
@@ -229,13 +229,13 @@ impl PyDaily {
         }
     }
 
-    /// Selects one of the previously created custom speaker devices to be the
+    /// Selects one of the previously created virtual speaker devices to be the
     /// main system speaker. Note that there can only be one speaker selected at
     /// a time. Also, if there are multiple participants in the meeting, the
     /// audio from all the participants will be mixed and that's the audio that
     /// is received in the speaker.
     ///
-    /// :param str device_name: The name of the custom speaker device to select
+    /// :param str device_name: The name of the virtual speaker device to select
     #[staticmethod]
     pub fn select_speaker_device(device_name: &str) -> PyResult<()> {
         unsafe {
@@ -252,9 +252,9 @@ impl PyDaily {
 fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyDaily>()?;
     m.add_class::<PyCallClient>()?;
-    m.add_class::<PyCustomSpeakerDevice>()?;
-    m.add_class::<PyCustomMicrophoneDevice>()?;
     m.add_class::<PyEventHandler>()?;
     m.add_class::<PyVideoFrame>()?;
+    m.add_class::<PyVirtualSpeakerDevice>()?;
+    m.add_class::<PyVirtualMicrophoneDevice>()?;
     Ok(())
 }

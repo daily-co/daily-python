@@ -340,7 +340,7 @@ follows:
 
 .. code-block:: python
 
-    Daily.init(custom_devices = True)
+    Daily.init(virtual_devices = True)
 
 Then, we can create the device:
 
@@ -365,7 +365,7 @@ Finally, after having joined a meeting, we can read samples from the speaker
 
 The audio format is 16-bit linear PCM.
 
-See :func:`daily.SpeakerDevice.read_samples` for more details.
+See :func:`daily.VirtualSpeakerDevice.read_samples` for more details.
 
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -375,7 +375,7 @@ initialize the SDK as before:
 
 .. code-block:: python
 
-    Daily.init(custom_devices = True)
+    Daily.init(virtual_devices = True)
 
 Then, create the microphone device:
 
@@ -406,6 +406,6 @@ Finally, after joining a meeting, we can write samples to the microphone device:
 
 The audio format is 16-bit linear PCM.
 
-See :func:`daily.CustomMicrophoneDevice.write_samples` for more details.
+See :func:`daily.VirtualMicrophoneDevice.write_samples` for more details.
 
 .. _Daily: https://daily.co

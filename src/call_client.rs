@@ -37,6 +37,8 @@ pub struct PyCallClientCallbackContext {
 /// Daily meeting and it can receive audio and video from other participants in
 /// the meeting as well as send audio and video. Multiple instances of call
 /// clients can be created in the same application.
+///
+/// :param class event_handler: A subclass of :class:`daily.EventHandler`
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     call_client: Box<CallClient>,
@@ -46,11 +48,6 @@ pub struct PyCallClient {
 impl PyCallClient {
     /// Create a new call client. The new call client can receive meeting events
     /// through an event handler.
-    ///
-    /// :param function event_handler: An event handler for receiving meeting events
-    ///
-    /// :return: A new call client
-    /// :rtype: :class:`daily.CallClient`
     #[new]
     pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
         unsafe {

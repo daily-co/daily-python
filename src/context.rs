@@ -2,8 +2,8 @@ use std::ffi::CString;
 use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::PyCustomMicrophoneDevice;
-use crate::PyCustomSpeakerDevice;
+use crate::PyVirtualMicrophoneDevice;
+use crate::PyVirtualSpeakerDevice;
 
 use webrtc_daily::sys::{
     audio_device_module::NativeAudioDeviceModule,
@@ -110,13 +110,13 @@ impl DailyContext {
         device_name: &str,
         sample_rate: u32,
         channels: u8,
-    ) -> PyResult<PyCustomSpeakerDevice> {
+    ) -> PyResult<PyVirtualSpeakerDevice> {
         if let Some(adm) = self.audio_device_module.as_mut() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid speaker device name string")
+                .expect("invalid virtual speaker device name string")
                 .into_raw();
 
-            let mut py_device = PyCustomSpeakerDevice::new(device_name, sample_rate, channels);
+            let mut py_device = PyVirtualSpeakerDevice::new(device_name, sample_rate, channels);
 
             unsafe {
                 let speaker_device = daily_core_context_create_custom_speaker_device(
@@ -136,7 +136,7 @@ impl DailyContext {
             Ok(py_device)
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "custom audio module not created",
+                "did you call Daily.init(virtual_devices = True)?",
             ))
         }
     }
@@ -146,13 +146,13 @@ impl DailyContext {
         device_name: &str,
         sample_rate: u32,
         channels: u8,
-    ) -> PyResult<PyCustomMicrophoneDevice> {
+    ) -> PyResult<PyVirtualMicrophoneDevice> {
         if let Some(adm) = self.audio_device_module.as_mut() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid microphone device name string")
+                .expect("invalid virtual microphone device name string")
                 .into_raw();
 
-            let mut py_device = PyCustomMicrophoneDevice::new(device_name, sample_rate, channels);
+            let mut py_device = PyVirtualMicrophoneDevice::new(device_name, sample_rate, channels);
 
             unsafe {
                 let microphone_device = daily_core_context_create_custom_microphone_device(
@@ -172,7 +172,7 @@ impl DailyContext {
             Ok(py_device)
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "custom audio module not created",
+                "did you call Daily.init(virtual_devices = True)?",
             ))
         }
     }
@@ -180,7 +180,7 @@ impl DailyContext {
     pub fn select_speaker_device(&mut self, device_name: &str) -> PyResult<()> {
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid speaker device name string")
+                .expect("invalid virtual speaker device name string")
                 .into_raw();
 
             let selected = unsafe {
@@ -198,12 +198,12 @@ impl DailyContext {
                 Ok(())
             } else {
                 Err(exceptions::PyRuntimeError::new_err(
-                    "unable to select custom speaker device",
+                    "unable to select virtual speaker device",
                 ))
             }
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "custom audio module not created",
+                "did you call Daily.init(virtual_devices = True)?",
             ))
         }
     }
@@ -211,7 +211,7 @@ impl DailyContext {
     pub fn select_microphone_device(&mut self, device_name: &str) -> PyResult<()> {
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device_name_ptr = CString::new(device_name)
-                .expect("invalid microphone device name string")
+                .expect("invalid virtual microphone device name string")
                 .into_raw();
 
             let selected = unsafe {
@@ -229,12 +229,12 @@ impl DailyContext {
                 Ok(())
             } else {
                 Err(exceptions::PyRuntimeError::new_err(
-                    "unable to select custom microphone device",
+                    "unable to select virtual microphone device",
                 ))
             }
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "custom audio module not created",
+                "did you call Daily.init(virtual_devices = True)?",
             ))
         }
     }
