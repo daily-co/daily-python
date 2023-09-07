@@ -65,12 +65,12 @@ impl PyCallClient {
                         .into_py(py)
                     });
 
-                    let client_delegate = NativeCallClientDelegate {
-                        ptr: NativeCallClientDelegatePtr(
+                    let client_delegate = NativeCallClientDelegate::new(
+                        NativeCallClientDelegatePtr::new(
                             callback_ctx.into_ptr() as *mut libc::c_void
                         ),
-                        fns: NativeCallClientDelegateFns { on_event },
-                    };
+                        NativeCallClientDelegateFns::new(on_event),
+                    );
 
                     daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
                 }
@@ -753,10 +753,10 @@ impl PyCallClient {
                 .into_py(py)
         });
 
-        let video_renderer = NativeCallClientVideoRenderer {
-            ptr: NativeCallClientDelegatePtr(callback_ctx.into_ptr() as *mut libc::c_void),
-            fns: NativeCallClientVideoRendererFns { on_video_frame },
-        };
+        let video_renderer = NativeCallClientVideoRenderer::new(
+            NativeCallClientDelegatePtr::new(callback_ctx.into_ptr() as *mut libc::c_void),
+            NativeCallClientVideoRendererFns::new(on_video_frame),
+        );
 
         unsafe {
             daily_core_call_client_set_participant_video_renderer(
