@@ -15,7 +15,7 @@ use virtual_microphone_device::PyVirtualMicrophoneDevice;
 use virtual_speaker_device::PyVirtualSpeakerDevice;
 
 use std::env;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ptr;
 
 use daily_core::prelude::{
@@ -35,23 +35,18 @@ unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,
     device_id: *const libc::c_char,
 ) {
-    let device_cstr = CString::from_raw(device_id as *mut _);
-
-    let device = device_cstr.clone().into_string().unwrap();
+    let device = CStr::from_ptr(device_id).to_string_lossy().into_owned();
 
     let result = GLOBAL_CONTEXT
         .as_mut()
         .unwrap()
         .select_microphone_device(device.as_str());
 
-    Python::with_gil(|py| {
-        if let Err(error) = result {
+    if let Err(error) = result {
+        Python::with_gil(|py| {
             error.write_unraisable(py, None);
-        }
-    });
-
-    // Release pointer and avoid double-free.
-    let _ = device_cstr.into_raw();
+        });
+    }
 }
 
 unsafe extern "C" fn get_audio_device(_delegate: *mut libc::c_void) -> *const libc::c_char {
