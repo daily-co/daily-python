@@ -734,7 +734,7 @@ impl PyCallClient {
         callback: PyObject,
         video_source: &str,
         color_format: &str,
-    ) -> PyResult<()> {
+    ) {
         let participant_ptr = CString::new(participant_id)
             .expect("invalid participant ID string")
             .into_raw();
@@ -759,8 +759,9 @@ impl PyCallClient {
         };
 
         unsafe {
-            let result = daily_core_call_client_set_participant_video_renderer(
+            daily_core_call_client_set_participant_video_renderer(
                 self.call_client.as_mut(),
+                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
                 participant_ptr,
                 video_source_ptr,
                 color_format_ptr,
@@ -770,14 +771,6 @@ impl PyCallClient {
             let _ = CString::from_raw(participant_ptr);
             let _ = CString::from_raw(video_source_ptr);
             let _ = CString::from_raw(color_format_ptr);
-
-            if result {
-                Ok(())
-            } else {
-                Err(exceptions::PyRuntimeError::new_err(
-                    "unable to set video renderer",
-                ))
-            }
         }
     }
 }
