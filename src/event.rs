@@ -11,33 +11,35 @@ pub(crate) struct Event {
 }
 
 pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
-    match event.action.as_str() {
-        "active-speaker-changed" => Some("on_active_speaker_changed"),
-        "app-message" => Some("on_app_message"),
-        "available-devices-updated" => Some("on_available_devices_updated"),
-        "call-state-updated" => Some("on_call_state_updated"),
-        "error" => Some("on_error"),
-        "inputs-updated" => Some("on_inputs_updated"),
-        "live-stream-error" => Some("on_live_stream_error"),
-        "live-stream-started" => Some("on_live_stream_started"),
-        "live-stream-stopped" => Some("on_live_stream_stopped"),
-        "live-stream-warning" => Some("on_live_stream_warning"),
-        "network-stats-updated" => Some("on_network_stats_updated"),
-        "participant-counts-updated" => Some("on_participant_counts_updated"),
-        "participant-joined" => Some("on_participant_joined"),
-        "participant-left" => Some("on_participant_left"),
-        "participant-updated" => Some("on_participant_updated"),
-        "publishing-updated" => Some("on_publishing_updated"),
-        "recording-error" => Some("on_recording_error"),
-        "recording-started" => Some("on_recording_started"),
-        "recording-stopped" => Some("on_recording_stopped"),
-        "subscription-profiles-updated" => Some("on_subscription_profiles_updated"),
-        "subscriptions-updated" => Some("on_subscriptions_updated"),
+    let method_name = match event.action.as_str() {
+        "active-speaker-changed" => "on_active_speaker_changed",
+        "app-message" => "on_app_message",
+        "available-devices-updated" => "on_available_devices_updated",
+        "call-state-updated" => "on_call_state_updated",
+        "error" => "on_error",
+        "inputs-updated" => "on_inputs_updated",
+        "live-stream-error" => "on_live_stream_error",
+        "live-stream-started" => "on_live_stream_started",
+        "live-stream-stopped" => "on_live_stream_stopped",
+        "live-stream-warning" => "on_live_stream_warning",
+        "network-stats-updated" => "on_network_stats_updated",
+        "participant-counts-updated" => "on_participant_counts_updated",
+        "participant-joined" => "on_participant_joined",
+        "participant-left" => "on_participant_left",
+        "participant-updated" => "on_participant_updated",
+        "publishing-updated" => "on_publishing_updated",
+        "recording-error" => "on_recording_error",
+        "recording-started" => "on_recording_started",
+        "recording-stopped" => "on_recording_stopped",
+        "subscription-profiles-updated" => "on_subscription_profiles_updated",
+        "subscriptions-updated" => "on_subscriptions_updated",
         a => {
             tracing::debug!("unimplemented event handler {a}");
-            None
+            return None;
         }
-    }
+    };
+
+    Some(method_name)
 }
 
 pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
