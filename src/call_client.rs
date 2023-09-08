@@ -513,8 +513,6 @@ unsafe extern "C" fn on_event(
 
         let event_string = CStr::from_ptr(event_json).to_string_lossy().into_owned();
 
-        println!("EVENT: {event_string}");
-
         let event = serde_json::from_str::<Event>(event_string.as_str()).unwrap();
 
         if let Some(method_name) = method_name_from_event(&event) {

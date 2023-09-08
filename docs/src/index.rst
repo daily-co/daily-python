@@ -28,8 +28,8 @@ This functionality can be applied to several AI use cases, including:
 
 .. note::
 
-   This SDK is in pre-beta. This means that the API might change before we
-   the official release.
+   This SDK is in pre-beta. This means that the API might change before the
+   official release.
 
 .. _Daily: https://daily.co
 .. _numpy: https://numpy.org
