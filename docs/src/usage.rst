@@ -408,4 +408,5 @@ The audio format is 16-bit linear PCM.
 
 See :func:`daily.VirtualMicrophoneDevice.write_samples` for more details.
 
+
 .. _Daily: https://daily.co

@@ -90,24 +90,9 @@ impl PyCallClient {
     /// and `client_settings`. The client settings specifie inputs updates or
     /// publising settings.
     ///
-    /// The following tables define the fields of the client settings dictionary:
-    ///
-    /// .. list-table:: **ClientSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "inputs"
-    ///      - InputSettings
-    ///    * - "publishing"
-    ///      - PublishingSettings
-    ///
-    /// See :func:`inputs` and :func:`publishing` for more details.
-    ///
     /// :param str meeting_url: The URL of the Daily meeting to join
     /// :param str meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
-    /// :param dict client_settings: Client settings with inputs and pubslihing information
+    /// :param dict client_settings: See :ref:`ClientSettings`
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None))]
     pub fn join(
         &mut self,
@@ -203,7 +188,7 @@ impl PyCallClient {
 
     /// Returns the current participants in the meeting.
     ///
-    /// :return: The current participants in the meeting
+    /// :return: See :ref:`CallParticipants`
     /// :rtype: dict
     pub fn participants(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -221,7 +206,7 @@ impl PyCallClient {
 
     /// Returns the number of hidden and non-hidden participants in the meeting.
     ///
-    /// :return: The number of participants in the meeting
+    /// :return: The number of participants in the meeting. See :ref:`ParticipantCounts`
     /// :rtype: dict
     pub fn participant_counts(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -240,7 +225,7 @@ impl PyCallClient {
 
     /// Updates remote participants.
     ///
-    /// :param dict remote_participants: A dictionary with remote participants update information
+    /// :param dict remote_participants: See :ref:`RemoteParticipantUpdates`
     pub fn update_remote_participants(&mut self, remote_participants: PyObject) {
         let remote_participants_map: HashMap<String, DictValue> =
             Python::with_gil(|py| remote_participants.extract(py).unwrap());
@@ -265,72 +250,7 @@ impl PyCallClient {
     /// Returns the current client inputs. The inputs define the call client
     /// video and audio sources (i.e. cameras and microphones).
     ///
-    /// The following tables define the fields of the inputs dictionary:
-    ///
-    /// .. list-table:: **InputSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "camera"
-    ///      - CameraInputSettings
-    ///    * - "microphone"
-    ///      - MicrophoneInputSettings
-    ///
-    /// .. list-table:: **CameraInputSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "isEnabled"
-    ///      - true | false
-    ///    * - "settings"
-    ///      - VideoInputSettings
-    ///
-    /// .. list-table:: **VideoInputSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "deviceId"
-    ///      - DEVICE_ID (e.g. "my-video-camera")
-    ///    * - "width"
-    ///      - number
-    ///    * - "height"
-    ///      - number
-    ///    * - "frameRate"
-    ///      - number
-    ///    * - "facingMode"
-    ///      - "user" | "environment" | "left" | "right"
-    ///    * - "customConstraints"
-    ///      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
-    ///
-    /// .. list-table:: **MicrophoneInputSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "isEnabled"
-    ///      - true | false
-    ///    * - "settings"
-    ///      - AudioInputSettings
-    ///
-    /// .. list-table:: **AudioInputSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "deviceId"
-    ///      - DEVICE_ID (e.g. "my-audio-device")
-    ///    * - "customConstraints"
-    ///      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
-    ///
-    /// :return: The current inputs
+    /// :return: See :ref:`InputSettings`
     /// :rtype: dict
     pub fn inputs(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -347,9 +267,7 @@ impl PyCallClient {
     /// Updates input settings. This function allows you to update the call
     /// client video and audio inputs.
     ///
-    /// See :func:`inputs` for more details.
-    ///
-    /// :param dict input_settings: A dictionary with inputs information
+    /// :param dict input_settings: See :ref:`InputSettings`
     pub fn update_inputs(&mut self, input_settings: PyObject) {
         let input_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| input_settings.extract(py).unwrap());
@@ -375,75 +293,7 @@ impl PyCallClient {
     /// specify if media should be published (i.e. sent) and, if so, how it
     /// should be sent (e.g. what resolutions or bitrate).
     ///
-    /// The following tables define the fields of the publishing dictionary:
-    ///
-    /// .. list-table:: **PublishingSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "camera"
-    ///      - CameraPublishingSettings
-    ///    * - "microphone"
-    ///      - MicrophonePublishingSettings
-    ///
-    /// .. list-table:: **CameraPublishingSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "isPublishing"
-    ///      - true | false
-    ///    * - "sendSettings"
-    ///      - VideoPublishingSettings
-    ///
-    /// .. list-table:: **VideoPublishingSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "maxQuality"
-    ///      - "low" | "medium" | "high"
-    ///    * - "encodings"
-    ///      - "adaptiveHEVC" | Array(CustomVideoEncoding)
-    ///
-    /// .. list-table:: **CustomVideoEncoding**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "quality"
-    ///      - "low" | "medium" | "high"
-    ///    * - "parameters"
-    ///      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
-    ///
-    /// .. list-table:: **MicrophonePublishingSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "isPublishing"
-    ///      - true | false
-    ///    * - "sendSettings"
-    ///      - "speech" | "music" | AudioPublishingSettings
-    ///
-    /// .. list-table:: **AudioPublishingSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "channelConfig"
-    ///      - "mono" | "stereo"
-    ///    * - "bitrate"
-    ///      - number
-    ///
-    /// :return: The current publishing settings
+    /// :return: See :ref:`PublishingSettings`
     /// :rtype: dict
     pub fn publishing(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -462,9 +312,7 @@ impl PyCallClient {
     /// Updates publishing settings. This function allows you to update the call
     /// client video and audio publishing settings.
     ///
-    /// See :func:`publishing` for more details.
-    ///
-    /// :param dict publishing_settings: A dictionary with publishing information
+    /// :param dict publishing_settings: See :ref:`PublishingSettings`
     pub fn update_publishing(&mut self, publishing_settings: PyObject) {
         let publishing_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| publishing_settings.extract(py).unwrap());
@@ -489,65 +337,7 @@ impl PyCallClient {
     /// Returns the current client subscriptions. The client subscriptions is a
     /// dictionary containing specific subscriptions per remote participant.
     ///
-    /// The following tables define the fields of the subscriptions dictionary:
-    ///
-    /// .. list-table:: **ParticipantSubscription**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - PARTICIPANT_ID
-    ///      - ParticipantSubscriptionSettings
-    ///
-    /// .. list-table:: **ParticipantSubscriptionSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "profile"
-    ///      - PROFILE_NAME (e.g. "base")
-    ///    * - "media"
-    ///      - SubscriptionMediaSettings
-    ///
-    ///
-    /// .. list-table:: **SubscriptionMediaSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "camera"
-    ///      - "subscribed" | "unsubscribed" | SubscriptionVideoSettings
-    ///    * - "microphone"
-    ///      - "subscribed" | "unsubscribed"
-    ///    * - "screenVideo"
-    ///      - "subscribed" | "unsubscribed" | SubscriptionVideoSettings
-    ///    * - "screenAudio"
-    ///      - "subscribed" | "unsubscribed"
-    ///
-    /// .. list-table:: **SubscriptionVideoSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "subscriptionState"
-    ///      - "subscribed" | "unsubscribed"
-    ///    * - "settings"
-    ///      - ReceiveVideoSettings
-    ///
-    /// .. list-table:: **ReceiveVideoSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "maxQuality"
-    ///      - "low" | "medium" | "high"
-    ///
-    /// :return: The current subscriptions
+    /// :return: See :ref:`ParticipantSubscriptions`
     /// :rtype: dict
     pub fn subscriptions(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -568,11 +358,8 @@ impl PyCallClient {
     /// subscription profiles to a participant and even change specific settings
     /// for some participants.
     ///
-    /// See :func:`subscriptions` and :func:`subscription_profiles` for more
-    /// details.
-    ///
-    /// :param dict participant_settings: A dictionary with subscription updates for specific participants
-    /// :param dict profile_settings: A dictionary with subscription profiles updates
+    /// :param dict participant_settings: See :ref:`ParticipantSubscriptions`
+    /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
     #[pyo3(signature = (participant_settings = None, profile_settings = None))]
     pub fn update_subscriptions(
         &mut self,
@@ -626,21 +413,7 @@ impl PyCallClient {
     /// Returns the current client subscription profiles. A subscription profile
     /// gives a set of subscription media settings a name.
     ///
-    /// The following table defines the fields of the subscription profiles
-    /// dictionary:
-    ///
-    /// .. list-table:: **SubscriptionSettings**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - PROFILE_NAME
-    ///      - SubscriptionMediaSettings
-    ///
-    /// See :func:`subscriptions` for more details.
-    ///
-    /// :return: The current subscription profiles
+    /// :return: See :ref:`SubscriptionProfileSettings`
     /// :rtype: dict
     pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
         unsafe {
@@ -657,9 +430,7 @@ impl PyCallClient {
 
     /// Updates subscription profiles.
     ///
-    /// See :func:`subscription_profiles` for more details.
-    ///
-    /// :param dict profile_settings: A dictionary with subscription profiles updates
+    /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
     pub fn update_subscription_profiles(&mut self, profile_settings: PyObject) {
         let profile_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| profile_settings.extract(py).unwrap());
@@ -684,22 +455,7 @@ impl PyCallClient {
     /// this client and is only allowed if this client is the owner of the
     /// meeting.
     ///
-    /// The following table defines the fields of the permissions dictionary:
-    ///
-    /// .. list-table:: **Permissions**
-    ///    :widths: 25 75
-    ///    :header-rows: 1
-    ///
-    ///    * - Key
-    ///      - Value
-    ///    * - "hasPresence"
-    ///      - bool
-    ///    * - "canSend"
-    ///      - Array("video", "audio", "screenVideo", "screenAudio")
-    ///    * - "canAdmin"
-    ///      - bool
-    ///
-    /// :param dict permissions: A dictionary with permission updates
+    /// :param dict permissions: See :ref:`Permissions`
     pub fn update_permissions(&mut self, permissions: PyObject) {
         let permissions_map: HashMap<String, DictValue> =
             Python::with_gil(|py| permissions.extract(py).unwrap());
@@ -726,7 +482,7 @@ impl PyCallClient {
     /// :param str participant_id: The ID of the participant to receive video from
     /// :param function callback: A function or class method to be called on every received frame
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
-    /// :param str color_format: The color format that frames should be received. Available formats: ABGR32, ARGB32, BGRA32, RGB24, RGBA32, I420
+    /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA32"))]
     pub fn set_video_renderer(
         &mut self,

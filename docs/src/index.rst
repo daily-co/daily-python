@@ -38,11 +38,12 @@ This functionality can be applied to several AI use cases, including:
 .. _YOLOv5: https://github.com/ultralytics/yolov5
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    installation
    usage
    api_reference
+   types
 
 
 Indices and tables
