@@ -6,19 +6,18 @@ use crate::PyVirtualMicrophoneDevice;
 use crate::PyVirtualSpeakerDevice;
 
 use webrtc_daily::sys::{
-    audio_device_module::NativeAudioDeviceModule,
-    custom_microphone_device::NativeCustomMicrophoneDevice,
-    custom_speaker_device::NativeCustomSpeakerDevice, media_stream::MediaStream,
-    rtc_refcount_interface_addref,
+    audio_device_module::NativeAudioDeviceModule, media_stream::MediaStream,
+    rtc_refcount_interface_addref, virtual_microphone_device::NativeVirtualMicrophoneDevice,
+    virtual_speaker_device::NativeVirtualSpeakerDevice,
 };
 
 use daily_core::prelude::{
     daily_core_context_create_audio_device_module,
-    daily_core_context_create_custom_microphone_device,
-    daily_core_context_create_custom_speaker_device, daily_core_context_custom_get_user_media,
-    daily_core_context_get_selected_custom_microphone_device,
-    daily_core_context_select_custom_microphone_device,
-    daily_core_context_select_custom_speaker_device, WebrtcAudioDeviceModule,
+    daily_core_context_create_virtual_microphone_device,
+    daily_core_context_create_virtual_speaker_device, daily_core_context_custom_get_user_media,
+    daily_core_context_get_selected_virtual_microphone_device,
+    daily_core_context_select_virtual_microphone_device,
+    daily_core_context_select_virtual_speaker_device, WebrtcAudioDeviceModule,
     WebrtcPeerConnectionFactory, WebrtcTaskQueueFactory, WebrtcThread,
 };
 
@@ -120,14 +119,14 @@ impl DailyContext {
             let mut py_device = PyVirtualSpeakerDevice::new(device_name, sample_rate, channels);
 
             unsafe {
-                let speaker_device = daily_core_context_create_custom_speaker_device(
+                let speaker_device = daily_core_context_create_virtual_speaker_device(
                     adm.as_mut_ptr() as *mut _,
                     device_name_cstr.as_ptr(),
                     sample_rate,
                     channels,
                 );
 
-                py_device.attach_audio_device(NativeCustomSpeakerDevice::from_unretained(
+                py_device.attach_audio_device(NativeVirtualSpeakerDevice::from_unretained(
                     speaker_device as *mut _,
                 ));
             }
@@ -153,14 +152,14 @@ impl DailyContext {
             let mut py_device = PyVirtualMicrophoneDevice::new(device_name, sample_rate, channels);
 
             unsafe {
-                let microphone_device = daily_core_context_create_custom_microphone_device(
+                let microphone_device = daily_core_context_create_virtual_microphone_device(
                     adm.as_mut_ptr() as *mut _,
                     device_name_cstr.as_ptr(),
                     sample_rate,
                     channels,
                 );
 
-                py_device.attach_audio_device(NativeCustomMicrophoneDevice::from_unretained(
+                py_device.attach_audio_device(NativeVirtualMicrophoneDevice::from_unretained(
                     microphone_device as *mut _,
                 ));
             }
@@ -179,7 +178,7 @@ impl DailyContext {
                 CString::new(device_name).expect("invalid virtual speaker device name string");
 
             let selected = unsafe {
-                daily_core_context_select_custom_speaker_device(
+                daily_core_context_select_virtual_speaker_device(
                     adm.as_ptr() as *mut _,
                     device_name_cstr.as_ptr(),
                 )
@@ -205,7 +204,7 @@ impl DailyContext {
                 CString::new(device_name).expect("invalid virtual microphone device name string");
 
             let selected = unsafe {
-                daily_core_context_select_custom_microphone_device(
+                daily_core_context_select_virtual_microphone_device(
                     adm.as_ptr() as *mut _,
                     device_name_cstr.as_ptr(),
                 )
@@ -230,7 +229,7 @@ impl DailyContext {
 
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device =
-                daily_core_context_get_selected_custom_microphone_device(adm.as_ptr() as *mut _);
+                daily_core_context_get_selected_virtual_microphone_device(adm.as_ptr() as *mut _);
             if device.is_null() {
                 empty.into_raw()
             } else {

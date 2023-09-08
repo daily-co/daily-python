@@ -1,6 +1,6 @@
 use webrtc_daily::sys::{
-    custom_microphone_device::NativeCustomMicrophoneDevice,
-    webrtc_daily_custom_microphone_device_write_samples,
+    virtual_microphone_device::NativeVirtualMicrophoneDevice,
+    webrtc_daily_virtual_microphone_device_write_samples,
 };
 
 use pyo3::exceptions;
@@ -17,7 +17,7 @@ pub struct PyVirtualMicrophoneDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
-    audio_device: Option<NativeCustomMicrophoneDevice>,
+    audio_device: Option<NativeVirtualMicrophoneDevice>,
 }
 
 impl PyVirtualMicrophoneDevice {
@@ -30,7 +30,7 @@ impl PyVirtualMicrophoneDevice {
         }
     }
 
-    pub fn attach_audio_device(&mut self, audio_device: NativeCustomMicrophoneDevice) {
+    pub fn attach_audio_device(&mut self, audio_device: NativeVirtualMicrophoneDevice) {
         self.audio_device = Some(audio_device);
     }
 }
@@ -82,7 +82,7 @@ impl PyVirtualMicrophoneDevice {
                 let py_samples: &PyBytes = samples.downcast::<PyBytes>(py).unwrap();
 
                 let samples_written = unsafe {
-                    webrtc_daily_custom_microphone_device_write_samples(
+                    webrtc_daily_virtual_microphone_device_write_samples(
                         audio_device.as_ptr() as *mut _,
                         py_samples.as_bytes().as_ptr() as *const _,
                         num_samples,

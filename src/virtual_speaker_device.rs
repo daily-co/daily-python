@@ -1,6 +1,6 @@
 use webrtc_daily::sys::{
-    custom_speaker_device::NativeCustomSpeakerDevice,
-    webrtc_daily_custom_speaker_device_read_samples,
+    virtual_speaker_device::NativeVirtualSpeakerDevice,
+    webrtc_daily_virtual_speaker_device_read_samples,
 };
 
 use pyo3::exceptions;
@@ -17,7 +17,7 @@ pub struct PyVirtualSpeakerDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
-    audio_device: Option<NativeCustomSpeakerDevice>,
+    audio_device: Option<NativeVirtualSpeakerDevice>,
 }
 
 impl PyVirtualSpeakerDevice {
@@ -30,7 +30,7 @@ impl PyVirtualSpeakerDevice {
         }
     }
 
-    pub fn attach_audio_device(&mut self, audio_device: NativeCustomSpeakerDevice) {
+    pub fn attach_audio_device(&mut self, audio_device: NativeVirtualSpeakerDevice) {
         self.audio_device = Some(audio_device);
     }
 }
@@ -85,7 +85,7 @@ impl PyVirtualSpeakerDevice {
                 let mut bytes: Vec<u8> = Vec::with_capacity(num_bytes);
 
                 let samples_read = unsafe {
-                    webrtc_daily_custom_speaker_device_read_samples(
+                    webrtc_daily_virtual_speaker_device_read_samples(
                         audio_device.as_ptr() as *mut _,
                         bytes.as_mut_ptr() as *mut _,
                         num_samples,
