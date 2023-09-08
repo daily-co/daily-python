@@ -40,6 +40,8 @@ impl DailyContext {
     }
 
     pub fn get_enumerated_devices(&self) -> *mut libc::c_char {
+        let empty: CString = CString::new("[]").expect("invalid enumerated devices string");
+
         if let Some(adm) = self.audio_device_module.as_ref() {
             let devices = unsafe {
                 webrtc_daily::sys::webrtc_daily_custom_audio_enumerated_devices(
@@ -48,13 +50,13 @@ impl DailyContext {
             };
 
             if devices.is_null() {
-                concat!("[]", "\0").as_ptr() as *mut _
+                empty.into_raw()
             } else {
-                // TODO(aleix): leaking?
+                // NOTE(aleix): Leaking because get_enumerated_devices() uses CStr.
                 devices as *mut _
             }
         } else {
-            concat!("[]", "\0").as_ptr() as *mut _
+            empty.into_raw()
         }
     }
 
@@ -224,17 +226,19 @@ impl DailyContext {
     }
 
     pub fn get_selected_microphone_device(&self) -> *const libc::c_char {
+        let empty: CString = CString::new("").expect("invalid selected microphone string");
+
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device =
                 daily_core_context_get_selected_custom_microphone_device(adm.as_ptr() as *mut _);
             if device.is_null() {
-                concat!("", "\0").as_ptr() as *const _
+                empty.into_raw()
             } else {
-                // TODO(aleix): leaking?
+                // NOTE(aleix): Leaking because get_audio_device() uses CStr.
                 device
             }
         } else {
-            concat!("", "\0").as_ptr() as *const _
+            empty.into_raw()
         }
     }
 }
