@@ -101,9 +101,7 @@ impl PyCallClient {
         client_settings: Option<PyObject>,
     ) {
         // Meeting URL
-        let meeting_url_ptr = CString::new(meeting_url)
-            .expect("invalid meeting URL string")
-            .into_raw();
+        let meeting_url_cstr = CString::new(meeting_url).expect("invalid meeting URL string");
 
         // Meeting token
         let meeting_token_string: String = if let Some(meeting_token) = meeting_token {
@@ -111,13 +109,8 @@ impl PyCallClient {
         } else {
             "".to_string()
         };
-        let meeting_token_ptr = if meeting_token_string.is_empty() {
-            ptr::null_mut()
-        } else {
-            CString::new(meeting_token_string)
-                .expect("invalid meeting token string")
-                .into_raw()
-        };
+        let meeting_token_cstr =
+            CString::new(meeting_token_string).expect("invalid meeting token string");
 
         // Client settings
         let client_settings_string: String = if let Some(client_settings) = client_settings {
@@ -129,34 +122,29 @@ impl PyCallClient {
         } else {
             "".to_string()
         };
-        let client_settings_ptr = if client_settings_string.is_empty() {
-            ptr::null_mut()
-        } else {
-            CString::new(client_settings_string)
-                .expect("invalid client settings string")
-                .into_raw()
-        };
+        let client_settings_cstr =
+            CString::new(client_settings_string).expect("invalid client settings string");
 
         unsafe {
             daily_core_call_client_join(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                meeting_url_ptr,
-                meeting_token_ptr,
-                client_settings_ptr,
+                meeting_url_cstr.as_ptr(),
+                if meeting_token_cstr.is_empty() {
+                    ptr::null_mut()
+                } else {
+                    meeting_token_cstr.as_ptr()
+                },
+                if client_settings_cstr.is_empty() {
+                    ptr::null_mut()
+                } else {
+                    client_settings_cstr.as_ptr()
+                },
             );
-
-            let _ = CString::from_raw(meeting_url_ptr);
-            if !meeting_token_ptr.is_null() {
-                let _ = CString::from_raw(meeting_token_ptr);
-            }
-            if !client_settings_ptr.is_null() {
-                let _ = CString::from_raw(client_settings_ptr);
-            }
         }
     }
 
-    /// Leave a previsouly joined meeting.
+    /// Leave a previously joined meeting.
     pub fn leave(&mut self) {
         unsafe {
             daily_core_call_client_leave(
@@ -171,18 +159,14 @@ impl PyCallClient {
     ///
     /// :param str user_name: This client's user name
     pub fn set_user_name(&mut self, user_name: &str) {
-        unsafe {
-            let user_name_ptr = CString::new(user_name)
-                .expect("invalid user name string")
-                .into_raw();
+        let user_name_cstr = CString::new(user_name).expect("invalid user name string");
 
+        unsafe {
             daily_core_call_client_set_user_name(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                user_name_ptr,
+                user_name_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(user_name_ptr);
         }
     }
 
@@ -232,18 +216,15 @@ impl PyCallClient {
 
         let remote_participants_string = serde_json::to_string(&remote_participants_map).unwrap();
 
-        let remote_participants_ptr = CString::new(remote_participants_string)
-            .expect("invalid remote participants string")
-            .into_raw();
+        let remote_participants_cstr =
+            CString::new(remote_participants_string).expect("invalid remote participants string");
 
         unsafe {
             daily_core_call_client_update_remote_participants(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                remote_participants_ptr,
+                remote_participants_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(remote_participants_ptr);
         }
     }
 
@@ -274,18 +255,15 @@ impl PyCallClient {
 
         let input_settings_string = serde_json::to_string(&input_settings_map).unwrap();
 
-        let input_settings_ptr = CString::new(input_settings_string)
-            .expect("invalid input settings string")
-            .into_raw();
+        let input_settings_cstr =
+            CString::new(input_settings_string).expect("invalid input settings string");
 
         unsafe {
             daily_core_call_client_update_inputs(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                input_settings_ptr,
+                input_settings_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(input_settings_ptr);
         }
     }
 
@@ -319,18 +297,15 @@ impl PyCallClient {
 
         let publishing_settings_string = serde_json::to_string(&publishing_settings_map).unwrap();
 
-        let publishing_settings_ptr = CString::new(publishing_settings_string)
-            .expect("invalid publishing settings string")
-            .into_raw();
+        let publishing_settings_cstr =
+            CString::new(publishing_settings_string).expect("invalid publishing settings string");
 
         unsafe {
             daily_core_call_client_update_publishing(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                publishing_settings_ptr,
+                publishing_settings_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(publishing_settings_ptr);
         }
     }
 
@@ -366,47 +341,47 @@ impl PyCallClient {
         participant_settings: Option<PyObject>,
         profile_settings: Option<PyObject>,
     ) {
-        let participant_settings_ptr = if let Some(participant_settings) = participant_settings {
+        // Participant subscription settings
+        let participant_settings_string = if let Some(participant_settings) = participant_settings {
             let participant_settings_map: HashMap<String, DictValue> =
                 Python::with_gil(|py| participant_settings.extract(py).unwrap());
 
-            let participant_settings_string =
-                serde_json::to_string(&participant_settings_map).unwrap();
-
-            CString::new(participant_settings_string)
-                .expect("invalid participant settings string")
-                .into_raw()
+            serde_json::to_string(&participant_settings_map).unwrap()
         } else {
-            ptr::null_mut()
+            "".to_string()
         };
 
-        let profile_settings_ptr = if let Some(profile_settings) = profile_settings {
+        let participant_settings_cstr =
+            CString::new(participant_settings_string).expect("invalid participant settings string");
+
+        // Profile settings
+        let profile_settings_string = if let Some(profile_settings) = profile_settings {
             let profile_settings_map: HashMap<String, DictValue> =
                 Python::with_gil(|py| profile_settings.extract(py).unwrap());
 
-            let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
-
-            CString::new(profile_settings_string)
-                .expect("invalid profile settings string")
-                .into_raw()
+            serde_json::to_string(&profile_settings_map).unwrap()
         } else {
-            ptr::null_mut()
+            "".to_string()
         };
+
+        let profile_settings_cstr =
+            CString::new(profile_settings_string).expect("invalid profile settings string");
 
         unsafe {
             daily_core_call_client_update_subscriptions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                participant_settings_ptr,
-                profile_settings_ptr,
+                if participant_settings_cstr.is_empty() {
+                    ptr::null()
+                } else {
+                    participant_settings_cstr.as_ptr()
+                },
+                if profile_settings_cstr.is_empty() {
+                    ptr::null()
+                } else {
+                    profile_settings_cstr.as_ptr()
+                },
             );
-
-            if !participant_settings_ptr.is_null() {
-                let _ = CString::from_raw(participant_settings_ptr);
-            }
-            if !profile_settings_ptr.is_null() {
-                let _ = CString::from_raw(profile_settings_ptr);
-            }
         }
     }
 
@@ -436,18 +411,15 @@ impl PyCallClient {
             Python::with_gil(|py| profile_settings.extract(py).unwrap());
 
         let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
-        let profile_settings_ptr = CString::new(profile_settings_string)
-            .expect("invalid profile settings string")
-            .into_raw();
+        let profile_settings_cstr =
+            CString::new(profile_settings_string).expect("invalid profile settings string");
 
         unsafe {
             daily_core_call_client_update_subscription_profiles(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                profile_settings_ptr,
+                profile_settings_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(profile_settings_ptr);
         }
     }
 
@@ -461,18 +433,15 @@ impl PyCallClient {
             Python::with_gil(|py| permissions.extract(py).unwrap());
 
         let permissions_string = serde_json::to_string(&permissions_map).unwrap();
-        let permissions_ptr = CString::new(permissions_string)
-            .expect("invalid permissions string")
-            .into_raw();
+        let permissions_cstr =
+            CString::new(permissions_string).expect("invalid permissions string");
 
         unsafe {
             daily_core_call_client_update_permissions(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                permissions_ptr,
+                permissions_cstr.as_ptr(),
             );
-
-            let _ = CString::from_raw(permissions_ptr);
         }
     }
 
@@ -491,17 +460,9 @@ impl PyCallClient {
         video_source: &str,
         color_format: &str,
     ) {
-        let participant_ptr = CString::new(participant_id)
-            .expect("invalid participant ID string")
-            .into_raw();
-
-        let video_source_ptr = CString::new(video_source)
-            .expect("invalid video source string")
-            .into_raw();
-
-        let color_format_ptr = CString::new(color_format)
-            .expect("invalid color format string")
-            .into_raw();
+        let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
+        let video_source_cstr = CString::new(video_source).expect("invalid video source string");
+        let color_format_cstr = CString::new(color_format).expect("invalid color format string");
 
         let callback_ctx: PyObject = Python::with_gil(|py| {
             Py::new(py, PyCallClientCallbackContext { callback })
@@ -518,15 +479,11 @@ impl PyCallClient {
             daily_core_call_client_set_participant_video_renderer(
                 self.call_client.as_mut(),
                 GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
-                participant_ptr,
-                video_source_ptr,
-                color_format_ptr,
+                participant_cstr.as_ptr(),
+                video_source_cstr.as_ptr(),
+                color_format_cstr.as_ptr(),
                 video_renderer,
             );
-
-            let _ = CString::from_raw(participant_ptr);
-            let _ = CString::from_raw(video_source_ptr);
-            let _ = CString::from_raw(color_format_ptr);
         }
     }
 }

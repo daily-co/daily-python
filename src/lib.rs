@@ -106,17 +106,16 @@ impl PyDaily {
             daily_core_set_log_level(LogLevel::Off);
         }
 
-        let library_ptr = CString::new(DAILY_PYTHON_NAME)
-            .expect("invalid library string")
-            .into_raw();
-        let version_ptr = CString::new(DAILY_PYTHON_VERSION)
-            .expect("invalid version string")
-            .into_raw();
-        let os_ptr = CString::new(env::consts::OS)
-            .expect("invalid OS string")
-            .into_raw();
+        let library_cstr = CString::new(DAILY_PYTHON_NAME).expect("invalid library string");
+        let version_cstr = CString::new(DAILY_PYTHON_VERSION).expect("invalid version string");
+        let os_cstr = CString::new(env::consts::OS).expect("invalid OS string");
 
-        let about_client = NativeAboutClient::new(library_ptr, version_ptr, os_ptr, ptr::null());
+        let about_client = NativeAboutClient::new(
+            library_cstr.as_ptr(),
+            version_cstr.as_ptr(),
+            os_cstr.as_ptr(),
+            ptr::null(),
+        );
 
         let context_delegate =
             NativeContextDelegate::new(NativeContextDelegatePtr::new(ptr::null_mut()));
@@ -146,12 +145,6 @@ impl PyDaily {
             about_client,
             worker_threads,
         );
-
-        unsafe {
-            let _ = CString::from_raw(library_ptr);
-            let _ = CString::from_raw(version_ptr);
-            let _ = CString::from_raw(os_ptr);
-        }
     }
 
     /// Deallocates SDK resources. This is usually called when shutting down the

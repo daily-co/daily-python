@@ -112,16 +112,15 @@ impl DailyContext {
         channels: u8,
     ) -> PyResult<PyVirtualSpeakerDevice> {
         if let Some(adm) = self.audio_device_module.as_mut() {
-            let device_name_ptr = CString::new(device_name)
-                .expect("invalid virtual speaker device name string")
-                .into_raw();
+            let device_name_cstr =
+                CString::new(device_name).expect("invalid virtual speaker device name string");
 
             let mut py_device = PyVirtualSpeakerDevice::new(device_name, sample_rate, channels);
 
             unsafe {
                 let speaker_device = daily_core_context_create_custom_speaker_device(
                     adm.as_mut_ptr() as *mut _,
-                    device_name_ptr,
+                    device_name_cstr.as_ptr(),
                     sample_rate,
                     channels,
                 );
@@ -129,8 +128,6 @@ impl DailyContext {
                 py_device.attach_audio_device(NativeCustomSpeakerDevice::from_unretained(
                     speaker_device as *mut _,
                 ));
-
-                let _ = CString::from_raw(device_name_ptr);
             }
 
             Ok(py_device)
@@ -148,16 +145,15 @@ impl DailyContext {
         channels: u8,
     ) -> PyResult<PyVirtualMicrophoneDevice> {
         if let Some(adm) = self.audio_device_module.as_mut() {
-            let device_name_ptr = CString::new(device_name)
-                .expect("invalid virtual microphone device name string")
-                .into_raw();
+            let device_name_cstr =
+                CString::new(device_name).expect("invalid virtual microphone device name string");
 
             let mut py_device = PyVirtualMicrophoneDevice::new(device_name, sample_rate, channels);
 
             unsafe {
                 let microphone_device = daily_core_context_create_custom_microphone_device(
                     adm.as_mut_ptr() as *mut _,
-                    device_name_ptr,
+                    device_name_cstr.as_ptr(),
                     sample_rate,
                     channels,
                 );
@@ -165,8 +161,6 @@ impl DailyContext {
                 py_device.attach_audio_device(NativeCustomMicrophoneDevice::from_unretained(
                     microphone_device as *mut _,
                 ));
-
-                let _ = CString::from_raw(device_name_ptr);
             }
 
             Ok(py_device)
@@ -179,19 +173,14 @@ impl DailyContext {
 
     pub fn select_speaker_device(&mut self, device_name: &str) -> PyResult<()> {
         if let Some(adm) = self.audio_device_module.as_ref() {
-            let device_name_ptr = CString::new(device_name)
-                .expect("invalid virtual speaker device name string")
-                .into_raw();
+            let device_name_cstr =
+                CString::new(device_name).expect("invalid virtual speaker device name string");
 
             let selected = unsafe {
-                let selected = daily_core_context_select_custom_speaker_device(
+                daily_core_context_select_custom_speaker_device(
                     adm.as_ptr() as *mut _,
-                    device_name_ptr,
-                );
-
-                let _ = CString::from_raw(device_name_ptr);
-
-                selected
+                    device_name_cstr.as_ptr(),
+                )
             };
 
             if selected {
@@ -210,19 +199,14 @@ impl DailyContext {
 
     pub fn select_microphone_device(&mut self, device_name: &str) -> PyResult<()> {
         if let Some(adm) = self.audio_device_module.as_ref() {
-            let device_name_ptr = CString::new(device_name)
-                .expect("invalid virtual microphone device name string")
-                .into_raw();
+            let device_name_cstr =
+                CString::new(device_name).expect("invalid virtual microphone device name string");
 
             let selected = unsafe {
-                let selected = daily_core_context_select_custom_microphone_device(
+                daily_core_context_select_custom_microphone_device(
                     adm.as_ptr() as *mut _,
-                    device_name_ptr,
-                );
-
-                let _ = CString::from_raw(device_name_ptr);
-
-                selected
+                    device_name_cstr.as_ptr(),
+                )
             };
 
             if selected {
