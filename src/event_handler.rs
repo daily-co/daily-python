@@ -157,6 +157,8 @@ impl PyEventHandler {
     }
 
     /// Event emitted for all participants when a recording starts.
+    ///
+    /// :param dict status: See :ref:`RecordingStatus`
     fn on_recording_started(&self, status: PyObject) -> PyResult<()> {
         Ok(())
     }

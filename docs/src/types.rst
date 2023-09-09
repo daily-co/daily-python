@@ -56,9 +56,9 @@ AvailableDevices
      - [ `MediaDeviceInfo`_ ]
 
 
-.. _CallParticipant:
+.. _CallParticipants:
 
-CallParticipant
+CallParticipants
 -----------------------------------
 
 .. list-table::
@@ -71,9 +71,9 @@ CallParticipant
      - `Participant`_
 
 
-.. _CallParticipants:
+.. _CallAllParticipants:
 
-CallParticipants
+CallAllParticipants
 -----------------------------------
 
 .. list-table::
@@ -85,7 +85,7 @@ CallParticipants
    * - "localPeerId"
      - string
    * - "allParticipants"
-     - `CallParticipant`_
+     - `CallParticipants`_
 
 
 .. _CanAdminPermission:
@@ -343,7 +343,7 @@ NetworkStats
    * - "previousThreshold"
      - `NetworkThreshold`_
    * - "quality"
-     - int
+     - number
    * - "stats"
      - `NetworkDetailedStats`_
    * - "threshold"
