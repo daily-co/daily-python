@@ -69,9 +69,9 @@ impl PyVirtualMicrophoneDevice {
     ///
     /// The number of audio samples should be multiple of 10ms of audio samples
     /// of the configured sample rate. For example, if the sample rate is 16000
-    /// we should be able to read 160 (10ms), 320 (20ms), 480 (30ms), etc.
+    /// we should be able to write 160 (10ms), 320 (20ms), 480 (30ms), etc.
     ///
-    /// :param bytestring num_samples: A bytestring with the samples to write
+    /// :param bytestring samples: A bytestring with the samples to write
     /// :param int num_samples: The number of samples to write
     ///
     /// :return: The number of samples written (which should match `num_samples`) or 0 if samples could not still be written
@@ -80,6 +80,18 @@ impl PyVirtualMicrophoneDevice {
         if let Some(audio_device) = self.audio_device.as_ref() {
             Python::with_gil(|py| {
                 let py_samples: &PyBytes = samples.downcast::<PyBytes>(py).unwrap();
+
+                let length = py_samples.len();
+                if let Err(err) = length {
+                    return Err(err);
+                }
+
+                let num_samples_bytes = num_samples * 2;
+                if num_samples_bytes > length.unwrap() {
+                    return Err(exceptions::PyValueError::new_err(
+                        "samples bytestring contains less samples than num_samples",
+                    ));
+                }
 
                 let samples_written = unsafe {
                     webrtc_daily_virtual_microphone_device_write_samples(

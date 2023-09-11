@@ -77,23 +77,25 @@ impl PyVirtualSpeakerDevice {
     /// :rtype: bytestring.
     pub fn read_samples(&self, num_samples: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
+            // libwebrtc provides with 16-bit linear PCM
+            let bits_per_sample = 16;
+            let num_bytes = num_samples * (bits_per_sample * self.channels() as usize) / 8;
+            let num_words = num_bytes / 2;
+
+            let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
+
+            let samples_read = unsafe {
+                webrtc_daily_virtual_speaker_device_read_samples(
+                    audio_device.as_ptr() as *mut _,
+                    buffer.as_mut_ptr(),
+                    num_samples,
+                )
+            };
+
             Python::with_gil(|py| {
-                // libwebrtc provides with 16-bit linear PCM
-                let bits_per_sample = 16;
-                let num_bytes = num_samples * (bits_per_sample * self.channels() as usize) / 8;
-
-                let mut bytes: Vec<u8> = Vec::with_capacity(num_bytes);
-
-                let samples_read = unsafe {
-                    webrtc_daily_virtual_speaker_device_read_samples(
-                        audio_device.as_ptr() as *mut _,
-                        bytes.as_mut_ptr() as *mut _,
-                        num_samples,
-                    )
-                };
-
                 if samples_read == num_samples as i32 {
-                    let py_bytes = unsafe { PyBytes::from_ptr(py, bytes.as_ptr(), num_bytes) };
+                    let py_bytes =
+                        unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
                     Ok(py_bytes.into_py(py))
                 } else if samples_read == 0 {
                     let empty_bytes: [u8; 0] = [];
