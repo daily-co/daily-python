@@ -16,12 +16,12 @@ impl DictValue {
         match val {
             Value::Null => py.None(),
             Value::Bool(b) => b.to_object(py),
-            Value::Number(n) => {
-                let oi64 = n.as_i64().map(|i| i.to_object(py));
-                let ou64 = n.as_u64().map(|i| i.to_object(py));
-                let of64 = n.as_f64().map(|i| i.to_object(py));
-                oi64.or(ou64).or(of64).expect("Invalid number")
-            }
+            Value::Number(n) => n
+                .as_i64()
+                .map(|i| i.to_object(py))
+                .or_else(|| n.as_u64().map(|i| i.to_object(py)))
+                .or_else(|| n.as_f64().map(|i| i.to_object(py)))
+                .expect("Invalid number"),
             Value::String(s) => s.to_object(py),
             Value::Array(v) => {
                 let inner: Vec<_> = v.iter().map(|x| Self::value_to_object(x, py)).collect();
