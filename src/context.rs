@@ -39,7 +39,7 @@ impl DailyContext {
     }
 
     pub fn get_enumerated_devices(&self) -> *mut libc::c_char {
-        let empty: CString = CString::new("[]").expect("invalid enumerated devices string");
+        const EMPTY: &[u8] = b"[]\0";
 
         if let Some(adm) = self.audio_device_module.as_ref() {
             let devices = unsafe {
@@ -49,13 +49,13 @@ impl DailyContext {
             };
 
             if devices.is_null() {
-                empty.into_raw()
+                EMPTY.as_ptr().cast_mut() as *mut _
             } else {
                 // NOTE(aleix): Leaking because get_enumerated_devices() uses CStr.
                 devices as *mut _
             }
         } else {
-            empty.into_raw()
+            EMPTY.as_ptr().cast_mut() as *mut _
         }
     }
 
@@ -225,19 +225,19 @@ impl DailyContext {
     }
 
     pub fn get_selected_microphone_device(&self) -> *const libc::c_char {
-        let empty: CString = CString::new("").expect("invalid selected microphone string");
+        const EMPTY: &[u8] = b"\0";
 
         if let Some(adm) = self.audio_device_module.as_ref() {
             let device =
                 daily_core_context_get_selected_virtual_microphone_device(adm.as_ptr() as *mut _);
             if device.is_null() {
-                empty.into_raw()
+                EMPTY.as_ptr().cast()
             } else {
                 // NOTE(aleix): Leaking because get_audio_device() uses CStr.
                 device
             }
         } else {
-            empty.into_raw()
+            EMPTY.as_ptr().cast()
         }
     }
 }
