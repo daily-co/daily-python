@@ -217,7 +217,7 @@ LiveStreamStatus
    * - Key
      - Value
    * - "layout"
-     - StreamingLayout
+     - `StreamingLayout`_
    * - "startedBy"
      - string
    * - "streamId"
@@ -615,7 +615,7 @@ RecordingStatus
    * - Key
      - Value
    * - "layout"
-     - StreamingLayout
+     - `StreamingLayout`_
    * - "recordingId"
      - string
    * - "startedBy"
@@ -691,6 +691,13 @@ SubscriptionVideoSettings
    * - "settings"
      - `ReceiveVideoSettings`_
 
+
+.. _StreamingLayout:
+
+StreamingLayout
+-----------------------------------
+
+For more details see the `layout object <https://docs.daily.co/reference/daily-js/instance-methods/start-recording#control-cloud-recording-layouts>`_.
 
 .. _VideoInputSettings:
 
