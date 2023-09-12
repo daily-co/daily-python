@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 
 /// This a base class for event handlers. Event handlers are used to handle
 /// events from the meeting, for example when a participant joins or leaves the
@@ -15,9 +16,14 @@ pub struct PyEventHandler;
 
 #[pymethods]
 impl PyEventHandler {
+    // Since this is a base class it might be that subclasses have arguments in
+    // their constructors. Those would be passed to new() even if we don't
+    // really need them. So, in order to accept any subclass arguments we just
+    // use a py_args extra positional arguments trick.
     #[new]
-    fn new() -> Self {
-        Self {}
+    #[pyo3(signature = (*py_args))]
+    fn new(py_args: &PyTuple) -> PyResult<Self> {
+        Ok(Self {})
     }
 
     /// Event emitted when the active speaker of the call has changed.
