@@ -81,13 +81,10 @@ impl PyVirtualMicrophoneDevice {
             Python::with_gil(|py| {
                 let py_samples: &PyBytes = samples.downcast::<PyBytes>(py).unwrap();
 
-                let length = py_samples.len();
-                if let Err(err) = length {
-                    return Err(err);
-                }
+                let length = py_samples.len()?;
 
                 let num_samples_bytes = num_samples * 2;
-                if num_samples_bytes > length.unwrap() {
+                if num_samples_bytes > length {
                     return Err(exceptions::PyValueError::new_err(
                         "samples bytestring contains less samples than num_samples",
                     ));
