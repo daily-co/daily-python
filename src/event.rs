@@ -10,6 +10,22 @@ pub(crate) struct Event {
     pub data: DictValue,
 }
 
+pub(crate) fn request_id_from_event(event: &Event) -> Option<u64> {
+    if let Some(object) = event.data.0.as_object() {
+        if let Some(request_id) = object.get("requestId") {
+            if let Some(id) = request_id.get("id") {
+                id.as_u64()
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
     let method_name = match event.action.as_str() {
         "active-speaker-changed" => "on_active_speaker_changed",
@@ -130,6 +146,20 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "recording-stopped" => object
             .get("streamId")
             .map(|stream_id| vec![DictValue(stream_id.clone())]),
+        "request-completed" => {
+            if let Some(request_success) = object.get("requestSuccess") {
+                Some(vec![
+                    DictValue(request_success.clone()),
+                    DictValue(Value::Null),
+                ])
+            } else if let Some(request_error) = object.get("requestError") {
+                request_error
+                    .get("msg")
+                    .map(|msg| vec![DictValue(Value::Null), DictValue(msg.clone())])
+            } else {
+                Some(vec![DictValue(Value::Null), DictValue(Value::Null)])
+            }
+        }
         "subscription-profiles-updated" => object
             .get("profiles")
             .map(|profiles| vec![DictValue(profiles.clone())]),

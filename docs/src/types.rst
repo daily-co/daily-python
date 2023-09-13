@@ -56,6 +56,32 @@ AvailableDevices
      - [ `MediaDeviceInfo`_ ]
 
 
+.. _CallClientError:
+
+CallClientError
+-----------------------------------
+
+A string with an error message or *None*.
+
+
+.. _CallClientJoinData:
+
+CallClientJoinData
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "meetingSession"
+     - `MeetingSession`_
+   * - "participants"
+     - `CallParticipants`_
+
+
+
 .. _CallParticipants:
 
 CallParticipants
@@ -242,6 +268,21 @@ MediaDeviceInfo
    * - "kind"
      - string
    * - "label"
+     - string
+
+
+.. _MeetingSession:
+
+MeetingSession
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "id"
      - string
 
 

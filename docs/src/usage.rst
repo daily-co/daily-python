@@ -70,6 +70,24 @@ other participants might see as a description of you (e.g. Jane Doe).
 
 See :func:`daily.CallClient.set_user_name` for more details.
 
+Completion callbacks
+--------------------------------------------------------
+
+Some :class:`daily.CallClient` methods are asynchronous. In order to know when
+those methods finish successfully or with an error, it's possible to optionally
+register a callback at invocation time.
+
+For example, below we will register a callback to know when a meeting join
+succeeds.
+
+.. code-block:: python
+
+    def on_joined(join_data, error):
+        if not error:
+            print("We just joined the meeting!")
+
+    client.join("https://my.daily.co/meeting", completion = on_joined)
+
 Handling events
 --------------------------------------------------------
 
@@ -94,7 +112,7 @@ handle the event when a participant joins by using
 
     class MyApp(EventHandler):
 
-        def on_participant_joined(participant):
+        def on_participant_joined(self, participant):
             print("New participant joined!")
 
 Finally, we need to register the event handler when creating a

@@ -1,22 +1,22 @@
-use std::boxed::Box;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::ptr;
+use std::sync::{Arc, Mutex};
 
 use crate::dict::DictValue;
-use crate::event::{args_from_event, method_name_from_event, Event};
+use crate::event::{args_from_event, method_name_from_event, request_id_from_event, Event};
 use crate::PyVideoFrame;
 use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
-    daily_core_call_client_create, daily_core_call_client_inputs, daily_core_call_client_join,
-    daily_core_call_client_leave, daily_core_call_client_participant_counts,
-    daily_core_call_client_participants, daily_core_call_client_publishing,
-    daily_core_call_client_set_delegate, daily_core_call_client_set_participant_video_renderer,
-    daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
-    daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
-    daily_core_call_client_update_permissions, daily_core_call_client_update_publishing,
-    daily_core_call_client_update_remote_participants,
+    daily_core_call_client_create, daily_core_call_client_destroy, daily_core_call_client_inputs,
+    daily_core_call_client_join, daily_core_call_client_leave,
+    daily_core_call_client_participant_counts, daily_core_call_client_participants,
+    daily_core_call_client_publishing, daily_core_call_client_set_delegate,
+    daily_core_call_client_set_participant_video_renderer, daily_core_call_client_set_user_name,
+    daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
+    daily_core_call_client_update_inputs, daily_core_call_client_update_permissions,
+    daily_core_call_client_update_publishing, daily_core_call_client_update_remote_participants,
     daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegate,
     NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeCallClientVideoRenderer,
@@ -24,14 +24,8 @@ use daily_core::prelude::{
 };
 
 use pyo3::exceptions;
-use pyo3::ffi::Py_IncRef;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
-
-#[pyclass(name = "CallClientCallbackContext", module = "daily")]
-pub struct PyCallClientCallbackContext {
-    pub callback: PyObject,
-}
 
 /// This class represents a call client. A call client is a participant of a
 /// Daily meeting and it can receive audio and video from other participants in
@@ -41,7 +35,17 @@ pub struct PyCallClientCallbackContext {
 /// :param class event_handler: A subclass of :class:`daily.EventHandler`
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
+    inner: Arc<Mutex<InnerCallClient>>,
+}
+
+struct InnerCallClient {
     call_client: Box<CallClient>,
+    completions: HashMap<u64, PyObject>,
+}
+
+struct CallbackContext {
+    callback: PyObject,
+    call_client: Arc<Mutex<InnerCallClient>>,
 }
 
 #[pymethods]
@@ -50,39 +54,37 @@ impl PyCallClient {
     /// through an event handler.
     #[new]
     pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
-        unsafe {
-            let call_client = daily_core_call_client_create();
-            if !call_client.is_null() {
-                if let Some(event_handler) = event_handler {
-                    let callback_ctx: PyObject = Python::with_gil(|py| {
-                        Py::new(
-                            py,
-                            PyCallClientCallbackContext {
-                                callback: event_handler,
-                            },
-                        )
-                        .unwrap()
-                        .into_py(py)
-                    });
+        let call_client = unsafe { daily_core_call_client_create() };
+        if !call_client.is_null() {
+            let inner_call_client = Arc::new(Mutex::new(InnerCallClient {
+                call_client: unsafe { Box::from_raw(call_client) },
+                completions: HashMap::new(),
+            }));
+            if let Some(event_handler) = event_handler {
+                let callback_ctx = Arc::new(CallbackContext {
+                    callback: event_handler,
+                    call_client: inner_call_client.clone(),
+                });
+
+                unsafe {
+                    let callback_ctx_ptr = Arc::into_raw(callback_ctx);
 
                     let client_delegate = NativeCallClientDelegate::new(
-                        NativeCallClientDelegatePtr::new(
-                            callback_ctx.into_ptr() as *mut libc::c_void
-                        ),
+                        NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
                         NativeCallClientDelegateFns::new(on_event),
                     );
 
                     daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
                 }
-
-                Ok(Self {
-                    call_client: Box::from_raw(call_client),
-                })
-            } else {
-                Err(exceptions::PyRuntimeError::new_err(
-                    "unable to create a CallClient() object",
-                ))
             }
+
+            Ok(Self {
+                inner: inner_call_client,
+            })
+        } else {
+            Err(exceptions::PyRuntimeError::new_err(
+                "unable to create a CallClient() object",
+            ))
         }
     }
 
@@ -93,12 +95,14 @@ impl PyCallClient {
     /// :param str meeting_url: The URL of the Daily meeting to join
     /// :param str meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
     /// :param dict client_settings: See :ref:`ClientSettings`
-    #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None))]
+    /// :param func completion: A completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
+    #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
         &mut self,
         meeting_url: &str,
         meeting_token: Option<PyObject>,
         client_settings: Option<PyObject>,
+        completion: Option<PyObject>,
     ) {
         // Meeting URL
         let meeting_url_cstr = CString::new(meeting_url).expect("invalid meeting URL string");
@@ -126,9 +130,10 @@ impl PyCallClient {
             CString::new(client_settings_string).expect("invalid client settings string");
 
         unsafe {
+            let request_id = self.maybe_register_completion(completion);
             daily_core_call_client_join(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 meeting_url_cstr.as_ptr(),
                 if meeting_token_cstr.is_empty() {
                     ptr::null_mut()
@@ -145,11 +150,15 @@ impl PyCallClient {
     }
 
     /// Leave a previously joined meeting.
-    pub fn leave(&mut self) {
+    ///
+    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (completion = None))]
+    pub fn leave(&mut self, completion: Option<PyObject>) {
+        let request_id = self.maybe_register_completion(completion);
         unsafe {
             daily_core_call_client_leave(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
             );
         }
     }
@@ -158,13 +167,16 @@ impl PyCallClient {
     /// might be able to see as a description of this client.
     ///
     /// :param str user_name: This client's user name
+    #[pyo3(signature = (user_name))]
     pub fn set_user_name(&mut self, user_name: &str) {
         let user_name_cstr = CString::new(user_name).expect("invalid user name string");
 
+        let request_id = self.maybe_register_completion(None);
+
         unsafe {
             daily_core_call_client_set_user_name(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 user_name_cstr.as_ptr(),
             );
         }
@@ -176,7 +188,9 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn participants(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
+            let participants_ptr = daily_core_call_client_participants(
+                self.inner.lock().unwrap().call_client.as_mut(),
+            );
             let participants_string = CStr::from_ptr(participants_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -194,8 +208,9 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn participant_counts(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let participant_counts_ptr =
-                daily_core_call_client_participant_counts(self.call_client.as_mut());
+            let participant_counts_ptr = daily_core_call_client_participant_counts(
+                self.inner.lock().unwrap().call_client.as_mut(),
+            );
             let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -210,7 +225,13 @@ impl PyCallClient {
     /// Updates remote participants.
     ///
     /// :param dict remote_participants: See :ref:`RemoteParticipantUpdates`
-    pub fn update_remote_participants(&mut self, remote_participants: PyObject) {
+    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (remote_participants, completion = None))]
+    pub fn update_remote_participants(
+        &mut self,
+        remote_participants: PyObject,
+        completion: Option<PyObject>,
+    ) {
         let remote_participants_map: HashMap<String, DictValue> =
             Python::with_gil(|py| remote_participants.extract(py).unwrap());
 
@@ -219,10 +240,12 @@ impl PyCallClient {
         let remote_participants_cstr =
             CString::new(remote_participants_string).expect("invalid remote participants string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_remote_participants(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 remote_participants_cstr.as_ptr(),
             );
         }
@@ -235,7 +258,8 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn inputs(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
+            let inputs_ptr =
+                daily_core_call_client_inputs(self.inner.lock().unwrap().call_client.as_mut());
             let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
 
             let inputs: HashMap<String, DictValue> =
@@ -249,7 +273,9 @@ impl PyCallClient {
     /// client video and audio inputs.
     ///
     /// :param dict input_settings: See :ref:`InputSettings`
-    pub fn update_inputs(&mut self, input_settings: PyObject) {
+    /// :param func completion: A completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
+    #[pyo3(signature = (input_settings, completion = None))]
+    pub fn update_inputs(&mut self, input_settings: PyObject, completion: Option<PyObject>) {
         let input_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| input_settings.extract(py).unwrap());
 
@@ -258,10 +284,12 @@ impl PyCallClient {
         let input_settings_cstr =
             CString::new(input_settings_string).expect("invalid input settings string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_inputs(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 input_settings_cstr.as_ptr(),
             );
         }
@@ -275,7 +303,8 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn publishing(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let publishing_ptr = daily_core_call_client_publishing(self.call_client.as_mut());
+            let publishing_ptr =
+                daily_core_call_client_publishing(self.inner.lock().unwrap().call_client.as_mut());
             let publishing_string = CStr::from_ptr(publishing_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -291,7 +320,13 @@ impl PyCallClient {
     /// client video and audio publishing settings.
     ///
     /// :param dict publishing_settings: See :ref:`PublishingSettings`
-    pub fn update_publishing(&mut self, publishing_settings: PyObject) {
+    /// :param func completion: A completion callback with two parameters: (:ref:`PublishingSettings`, :ref:`CallClientError`)
+    #[pyo3(signature = (publishing_settings, completion = None))]
+    pub fn update_publishing(
+        &mut self,
+        publishing_settings: PyObject,
+        completion: Option<PyObject>,
+    ) {
         let publishing_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| publishing_settings.extract(py).unwrap());
 
@@ -300,10 +335,12 @@ impl PyCallClient {
         let publishing_settings_cstr =
             CString::new(publishing_settings_string).expect("invalid publishing settings string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_publishing(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 publishing_settings_cstr.as_ptr(),
             );
         }
@@ -316,7 +353,9 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn subscriptions(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
+            let subscriptions_ptr = daily_core_call_client_subscriptions(
+                self.inner.lock().unwrap().call_client.as_mut(),
+            );
             let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -335,11 +374,13 @@ impl PyCallClient {
     ///
     /// :param dict participant_settings: See :ref:`ParticipantSubscriptions`
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    #[pyo3(signature = (participant_settings = None, profile_settings = None))]
+    /// :param func completion: A completion callback with two parameters: (:ref:`ParticipantSubscriptions`, :ref:`CallClientError`)
+    #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &mut self,
         participant_settings: Option<PyObject>,
         profile_settings: Option<PyObject>,
+        completion: Option<PyObject>,
     ) {
         // Participant subscription settings
         let participant_settings_string = if let Some(participant_settings) = participant_settings {
@@ -367,10 +408,12 @@ impl PyCallClient {
         let profile_settings_cstr =
             CString::new(profile_settings_string).expect("invalid profile settings string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_subscriptions(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 if participant_settings_cstr.is_empty() {
                     ptr::null()
                 } else {
@@ -392,8 +435,9 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let profiles_ptr =
-                daily_core_call_client_subscription_profiles(self.call_client.as_mut());
+            let profiles_ptr = daily_core_call_client_subscription_profiles(
+                self.inner.lock().unwrap().call_client.as_mut(),
+            );
             let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
 
             let profiles: HashMap<String, DictValue> =
@@ -406,7 +450,13 @@ impl PyCallClient {
     /// Updates subscription profiles.
     ///
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    pub fn update_subscription_profiles(&mut self, profile_settings: PyObject) {
+    /// :param func completion: A completion callback with two parameters: (:ref:`SubscriptionProfileSettings`, :ref:`CallClientError`)
+    #[pyo3(signature = (profile_settings, completion = None))]
+    pub fn update_subscription_profiles(
+        &mut self,
+        profile_settings: PyObject,
+        completion: Option<PyObject>,
+    ) {
         let profile_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| profile_settings.extract(py).unwrap());
 
@@ -414,10 +464,12 @@ impl PyCallClient {
         let profile_settings_cstr =
             CString::new(profile_settings_string).expect("invalid profile settings string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_subscription_profiles(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 profile_settings_cstr.as_ptr(),
             );
         }
@@ -428,7 +480,9 @@ impl PyCallClient {
     /// meeting.
     ///
     /// :param dict permissions: See :ref:`Permissions`
-    pub fn update_permissions(&mut self, permissions: PyObject) {
+    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (permissions, completion = None))]
+    pub fn update_permissions(&mut self, permissions: PyObject, completion: Option<PyObject>) {
         let permissions_map: HashMap<String, DictValue> =
             Python::with_gil(|py| permissions.extract(py).unwrap());
 
@@ -436,10 +490,12 @@ impl PyCallClient {
         let permissions_cstr =
             CString::new(permissions_string).expect("invalid permissions string");
 
+        let request_id = self.maybe_register_completion(completion);
+
         unsafe {
             daily_core_call_client_update_permissions(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 permissions_cstr.as_ptr(),
             );
         }
@@ -449,7 +505,7 @@ impl PyCallClient {
     /// participant. The color format of the received frames can be chosen.
     ///
     /// :param str participant_id: The ID of the participant to receive video from
-    /// :param function callback: A function or class method to be called on every received frame
+    /// :param function callback: A function or class method to be called on every received frame. It receives two arguments: the participant ID and a :class:`VideoFrame`
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA32"))]
@@ -464,21 +520,24 @@ impl PyCallClient {
         let video_source_cstr = CString::new(video_source).expect("invalid video source string");
         let color_format_cstr = CString::new(color_format).expect("invalid color format string");
 
-        let callback_ctx: PyObject = Python::with_gil(|py| {
-            Py::new(py, PyCallClientCallbackContext { callback })
-                .unwrap()
-                .into_py(py)
-        });
-
-        let video_renderer = NativeCallClientVideoRenderer::new(
-            NativeCallClientDelegatePtr::new(callback_ctx.into_ptr() as *mut libc::c_void),
-            NativeCallClientVideoRendererFns::new(on_video_frame),
-        );
-
         unsafe {
+            let callback_ctx = Arc::new(CallbackContext {
+                callback,
+                call_client: self.inner.clone(),
+            });
+
+            let callback_ctx_ptr = Arc::into_raw(callback_ctx);
+
+            let video_renderer = NativeCallClientVideoRenderer::new(
+                NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
+                NativeCallClientVideoRendererFns::new(on_video_frame),
+            );
+
+            let request_id = self.maybe_register_completion(None);
+
             daily_core_call_client_set_participant_video_renderer(
-                self.call_client.as_mut(),
-                GLOBAL_CONTEXT.as_ref().unwrap().next_request_id(),
+                self.inner.lock().unwrap().call_client.as_mut(),
+                request_id,
                 participant_cstr.as_ptr(),
                 video_source_cstr.as_ptr(),
                 color_format_cstr.as_ptr(),
@@ -486,11 +545,28 @@ impl PyCallClient {
             );
         }
     }
+
+    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+        let request_id = unsafe { GLOBAL_CONTEXT.as_ref().unwrap().next_request_id() };
+
+        if let Some(completion) = completion {
+            self.inner
+                .lock()
+                .unwrap()
+                .completions
+                .insert(request_id, completion);
+        }
+
+        request_id
+    }
 }
 
 impl Drop for PyCallClient {
     fn drop(&mut self) {
-        self.leave();
+        // This assumes the client has left the meeting.
+        unsafe {
+            daily_core_call_client_destroy(self.inner.lock().unwrap().call_client.as_mut());
+        }
     }
 }
 
@@ -500,27 +576,50 @@ unsafe extern "C" fn on_event(
     _json_len: isize,
 ) {
     Python::with_gil(|py| {
-        let py_callback_ctx_ptr = delegate as *mut pyo3::ffi::PyObject;
+        let callback_ctx_ptr = delegate as *const CallbackContext;
 
-        // PyObject below will decrease the reference counter and we need to
-        // always keep a reference.
-        Py_IncRef(py_callback_ctx_ptr);
+        // We increment the reference count because otherwise it will get
+        // dropped when Arc::from_raw() takes ownership, and we still want to
+        // keep the delegate pointer around.
+        Arc::increment_strong_count(callback_ctx_ptr);
 
-        let py_callback_ctx = PyObject::from_owned_ptr(py, py_callback_ctx_ptr);
-
-        let callback_ctx: PyRefMut<'_, PyCallClientCallbackContext> =
-            py_callback_ctx.extract(py).unwrap();
+        let callback_ctx = Arc::from_raw(callback_ctx_ptr);
 
         let event_string = CStr::from_ptr(event_json).to_string_lossy().into_owned();
 
         let event = serde_json::from_str::<Event>(event_string.as_str()).unwrap();
 
-        if let Some(method_name) = method_name_from_event(&event) {
-            if let Some(args) = args_from_event(&event) {
-                let py_args = PyTuple::new(py, args);
+        match event.action.as_str() {
+            "request-completed" => {
+                if let Some(request_id) = request_id_from_event(&event) {
+                    if let Some(callback) = callback_ctx
+                        .call_client
+                        .lock()
+                        .unwrap()
+                        .completions
+                        .remove(&request_id)
+                    {
+                        if let Some(args) = args_from_event(&event) {
+                            let py_args = PyTuple::new(py, args);
 
-                if let Err(error) = callback_ctx.callback.call_method1(py, method_name, py_args) {
-                    error.write_unraisable(py, None);
+                            if let Err(error) = callback.call1(py, py_args) {
+                                error.write_unraisable(py, None);
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {
+                if let Some(method_name) = method_name_from_event(&event) {
+                    if let Some(args) = args_from_event(&event) {
+                        let py_args = PyTuple::new(py, args);
+
+                        if let Err(error) =
+                            callback_ctx.callback.call_method1(py, method_name, py_args)
+                        {
+                            error.write_unraisable(py, None);
+                        }
+                    }
                 }
             }
         }
@@ -533,16 +632,14 @@ unsafe extern "C" fn on_video_frame(
     frame: *const NativeVideoFrame,
 ) {
     Python::with_gil(|py| {
-        let py_callback_ctx_ptr = delegate as *mut pyo3::ffi::PyObject;
+        let callback_ctx_ptr = delegate as *const CallbackContext;
 
-        // PyObject below will decrease the reference counter and we need to
-        // always keep a reference.
-        Py_IncRef(py_callback_ctx_ptr);
+        // We increment the reference count because otherwise it will get
+        // dropped when Arc::from_raw() takes ownership, and we still want to
+        // keep the delegate pointer around.
+        Arc::increment_strong_count(callback_ctx_ptr);
 
-        let py_callback_ctx = PyObject::from_owned_ptr(py, py_callback_ctx_ptr);
-
-        let callback_ctx: PyRefMut<'_, PyCallClientCallbackContext> =
-            py_callback_ctx.extract(py).unwrap();
+        let callback_ctx = Arc::from_raw(callback_ctx_ptr);
 
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
