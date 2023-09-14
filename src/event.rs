@@ -65,10 +65,10 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
             .get("participant")
             .map(|participant| vec![DictValue(participant.clone())]),
         "app-message" => {
-            if let Some(from) = object.get("from") {
+            if let Some(message) = object.get("msgData") {
                 object
-                    .get("msgData")
-                    .map(|message| vec![DictValue(from.clone()), DictValue(message.clone())])
+                    .get("from")
+                    .map(|from| vec![DictValue(message.clone()), DictValue(from.clone())])
             } else {
                 None
             }

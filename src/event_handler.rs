@@ -21,8 +21,8 @@ impl PyEventHandler {
     // really need them. So, in order to accept any subclass arguments we just
     // use a py_args extra positional arguments trick.
     #[new]
-    #[pyo3(signature = (*py_args))]
-    fn new(py_args: &PyTuple) -> PyResult<Self> {
+    #[pyo3(signature = (*args))]
+    fn new(args: &PyTuple) -> PyResult<Self> {
         Ok(Self {})
     }
 
@@ -36,8 +36,8 @@ impl PyEventHandler {
     /// Event emitted when a custom app message is received from another participant.
     ///
     /// :param string message: Message received from a remote participant
-    /// :param string from: Participant ID that sent the message
-    fn on_app_message(&self, message: PyObject, from: PyObject) -> PyResult<()> {
+    /// :param string sender: Participant ID that sent the message
+    fn on_app_message(&self, message: PyObject, sender: PyObject) -> PyResult<()> {
         Ok(())
     }
 
