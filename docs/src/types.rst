@@ -539,9 +539,9 @@ ParticipantPermissions
    * - "hasPresence"
      - bool
    * - "canAdmin"
-     - [ `CanAdminPermission`_ ]
+     - bool | [ `CanAdminPermission`_ ]
    * - "canSend"
-     - [ `CanSendPermission`_ ]
+     - bool | [ `CanSendPermission`_ ]
 
 
 .. _ParticipantSubscriptions:
@@ -591,25 +591,6 @@ ParticipantUpdate
      - `ParticipantPermissions`_
    * - "inputsEnabled"
      - `ParticipantInputs`_
-
-
-.. _Permissions:
-
-Permissions
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "hasPresence"
-     - bool
-   * - "canSend"
-     - [ `CanSendPermission`_ ]
-   * - "canAdmin"
-     - [ `CanAdminPermission`_ ]
 
 
 .. _PublishingSettings:

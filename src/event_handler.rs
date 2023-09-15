@@ -16,10 +16,10 @@ pub struct PyEventHandler;
 
 #[pymethods]
 impl PyEventHandler {
-    // Since this is a base class it might be that subclasses have arguments in
-    // their constructors. Those would be passed to new() even if we don't
-    // really need them. So, in order to accept any subclass arguments we just
-    // use a py_args extra positional arguments trick.
+    // Since this is a base class it might be that subclasses have constructor
+    // parameters. Constructor arguments would be passed to new() even if we
+    // don't really need them. So, in order to accept any subclass arguments we
+    // just use a *args extra positional arguments trick.
     #[new]
     #[pyo3(signature = (*args))]
     fn new(args: &PyTuple) -> PyResult<Self> {
