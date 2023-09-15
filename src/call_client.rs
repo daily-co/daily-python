@@ -24,8 +24,8 @@ use daily_core::prelude::{
     daily_core_call_client_update_remote_participants,
     daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegate,
-    NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeCallClientVideoRenderer,
-    NativeCallClientVideoRendererFns, NativeVideoFrame,
+    NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeVideoFrame,
+    NativeVideoRenderer, NativeVideoRendererFns,
 };
 
 use pyo3::exceptions;
