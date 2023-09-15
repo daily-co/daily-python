@@ -44,7 +44,7 @@ struct InnerCallClient {
 }
 
 struct CallbackContext {
-    callback: PyObject,
+    callback: Option<PyObject>,
     call_client: Arc<Mutex<InnerCallClient>>,
 }
 
@@ -60,22 +60,21 @@ impl PyCallClient {
                 call_client: unsafe { Box::from_raw(call_client) },
                 completions: HashMap::new(),
             }));
-            if let Some(event_handler) = event_handler {
-                let callback_ctx = Arc::new(CallbackContext {
-                    callback: event_handler,
-                    call_client: inner_call_client.clone(),
-                });
 
-                unsafe {
-                    let callback_ctx_ptr = Arc::into_raw(callback_ctx);
+            let callback_ctx = Arc::new(CallbackContext {
+                callback: event_handler,
+                call_client: inner_call_client.clone(),
+            });
 
-                    let client_delegate = NativeCallClientDelegate::new(
-                        NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-                        NativeCallClientDelegateFns::new(on_event),
-                    );
+            unsafe {
+                let callback_ctx_ptr = Arc::into_raw(callback_ctx);
 
-                    daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
-                }
+                let client_delegate = NativeCallClientDelegate::new(
+                    NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
+                    NativeCallClientDelegateFns::new(on_event),
+                );
+
+                daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
             }
 
             Ok(Self {
@@ -522,7 +521,7 @@ impl PyCallClient {
 
         unsafe {
             let callback_ctx = Arc::new(CallbackContext {
-                callback,
+                callback: Some(callback),
                 call_client: self.inner.clone(),
             });
 
@@ -610,14 +609,14 @@ unsafe extern "C" fn on_event(
                 }
             }
             _ => {
-                if let Some(method_name) = method_name_from_event(&event) {
-                    if let Some(args) = args_from_event(&event) {
-                        let py_args = PyTuple::new(py, args);
+                if let Some(callback) = &callback_ctx.callback {
+                    if let Some(method_name) = method_name_from_event(&event) {
+                        if let Some(args) = args_from_event(&event) {
+                            let py_args = PyTuple::new(py, args);
 
-                        if let Err(error) =
-                            callback_ctx.callback.call_method1(py, method_name, py_args)
-                        {
-                            error.write_unraisable(py, None);
+                            if let Err(error) = callback.call_method1(py, method_name, py_args) {
+                                error.write_unraisable(py, None);
+                            }
                         }
                     }
                 }
@@ -641,24 +640,26 @@ unsafe extern "C" fn on_video_frame(
 
         let callback_ctx = Arc::from_raw(callback_ctx_ptr);
 
-        let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
+        if let Some(callback) = &callback_ctx.callback {
+            let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
-        let color_format = CStr::from_ptr((*frame).color_format)
-            .to_string_lossy()
-            .into_owned();
+            let color_format = CStr::from_ptr((*frame).color_format)
+                .to_string_lossy()
+                .into_owned();
 
-        let video_frame = PyVideoFrame {
-            buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
-            width: (*frame).width,
-            height: (*frame).height,
-            timestamp_us: (*frame).timestamp_us,
-            color_format: color_format.into_py(py),
-        };
+            let video_frame = PyVideoFrame {
+                buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
+                width: (*frame).width,
+                height: (*frame).height,
+                timestamp_us: (*frame).timestamp_us,
+                color_format: color_format.into_py(py),
+            };
 
-        let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
+            let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
 
-        if let Err(error) = callback_ctx.callback.call1(py, args) {
-            error.write_unraisable(py, None);
+            if let Err(error) = callback.call1(py, args) {
+                error.write_unraisable(py, None);
+            }
         }
     });
 }
