@@ -12,11 +12,12 @@ use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_destroy, daily_core_call_client_inputs,
     daily_core_call_client_join, daily_core_call_client_leave,
     daily_core_call_client_participant_counts, daily_core_call_client_participants,
-    daily_core_call_client_publishing, daily_core_call_client_set_delegate,
-    daily_core_call_client_set_participant_video_renderer, daily_core_call_client_set_user_name,
-    daily_core_call_client_subscription_profiles, daily_core_call_client_subscriptions,
-    daily_core_call_client_update_inputs, daily_core_call_client_update_permissions,
-    daily_core_call_client_update_publishing, daily_core_call_client_update_remote_participants,
+    daily_core_call_client_publishing, daily_core_call_client_send_app_message,
+    daily_core_call_client_set_delegate, daily_core_call_client_set_participant_video_renderer,
+    daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
+    daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
+    daily_core_call_client_update_permissions, daily_core_call_client_update_publishing,
+    daily_core_call_client_update_remote_participants,
     daily_core_call_client_update_subscription_profiles,
     daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegate,
     NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeCallClientVideoRenderer,
@@ -112,7 +113,7 @@ impl PyCallClient {
     /// :param str meeting_url: The URL of the Daily meeting to join
     /// :param str meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
     /// :param dict client_settings: See :ref:`ClientSettings`
-    /// :param func completion: A completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
         &mut self,
@@ -125,26 +126,23 @@ impl PyCallClient {
         let meeting_url_cstr = CString::new(meeting_url).expect("invalid meeting URL string");
 
         // Meeting token
-        let meeting_token_string: String = if let Some(meeting_token) = meeting_token {
-            Python::with_gil(|py| meeting_token.extract(py).unwrap())
-        } else {
-            "".to_string()
-        };
-        let meeting_token_cstr =
-            CString::new(meeting_token_string).expect("invalid meeting token string");
+        let meeting_token_cstr = meeting_token
+            .map(|token| {
+                let token_string: String = Python::with_gil(|py| token.extract(py).unwrap());
+                CString::new(token_string).expect("invalid meeting token string")
+            })
+            .or(None);
 
         // Client settings
-        let client_settings_string: String = if let Some(client_settings) = client_settings {
-            Python::with_gil(|py| {
-                let client_settings: HashMap<String, DictValue> =
-                    client_settings.extract(py).unwrap();
-                serde_json::to_string(&client_settings).unwrap()
+        let client_settings_cstr = client_settings
+            .map(|settings| {
+                let settings_string: String = Python::with_gil(|py| {
+                    let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
+                    serde_json::to_string(&settings_map).unwrap()
+                });
+                CString::new(settings_string).expect("invalid client settings string")
             })
-        } else {
-            "".to_string()
-        };
-        let client_settings_cstr =
-            CString::new(client_settings_string).expect("invalid client settings string");
+            .or(None);
 
         unsafe {
             let request_id = self.maybe_register_completion(completion);
@@ -152,23 +150,15 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 request_id,
                 meeting_url_cstr.as_ptr(),
-                if meeting_token_cstr.is_empty() {
-                    ptr::null_mut()
-                } else {
-                    meeting_token_cstr.as_ptr()
-                },
-                if client_settings_cstr.is_empty() {
-                    ptr::null_mut()
-                } else {
-                    client_settings_cstr.as_ptr()
-                },
+                meeting_token_cstr.map_or(ptr::null_mut(), |s| s.as_ptr()),
+                client_settings_cstr.map_or(ptr::null_mut(), |s| s.as_ptr()),
             );
         }
     }
 
     /// Leave a previously joined meeting.
     ///
-    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn leave(&mut self, completion: Option<PyObject>) {
         let request_id = self.maybe_register_completion(completion);
@@ -235,7 +225,7 @@ impl PyCallClient {
     /// Updates remote participants.
     ///
     /// :param dict remote_participants: See :ref:`RemoteParticipantUpdates`
-    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
         &mut self,
@@ -282,7 +272,7 @@ impl PyCallClient {
     /// client video and audio inputs.
     ///
     /// :param dict input_settings: See :ref:`InputSettings`
-    /// :param func completion: A completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (input_settings, completion = None))]
     pub fn update_inputs(&mut self, input_settings: PyObject, completion: Option<PyObject>) {
         let input_settings_map: HashMap<String, DictValue> =
@@ -328,7 +318,7 @@ impl PyCallClient {
     /// client video and audio publishing settings.
     ///
     /// :param dict publishing_settings: See :ref:`PublishingSettings`
-    /// :param func completion: A completion callback with two parameters: (:ref:`PublishingSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (:ref:`PublishingSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
         &mut self,
@@ -380,7 +370,7 @@ impl PyCallClient {
     ///
     /// :param dict participant_settings: See :ref:`ParticipantSubscriptions`
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: A completion callback with two parameters: (:ref:`ParticipantSubscriptions`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (:ref:`ParticipantSubscriptions`, :ref:`CallClientError`)
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &mut self,
@@ -389,30 +379,24 @@ impl PyCallClient {
         completion: Option<PyObject>,
     ) {
         // Participant subscription settings
-        let participant_settings_string = if let Some(participant_settings) = participant_settings {
-            let participant_settings_map: HashMap<String, DictValue> =
-                Python::with_gil(|py| participant_settings.extract(py).unwrap());
-
-            serde_json::to_string(&participant_settings_map).unwrap()
-        } else {
-            "".to_string()
-        };
-
-        let participant_settings_cstr =
-            CString::new(participant_settings_string).expect("invalid participant settings string");
+        let participant_settings_cstr = participant_settings
+            .map(|settings| {
+                let settings_map: HashMap<String, DictValue> =
+                    Python::with_gil(|py| settings.extract(py).unwrap());
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                CString::new(settings_string).expect("invalid participant settings string")
+            })
+            .or(None);
 
         // Profile settings
-        let profile_settings_string = if let Some(profile_settings) = profile_settings {
-            let profile_settings_map: HashMap<String, DictValue> =
-                Python::with_gil(|py| profile_settings.extract(py).unwrap());
-
-            serde_json::to_string(&profile_settings_map).unwrap()
-        } else {
-            "".to_string()
-        };
-
-        let profile_settings_cstr =
-            CString::new(profile_settings_string).expect("invalid profile settings string");
+        let profile_settings_cstr = profile_settings
+            .map(|settings| {
+                let settings_map: HashMap<String, DictValue> =
+                    Python::with_gil(|py| settings.extract(py).unwrap());
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                CString::new(settings_string).expect("invalid profile settings string")
+            })
+            .or(None);
 
         let request_id = self.maybe_register_completion(completion);
 
@@ -420,16 +404,8 @@ impl PyCallClient {
             daily_core_call_client_update_subscriptions(
                 self.call_client.as_mut(),
                 request_id,
-                if participant_settings_cstr.is_empty() {
-                    ptr::null()
-                } else {
-                    participant_settings_cstr.as_ptr()
-                },
-                if profile_settings_cstr.is_empty() {
-                    ptr::null()
-                } else {
-                    profile_settings_cstr.as_ptr()
-                },
+                participant_settings_cstr.map_or(ptr::null(), |s| s.as_ptr()),
+                profile_settings_cstr.map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
     }
@@ -455,7 +431,7 @@ impl PyCallClient {
     /// Updates subscription profiles.
     ///
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: A completion callback with two parameters: (:ref:`SubscriptionProfileSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (:ref:`SubscriptionProfileSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
         &mut self,
@@ -485,7 +461,7 @@ impl PyCallClient {
     /// meeting.
     ///
     /// :param dict permissions: See :ref:`Permissions`
-    /// :param func completion: A completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(&mut self, permissions: PyObject, completion: Option<PyObject>) {
         let permissions_map: HashMap<String, DictValue> =
@@ -551,6 +527,39 @@ impl PyCallClient {
                 video_source_cstr.as_ptr(),
                 color_format_cstr.as_ptr(),
                 video_renderer,
+            );
+        }
+    }
+
+    /// Sends a message to other participants, or another specific participant,
+    /// during the call.
+    ///
+    /// :param any message: The message to send (should be serializable to JSON)
+    /// :param str participant: The participant to send the message to. Or `None` to broadcast the message
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (message, participant = None , completion = None))]
+    pub fn send_app_message(
+        &mut self,
+        message: PyObject,
+        participant: Option<&str>,
+        completion: Option<PyObject>,
+    ) {
+        let message_value: DictValue = Python::with_gil(|py| message.extract(py).unwrap());
+        let message_string = serde_json::to_string(&message_value.0).unwrap();
+        let message_cstr = CString::new(message_string).expect("invalid message string");
+
+        let participant_cstr = participant
+            .map(|p| CString::new(p).expect("invalid participant string"))
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_send_app_message(
+                self.call_client.as_mut(),
+                request_id,
+                message_cstr.as_ptr(),
+                participant_cstr.map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
     }
