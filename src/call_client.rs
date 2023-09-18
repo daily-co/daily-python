@@ -33,12 +33,34 @@ struct CallClientPtr {
 }
 
 impl CallClientPtr {
-    fn as_mut(&self) -> &mut CallClient {
+    fn as_mut(&mut self) -> &mut CallClient {
         unsafe { &mut *(self.ptr) }
     }
 }
 
 unsafe impl Send for CallClientPtr {}
+
+#[derive(Clone)]
+struct InnerCallClient {
+    call_client: CallClientPtr,
+    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
+}
+
+#[derive(Clone)]
+struct CallbackContext {
+    callback: Option<PyObject>,
+    call_client: InnerCallClient,
+}
+
+unsafe impl Sync for CallbackContext {}
+unsafe impl Send for CallbackContext {}
+
+#[derive(Clone)]
+struct CallbackContextPtr {
+    ptr: *const CallbackContext,
+}
+
+unsafe impl Send for CallbackContextPtr {}
 
 /// This class represents a call client. A call client is a participant of a
 /// Daily meeting and it can receive audio and video from other participants in
@@ -50,17 +72,7 @@ unsafe impl Send for CallClientPtr {}
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     inner: InnerCallClient,
-}
-
-#[derive(Clone)]
-struct InnerCallClient {
-    call_client: CallClientPtr,
-    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-}
-
-struct CallbackContext {
-    callback: Option<PyObject>,
-    call_client: InnerCallClient,
+    callback_ctx_ptrs: Vec<CallbackContextPtr>,
 }
 
 #[pymethods]
@@ -81,19 +93,22 @@ impl PyCallClient {
                 call_client: inner_call_client.clone(),
             });
 
+            let callback_ctx_ptr = Arc::into_raw(callback_ctx);
+
+            let client_delegate = NativeCallClientDelegate::new(
+                NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
+                NativeCallClientDelegateFns::new(on_event),
+            );
+
             unsafe {
-                let callback_ctx_ptr = Arc::into_raw(callback_ctx);
-
-                let client_delegate = NativeCallClientDelegate::new(
-                    NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-                    NativeCallClientDelegateFns::new(on_event),
-                );
-
                 daily_core_call_client_set_delegate(&mut (*call_client), client_delegate);
             }
 
             Ok(Self {
                 inner: inner_call_client,
+                callback_ctx_ptrs: vec![CallbackContextPtr {
+                    ptr: callback_ctx_ptr,
+                }],
             })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
@@ -531,6 +546,10 @@ impl PyCallClient {
 
         let callback_ctx_ptr = Arc::into_raw(callback_ctx);
 
+        self.callback_ctx_ptrs.push(CallbackContextPtr {
+            ptr: callback_ctx_ptr,
+        });
+
         let video_renderer = NativeCallClientVideoRenderer::new(
             NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
             NativeCallClientVideoRendererFns::new(on_video_frame),
@@ -570,6 +589,15 @@ impl Drop for PyCallClient {
         // This assumes the client has left the meeting.
         unsafe {
             daily_core_call_client_destroy(self.inner.call_client.ptr);
+        }
+
+        // Cleanup callback contexts. The callback contexts still have one
+        // reference count (because of we drop it but increase it again every
+        // time a callback happens). After the client is destroyed it is safe to
+        // simply get rid of all of them.
+        for callback_ctx_ptr in self.callback_ctx_ptrs.iter() {
+            let _callback_ctx = unsafe { Arc::from_raw(callback_ctx_ptr.ptr) };
+            // This will properly drop the CallbackContext.
         }
     }
 }
