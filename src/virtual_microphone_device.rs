@@ -1,7 +1,6 @@
-use webrtc_daily::sys::{
-    virtual_microphone_device::NativeVirtualMicrophoneDevice,
-    webrtc_daily_virtual_microphone_device_write_samples,
-};
+use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
+
+use daily_core::prelude::daily_core_context_virtual_microphone_device_write_samples;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -91,7 +90,7 @@ impl PyVirtualMicrophoneDevice {
                 }
 
                 let samples_written = unsafe {
-                    webrtc_daily_virtual_microphone_device_write_samples(
+                    daily_core_context_virtual_microphone_device_write_samples(
                         audio_device.as_ptr() as *mut _,
                         py_samples.as_bytes().as_ptr() as *const _,
                         num_samples,
@@ -108,7 +107,7 @@ impl PyVirtualMicrophoneDevice {
             })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "no device has been attached",
+                "no microphone device has been attached",
             ))
         }
     }

@@ -1,7 +1,6 @@
-use webrtc_daily::sys::{
-    virtual_speaker_device::NativeVirtualSpeakerDevice,
-    webrtc_daily_virtual_speaker_device_read_samples,
-};
+use webrtc_daily::sys::virtual_speaker_device::NativeVirtualSpeakerDevice;
+
+use daily_core::prelude::daily_core_context_virtual_speaker_device_read_samples;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -85,7 +84,7 @@ impl PyVirtualSpeakerDevice {
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
 
             let samples_read = unsafe {
-                webrtc_daily_virtual_speaker_device_read_samples(
+                daily_core_context_virtual_speaker_device_read_samples(
                     audio_device.as_ptr() as *mut _,
                     buffer.as_mut_ptr(),
                     num_samples,
@@ -109,7 +108,7 @@ impl PyVirtualSpeakerDevice {
             })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
-                "no device has been attached",
+                "no speaker device has been attached",
             ))
         }
     }

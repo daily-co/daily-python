@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::ptr;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use crate::dict::DictValue;
 use crate::event::{args_from_event, method_name_from_event, request_id_from_event, Event};
 use crate::PyVideoFrame;
 use crate::GLOBAL_CONTEXT;
+
+use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::{
     daily_core_call_client_create, daily_core_call_client_destroy,
@@ -497,10 +500,16 @@ impl PyCallClient {
         callback: PyObject,
         video_source: &str,
         color_format: &str,
-    ) {
+    ) -> PyResult<()> {
         let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
         let video_source_cstr = CString::new(video_source).expect("invalid video source string");
         let color_format_cstr = CString::new(color_format).expect("invalid color format string");
+
+        if ColorFormat::from_str(color_format).is_err() {
+            return Err(exceptions::PyValueError::new_err(format!(
+                "invalid color format '{color_format}'"
+            )));
+        }
 
         let callback_ctx = Arc::new(CallbackContext {
             callback: Some(callback),
@@ -530,6 +539,8 @@ impl PyCallClient {
                 video_renderer,
             );
         }
+
+        Ok(())
     }
 
     /// Sends a message to other participants, or another specific participant,

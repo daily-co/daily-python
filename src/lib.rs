@@ -4,6 +4,7 @@ pub mod dict;
 pub mod event;
 pub mod event_handler;
 pub mod video_frame;
+pub mod virtual_camera_device;
 pub mod virtual_microphone_device;
 pub mod virtual_speaker_device;
 
@@ -11,11 +12,12 @@ use call_client::PyCallClient;
 use context::{DailyContext, GLOBAL_CONTEXT};
 use event_handler::PyEventHandler;
 use video_frame::PyVideoFrame;
+use virtual_camera_device::PyVirtualCameraDevice;
 use virtual_microphone_device::PyVirtualMicrophoneDevice;
 use virtual_speaker_device::PyVirtualSpeakerDevice;
 
 use std::env;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::ptr;
 
 use daily_core::prelude::{
@@ -33,20 +35,10 @@ const DAILY_PYTHON_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,
-    device_id: *const libc::c_char,
+    _device_id: *const libc::c_char,
 ) {
-    let device = CStr::from_ptr(device_id).to_string_lossy().into_owned();
-
-    let result = GLOBAL_CONTEXT
-        .as_mut()
-        .unwrap()
-        .select_microphone_device(device.as_str());
-
-    if let Err(error) = result {
-        Python::with_gil(|py| {
-            error.write_unraisable(py, None);
-        });
-    }
+    // Probably nothing to do here since our microphone device is already
+    // properly selected during getUserMedia.
 }
 
 unsafe extern "C" fn get_audio_device(_delegate: *mut libc::c_void) -> *const libc::c_char {
@@ -96,13 +88,12 @@ impl PyDaily {
     /// Initializes the SDK. This function needs to be called before anything
     /// else, usually done at the application startup.
     ///
-    /// :param bool virtual_devices: If True the default system devices (camera, speaker and microphone) will be used. Otherwise, virtual devices can be registered
     /// :param int worker_threads: Number of internal worker threads. Increasing this number might be necessary if the application needs to create a large number of concurrent call clients
     #[staticmethod]
-    #[pyo3(signature = (virtual_devices = false, worker_threads = 2))]
-    pub fn init(virtual_devices: bool, worker_threads: usize) {
+    #[pyo3(signature = (worker_threads = 2))]
+    pub fn init(worker_threads: usize) {
         unsafe {
-            GLOBAL_CONTEXT = Some(DailyContext::default());
+            GLOBAL_CONTEXT = Some(DailyContext::new());
             daily_core_set_log_level(LogLevel::Off);
         }
 
@@ -125,11 +116,7 @@ impl PyDaily {
             NativeWebRtcContextDelegateFns::new(
                 get_user_media,
                 get_enumerated_devices,
-                if virtual_devices {
-                    Some(create_audio_device_module)
-                } else {
-                    None
-                },
+                Some(create_audio_device_module),
                 None,
                 None,
                 None,
@@ -156,11 +143,36 @@ impl PyDaily {
         unsafe { daily_core_context_destroy() };
     }
 
-    /// Creates a new virtual speaker device. New virtual speaker devices can only
-    /// be created if `virtual_devices` was set to True when calling
-    /// :func:`init`, otherwise the system audio devices will be used. Speaker
-    /// devices are used to receive audio (i.e. read audio samples) from the
-    /// meeting.
+    /// Creates a new virtual camera device. Camera devices are used to
+    /// send video (i.e. video frames) into the meeting.
+    ///
+    /// :param str device_name: The virtual camera device name
+    /// :param int width: Resolution width
+    /// :param int height: Resolution height
+    /// :param str color_format: The color format of the frames that will be written to the camera device. See :ref:`ColorFormat`
+    ///
+    /// :return: A new virtual camera device
+    /// :rtype: :class:`daily.VirtualCameraDevice`
+    #[staticmethod]
+    #[pyo3(signature = (device_name, width, height, color_format = "RGBA32"))]
+    pub fn create_camera_device(
+        device_name: &str,
+        width: u32,
+        height: u32,
+        color_format: &str,
+    ) -> PyResult<PyVirtualCameraDevice> {
+        unsafe {
+            GLOBAL_CONTEXT.as_mut().unwrap().create_camera_device(
+                device_name,
+                width,
+                height,
+                color_format,
+            )
+        }
+    }
+
+    /// Creates a new virtual speaker device. Speaker devices are used to
+    /// receive audio (i.e. read audio samples) from the meeting.
     ///
     /// There can only be one speaker device per application and it needs to be
     /// set with :func:`select_speaker_device`.
@@ -187,11 +199,8 @@ impl PyDaily {
         }
     }
 
-    /// Creates a new virtual microphone device. New virtual microphone devices
-    /// can only be created if `virtual_devices` was set to True when calling
-    /// :func:`init`, otherwise the system audio devices will be
-    /// used. Microphone devices are used to send audio (i.e. write audio
-    /// samples) to the meeting.
+    /// Creates a new virtual microphone device. Microphone devices are used to
+    /// send audio (i.e. write audio samples) to the meeting.
     ///
     /// Microphone devices are selected with :func:`CallClient.update_inputs`.
     ///
@@ -242,7 +251,8 @@ fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyEventHandler>()?;
     m.add_class::<PyVideoFrame>()?;
-    m.add_class::<PyVirtualSpeakerDevice>()?;
+    m.add_class::<PyVirtualCameraDevice>()?;
     m.add_class::<PyVirtualMicrophoneDevice>()?;
+    m.add_class::<PyVirtualSpeakerDevice>()?;
     Ok(())
 }

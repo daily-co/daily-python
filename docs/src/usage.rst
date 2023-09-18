@@ -352,15 +352,7 @@ Audio works a little bit differently than video. It is not possible to receive
 audio for a single participant; instead, all the audio of the meeting will be
 received.
 
-In order to receive audio from the meeting, we need to create a speaker
-device. To create a virtual speaker device, we need to initialize the SDK as
-follows:
-
-.. code-block:: python
-
-    Daily.init(virtual_devices = True)
-
-Then, we can create the device:
+In order to receive audio from the meeting, we need to create a speaker device:
 
 .. code-block:: python
 
@@ -388,14 +380,7 @@ See :func:`daily.VirtualSpeakerDevice.read_samples` for more details.
 Sending audio to a meeting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To send audio into a meeting we need to create a microphone device and
-initialize the SDK as before:
-
-.. code-block:: python
-
-    Daily.init(virtual_devices = True)
-
-Then, create the microphone device:
+To send audio into a meeting we need to create a microphone device:
 
 .. code-block:: python
 
