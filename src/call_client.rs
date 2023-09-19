@@ -40,20 +40,10 @@ impl CallClientPtr {
 
 unsafe impl Send for CallClientPtr {}
 
-#[derive(Clone)]
-struct InnerCallClient {
-    call_client: CallClientPtr,
-    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-}
-
-#[derive(Clone)]
 struct CallbackContext {
     callback: Option<PyObject>,
-    call_client: InnerCallClient,
+    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
 }
-
-unsafe impl Sync for CallbackContext {}
-unsafe impl Send for CallbackContext {}
 
 #[derive(Clone)]
 struct CallbackContextPtr {
@@ -68,10 +58,10 @@ unsafe impl Send for CallbackContextPtr {}
 /// clients can be created in the same application.
 ///
 /// :param class event_handler: A subclass of :class:`daily.EventHandler`
-#[derive(Clone)]
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
-    inner: InnerCallClient,
+    call_client: CallClientPtr,
+    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
     callback_ctx_ptrs: Vec<CallbackContextPtr>,
 }
 
@@ -83,14 +73,11 @@ impl PyCallClient {
     pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
         let call_client = unsafe { daily_core_call_client_create() };
         if !call_client.is_null() {
-            let inner_call_client = InnerCallClient {
-                call_client: CallClientPtr { ptr: call_client },
-                completions: Arc::new(Mutex::new(HashMap::new())),
-            };
+            let completions = Arc::new(Mutex::new(HashMap::new()));
 
             let callback_ctx = Arc::new(CallbackContext {
                 callback: event_handler,
-                call_client: inner_call_client.clone(),
+                completions: completions.clone(),
             });
 
             let callback_ctx_ptr = Arc::into_raw(callback_ctx);
@@ -105,7 +92,8 @@ impl PyCallClient {
             }
 
             Ok(Self {
-                inner: inner_call_client,
+                call_client: CallClientPtr { ptr: call_client },
+                completions,
                 callback_ctx_ptrs: vec![CallbackContextPtr {
                     ptr: callback_ctx_ptr,
                 }],
@@ -161,7 +149,7 @@ impl PyCallClient {
         unsafe {
             let request_id = self.maybe_register_completion(completion);
             daily_core_call_client_join(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 meeting_url_cstr.as_ptr(),
                 if meeting_token_cstr.is_empty() {
@@ -185,7 +173,7 @@ impl PyCallClient {
     pub fn leave(&mut self, completion: Option<PyObject>) {
         let request_id = self.maybe_register_completion(completion);
         unsafe {
-            daily_core_call_client_leave(self.inner.call_client.as_mut(), request_id);
+            daily_core_call_client_leave(self.call_client.as_mut(), request_id);
         }
     }
 
@@ -200,7 +188,7 @@ impl PyCallClient {
         let request_id = self.maybe_register_completion(None);
         unsafe {
             daily_core_call_client_set_user_name(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 user_name_cstr.as_ptr(),
             );
@@ -213,8 +201,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn participants(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let participants_ptr =
-                daily_core_call_client_participants(self.inner.call_client.as_mut());
+            let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
             let participants_string = CStr::from_ptr(participants_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -233,7 +220,7 @@ impl PyCallClient {
     pub fn participant_counts(&mut self) -> PyResult<PyObject> {
         unsafe {
             let participant_counts_ptr =
-                daily_core_call_client_participant_counts(self.inner.call_client.as_mut());
+                daily_core_call_client_participant_counts(self.call_client.as_mut());
             let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -267,7 +254,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_remote_participants(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 remote_participants_cstr.as_ptr(),
             );
@@ -281,7 +268,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn inputs(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let inputs_ptr = daily_core_call_client_inputs(self.inner.call_client.as_mut());
+            let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
             let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
 
             let inputs: HashMap<String, DictValue> =
@@ -310,7 +297,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_inputs(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 input_settings_cstr.as_ptr(),
             );
@@ -325,7 +312,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn publishing(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let publishing_ptr = daily_core_call_client_publishing(self.inner.call_client.as_mut());
+            let publishing_ptr = daily_core_call_client_publishing(self.call_client.as_mut());
             let publishing_string = CStr::from_ptr(publishing_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -360,7 +347,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_publishing(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 publishing_settings_cstr.as_ptr(),
             );
@@ -374,8 +361,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn subscriptions(&mut self) -> PyResult<PyObject> {
         unsafe {
-            let subscriptions_ptr =
-                daily_core_call_client_subscriptions(self.inner.call_client.as_mut());
+            let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
             let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -432,7 +418,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_subscriptions(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 if participant_settings_cstr.is_empty() {
                     ptr::null()
@@ -456,7 +442,7 @@ impl PyCallClient {
     pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
         unsafe {
             let profiles_ptr =
-                daily_core_call_client_subscription_profiles(self.inner.call_client.as_mut());
+                daily_core_call_client_subscription_profiles(self.call_client.as_mut());
             let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
 
             let profiles: HashMap<String, DictValue> =
@@ -487,7 +473,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_subscription_profiles(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 profile_settings_cstr.as_ptr(),
             );
@@ -513,7 +499,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_permissions(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 permissions_cstr.as_ptr(),
             );
@@ -541,7 +527,7 @@ impl PyCallClient {
 
         let callback_ctx = Arc::new(CallbackContext {
             callback: Some(callback),
-            call_client: self.inner.clone(),
+            completions: self.completions.clone(),
         });
 
         let callback_ctx_ptr = Arc::into_raw(callback_ctx);
@@ -559,7 +545,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_set_participant_video_renderer(
-                self.inner.call_client.as_mut(),
+                self.call_client.as_mut(),
                 request_id,
                 participant_cstr.as_ptr(),
                 video_source_cstr.as_ptr(),
@@ -573,8 +559,7 @@ impl PyCallClient {
         let request_id = unsafe { GLOBAL_CONTEXT.as_ref().unwrap().next_request_id() };
 
         if let Some(completion) = completion {
-            self.inner
-                .completions
+            self.completions
                 .lock()
                 .unwrap()
                 .insert(request_id, completion);
@@ -588,7 +573,7 @@ impl Drop for PyCallClient {
     fn drop(&mut self) {
         // This assumes the client has left the meeting.
         unsafe {
-            daily_core_call_client_destroy(self.inner.call_client.ptr);
+            daily_core_call_client_destroy(self.call_client.ptr);
         }
 
         // Cleanup callback contexts. The callback contexts still have one
@@ -624,12 +609,8 @@ unsafe extern "C" fn on_event(
         match event.action.as_str() {
             "request-completed" => {
                 if let Some(request_id) = request_id_from_event(&event) {
-                    if let Some(callback) = callback_ctx
-                        .call_client
-                        .completions
-                        .lock()
-                        .unwrap()
-                        .remove(&request_id)
+                    if let Some(callback) =
+                        callback_ctx.completions.lock().unwrap().remove(&request_id)
                     {
                         if let Some(args) = args_from_event(&event) {
                             let py_args = PyTuple::new(py, args);
