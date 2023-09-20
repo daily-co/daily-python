@@ -9,7 +9,8 @@ use crate::PyVideoFrame;
 use crate::GLOBAL_CONTEXT;
 
 use daily_core::prelude::{
-    daily_core_call_client_create, daily_core_call_client_destroy, daily_core_call_client_inputs,
+    daily_core_call_client_create, daily_core_call_client_destroy,
+    daily_core_call_client_get_network_stats, daily_core_call_client_inputs,
     daily_core_call_client_join, daily_core_call_client_leave,
     daily_core_call_client_participant_counts, daily_core_call_client_participants,
     daily_core_call_client_publishing, daily_core_call_client_send_app_message,
@@ -460,7 +461,7 @@ impl PyCallClient {
     /// this client and is only allowed if this client is the owner of the
     /// meeting.
     ///
-    /// :param dict permissions: See :ref:`Permissions`
+    /// :param dict permissions: See :ref:`ParticipantPermissions`
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(&mut self, permissions: PyObject, completion: Option<PyObject>) {
@@ -561,6 +562,22 @@ impl PyCallClient {
                 message_cstr.as_ptr(),
                 participant_cstr.map_or(ptr::null(), |s| s.as_ptr()),
             );
+        }
+    }
+
+    /// Returns the latest network statistics.
+    ///
+    /// :return: See :ref:`NetworkStats`
+    /// :rtype: dict
+    pub fn get_network_stats(&mut self) -> PyResult<PyObject> {
+        unsafe {
+            let stats_ptr = daily_core_call_client_get_network_stats(self.call_client.as_mut());
+            let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
+
+            let stats: HashMap<String, DictValue> =
+                serde_json::from_str(stats_string.as_str()).unwrap();
+
+            Ok(Python::with_gil(|py| stats.to_object(py)))
         }
     }
 
