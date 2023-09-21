@@ -981,8 +981,7 @@ dependencies = [
 [[package]]
 name = "js-sys"
 version = "0.3.64"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5f195fe497f702db0f318b07fdd68edb16955aed830df8363d837542f8f935a"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -2424,8 +2423,7 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 [[package]]
 name = "wasm-bindgen"
 version = "0.2.87"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7706a72ab36d8cb1f80ffbf0e071533974a60d0a308d01a5d0375bf60499a342"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "cfg-if",
  "serde",
@@ -2436,8 +2434,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-backend"
 version = "0.2.87"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ef2b6d3c510e9625e5fe6f509ab07d66a760f0885d858736483c32ed7809abd"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "bumpalo",
  "log",
@@ -2451,8 +2448,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-futures"
 version = "0.4.37"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c02dbc21516f9f1f04f187958890d7e6026df8d16540b7ad9492bc34a67cea03"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -2463,8 +2459,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro"
 version = "0.2.87"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dee495e55982a3bd48105a7b947fd2a9b4a8ae3010041b9e0faab3f9cd028f1d"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -2473,8 +2468,7 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-macro-support"
 version = "0.2.87"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2486,14 +2480,12 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-shared"
 version = "0.2.87"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca6ad05a4870b2bf5fe995117d3728437bd27d7cd5f06f13c17443ef369775a1"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 
 [[package]]
 name = "web-sys"
 version = "0.3.64"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b85cbef8c220a6abc02aefd892dfc0fc23afb1c6a426316ec33253a3877249b"
+source = "git+https://github.com/daily-co/wasm-bindgen?branch=daily-co#0bbd113820de7ee68530246c4ff6bc218fd54d76"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -2527,6 +2519,7 @@ dependencies = [
  "jni",
  "js-sys",
  "libc",
+ "num_enum",
  "serde",
  "serde_json",
  "snapshot-tests",

@@ -3,6 +3,7 @@ name = "daily-python"
 version = "0.0.14"
 edition = "2021"
 license = "LicenseRef-Daily-co-Proprietary"
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
@@ -21,3 +22,17 @@ serde = { version = "1.0.143", default_features = false, features = ["derive"] }
 serde_json = "1.0.83"
 tracing = "0.1.37"
 webrtc-daily = { path = "../webrtc-daily" }
+
+# You might be wondering why do we need this, since `daily-python` does not
+# build for WASM.
+# Cargo's crate resolve will check the entire dependency tree regardless of the
+# actual build target, and thus will fail to find a `wasm-bindgen` with the
+# features we need, since they are not upstreamed yet.
+# Because daily-python is not a member of the larger `daily-x` workspace, it
+# does not know of the patches that we apply on wasm-bindgen there, so we have
+# to tell Cargo again that we're patching all the wasm-bindgen crates.
+[patch.crates-io]
+wasm-bindgen = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+wasm-bindgen-futures = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+js-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+web-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
