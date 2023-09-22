@@ -186,7 +186,7 @@ ClientSettings
 ColorFormat
 -----------------------------------
 
-"ABGR32" | "ARGB32" | "BGRA32" | "RGB24" | "RGBA32" | "I420"
+"ABGR" | "ARGB" | "BGRA" | "RGBA" | "RGB" | "I420"
 
 
 .. _CallState:

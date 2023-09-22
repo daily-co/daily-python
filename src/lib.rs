@@ -154,7 +154,7 @@ impl PyDaily {
     /// :return: A new virtual camera device
     /// :rtype: :class:`daily.VirtualCameraDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, width, height, color_format = "RGBA32"))]
+    #[pyo3(signature = (device_name, width, height, color_format = "RGBA"))]
     pub fn create_camera_device(
         device_name: &str,
         width: u32,

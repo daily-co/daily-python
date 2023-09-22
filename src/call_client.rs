@@ -493,7 +493,7 @@ impl PyCallClient {
     /// :param function callback: A function or class method to be called on every received frame. It receives two arguments: the participant ID and a :class:`VideoFrame`
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
-    #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA32"))]
+    #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA"))]
     pub fn set_video_renderer(
         &mut self,
         participant_id: &str,
