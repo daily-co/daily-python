@@ -18,6 +18,7 @@ use daily_core::prelude::{
     daily_core_context_create_virtual_camera_device,
     daily_core_context_create_virtual_microphone_device,
     daily_core_context_create_virtual_speaker_device,
+    daily_core_context_device_manager_enumerated_devices,
     daily_core_context_device_manager_get_user_media,
     daily_core_context_get_selected_microphone_device, daily_core_context_select_speaker_device,
     WebrtcAudioDeviceModule, WebrtcPeerConnectionFactory, WebrtcTaskQueueFactory, WebrtcThread,
@@ -55,8 +56,8 @@ impl DailyContext {
         const EMPTY: &[u8] = b"[]\0";
 
         let devices = unsafe {
-            webrtc_daily::sys::webrtc_daily_device_manager_enumerated_devices(
-                self.device_manager.as_ptr(),
+            daily_core_context_device_manager_enumerated_devices(
+                self.device_manager.as_ptr() as *const _
             )
         };
 
