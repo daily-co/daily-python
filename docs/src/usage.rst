@@ -244,6 +244,55 @@ Video and audio virtual devices
 A call client can specify virtual video and audio devices which can then be used
 as simulated cameras, speakers or microphones.
 
+Cameras
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cameras are used to send video into the meeting. A camera is a live stream, so
+it needs to generate images at a certain framerate.
+
+To start, we need to create a virtual camera with a certain width and height and
+an optional color format (frames written to the camera should then be in this
+color format):
+
+.. code-block:: python
+
+    camera = Daily.create_camera_device("my-camera",
+                                         width = 1024,
+                                         height = 1024,
+                                         color_format = "RGB")
+
+Once the camera is selected, we need to choose it as our default camera
+input. This is done through the call client input settings:
+
+.. code-block:: python
+
+    client.update_inputs({
+        "camera": {
+            "isEnabled": True,
+            "settings": {
+                "deviceId": "my-camera"
+            }
+        }
+    })
+
+Finally, we can just write frames to the camera which are then sent as the call
+client video stream. In the following example, we load a PNG file (using the
+`Pillow <https://pillow.readthedocs.io/>`_ library) in RGB format and we send it
+30 times per second.
+
+.. code-block:: python
+
+    from PIL import Image
+
+    im = Image.open("image.png")
+
+    while True:
+        camera.write_frame(im.tobytes())
+        time.sleep(0.033)
+
+See :func:`daily.Daily.create_camera_device` and
+:func:`daily.CallClient.update_inputs` for more details.
+
 Speakers and microphones
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

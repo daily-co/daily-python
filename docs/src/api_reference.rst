@@ -13,8 +13,11 @@ API Reference
 .. autoclass:: daily.VideoFrame
     :members:
 
-.. autoclass:: daily.VirtualSpeakerDevice
+.. autoclass:: daily.VirtualCameraDevice
     :members:
 
 .. autoclass:: daily.VirtualMicrophoneDevice
+    :members:
+
+.. autoclass:: daily.VirtualSpeakerDevice
     :members:
