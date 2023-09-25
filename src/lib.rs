@@ -172,7 +172,7 @@ impl PyDaily {
     }
 
     /// Creates a new virtual speaker device. Speaker devices are used to
-    /// receive audio (i.e. read audio samples) from the meeting.
+    /// receive audio (i.e. read audio frames) from the meeting.
     ///
     /// There can only be one speaker device per application and it needs to be
     /// set with :func:`select_speaker_device`.
@@ -200,7 +200,7 @@ impl PyDaily {
     }
 
     /// Creates a new virtual microphone device. Microphone devices are used to
-    /// send audio (i.e. write audio samples) to the meeting.
+    /// send audio (i.e. write audio frames) to the meeting.
     ///
     /// Microphone devices are selected with :func:`CallClient.update_inputs`.
     ///

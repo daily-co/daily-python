@@ -1,6 +1,6 @@
 use webrtc_daily::sys::virtual_speaker_device::NativeVirtualSpeakerDevice;
 
-use daily_core::prelude::daily_core_context_virtual_speaker_device_read_samples;
+use daily_core::prelude::daily_core_context_virtual_speaker_device_read_frames;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -63,46 +63,48 @@ impl PyVirtualSpeakerDevice {
         self.channels
     }
 
-    /// Reads audio samples from a virtual speaker device created with
+    /// Reads audio frames from a virtual speaker device created with
     /// :func:`Daily.create_speaker_device`.
     ///
-    /// The number of audio samples should be multiple of 10ms of audio samples
-    /// of the configured sample rate. For example, if the sample rate is 16000
-    /// we should be able to read 160 (10ms), 320 (20ms), 480 (30ms), etc.
+    /// The number of audio frames to read should be a multiple of 10ms worth of
+    /// audio frames (considering the configured device sample rate). For
+    /// example, if the sample rate is 16000 and there's only 1 channel, we
+    /// should be able to read 160 audio frames (10ms), 320 (20ms), 480 (30ms),
+    /// etc.
     ///
-    /// :param int num_samples: The number of samples to read
+    /// :param int num_frames: The number of audio frames to read
     ///
-    /// :return: The read samples as a bytestring. If no samples could be read yet, it returns an empty bytestring
+    /// :return: The read audio frames as a bytestring. If no audio frames could be read, it returns an empty bytestring
     /// :rtype: bytestring.
-    pub fn read_samples(&self, num_samples: usize) -> PyResult<PyObject> {
+    pub fn read_frames(&self, num_frames: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
             // libwebrtc provides with 16-bit linear PCM
             let bits_per_sample = 16;
-            let num_bytes = num_samples * (bits_per_sample * self.channels() as usize) / 8;
+            let num_bytes = num_frames * (bits_per_sample * self.channels() as usize) / 8;
             let num_words = num_bytes / 2;
 
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
 
-            let samples_read = unsafe {
-                daily_core_context_virtual_speaker_device_read_samples(
+            let frames_read = unsafe {
+                daily_core_context_virtual_speaker_device_read_frames(
                     audio_device.as_ptr() as *mut _,
                     buffer.as_mut_ptr(),
-                    num_samples,
+                    num_frames,
                 )
             };
 
             Python::with_gil(|py| {
-                if samples_read == num_samples as i32 {
+                if frames_read == num_frames as i32 {
                     let py_bytes =
                         unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
                     Ok(py_bytes.into_py(py))
-                } else if samples_read == 0 {
+                } else if frames_read == 0 {
                     let empty_bytes: [u8; 0] = [];
                     let py_bytes = PyBytes::new(py, &empty_bytes);
                     Ok(py_bytes.into_py(py))
                 } else {
                     Err(exceptions::PyIOError::new_err(
-                        "error writing audio samples to device",
+                        "error reading audio frames from the device",
                     ))
                 }
             })

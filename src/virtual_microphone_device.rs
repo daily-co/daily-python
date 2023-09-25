@@ -1,6 +1,6 @@
 use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 
-use daily_core::prelude::daily_core_context_virtual_microphone_device_write_samples;
+use daily_core::prelude::daily_core_context_virtual_microphone_device_write_frames;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -63,45 +63,50 @@ impl PyVirtualMicrophoneDevice {
         self.channels
     }
 
-    /// Writes audio samples to a virtual microphone device created with
+    /// Writes audio frames to a virtual microphone device created with
     /// :func:`Daily.create_microphone_device`.
     ///
-    /// The number of audio samples should be multiple of 10ms of audio samples
-    /// of the configured sample rate. For example, if the sample rate is 16000
-    /// we should be able to write 160 (10ms), 320 (20ms), 480 (30ms), etc.
+    /// The number of audio frames should be a multiple of 10ms worth of audio
+    /// frames (considering the configured device sample rate). For example, if
+    /// the sample rate is 16000 and there's only 1 channel, we should be able
+    /// to write 160 audio frames (10ms), 320 (20ms), 480 (30ms), etc. If the
+    /// number of audio frames is not a multiple of 10ms worth of audio frames,
+    /// silence will be added as padding.
     ///
-    /// :param bytestring samples: A bytestring with the samples to write
-    /// :param int num_samples: The number of samples to write
+    /// :param bytestring frames: A bytestring with the audio frames to write
     ///
-    /// :return: The number of samples written (which should match `num_samples`) or 0 if samples could not still be written
+    /// :return: The number of audio frames written
     /// :rtype: int
-    pub fn write_samples(&self, samples: PyObject, num_samples: usize) -> PyResult<PyObject> {
+    pub fn write_frames(&self, frames: PyObject) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
             Python::with_gil(|py| {
-                let py_samples: &PyBytes = samples.downcast::<PyBytes>(py).unwrap();
+                let py_frames: &PyBytes = frames.downcast::<PyBytes>(py).unwrap();
 
-                let length = py_samples.len()?;
+                let frames = py_frames.as_bytes();
+                let byte_length = frames.len();
 
-                let num_samples_bytes = num_samples * 2;
-                if num_samples_bytes > length {
+                // libwebrtc needs 16-bit linear PCM samples
+                if byte_length % 2 != 0 {
                     return Err(exceptions::PyValueError::new_err(
-                        "samples bytestring contains less samples than num_samples",
+                        "frames bytestring should contain 16-bit samples",
                     ));
                 }
 
-                let samples_written = unsafe {
-                    daily_core_context_virtual_microphone_device_write_samples(
+                let num_frames = byte_length / 2; // 16 bits/sample / 8 bits/byte = 2 byte/sample
+
+                let frames_written = unsafe {
+                    daily_core_context_virtual_microphone_device_write_frames(
                         audio_device.as_ptr() as *mut _,
-                        py_samples.as_bytes().as_ptr() as *const _,
-                        num_samples,
+                        frames.as_ptr() as *const _,
+                        num_frames,
                     )
                 };
 
-                if samples_written == num_samples as i32 || samples_written == 0 {
-                    Ok(samples_written.into_py(py))
+                if frames_written > 0 {
+                    Ok(frames_written.into_py(py))
                 } else {
                     Err(exceptions::PyIOError::new_err(
-                        "error writing audio samples to device",
+                        "error writing audio frames to device",
                     ))
                 }
             })
