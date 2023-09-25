@@ -122,7 +122,7 @@ impl PyCallClient {
     pub fn join(
         &mut self,
         meeting_url: &str,
-        meeting_token: Option<PyObject>,
+        meeting_token: Option<&str>,
         client_settings: Option<PyObject>,
         completion: Option<PyObject>,
     ) {
@@ -131,10 +131,7 @@ impl PyCallClient {
 
         // Meeting token
         let meeting_token_cstr = meeting_token
-            .map(|token| {
-                let token_string: String = Python::with_gil(|py| token.extract(py).unwrap());
-                CString::new(token_string).expect("invalid meeting token string")
-            })
+            .map(|token| CString::new(token).expect("invalid meeting token string"))
             .or(None);
 
         // Client settings
@@ -154,8 +151,12 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 request_id,
                 meeting_url_cstr.as_ptr(),
-                meeting_token_cstr.map_or(ptr::null_mut(), |s| s.as_ptr()),
-                client_settings_cstr.map_or(ptr::null_mut(), |s| s.as_ptr()),
+                meeting_token_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+                client_settings_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
             );
         }
     }
@@ -408,8 +409,12 @@ impl PyCallClient {
             daily_core_call_client_update_subscriptions(
                 self.call_client.as_mut(),
                 request_id,
-                participant_settings_cstr.map_or(ptr::null(), |s| s.as_ptr()),
-                profile_settings_cstr.map_or(ptr::null(), |s| s.as_ptr()),
+                participant_settings_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
+                profile_settings_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
     }
@@ -571,7 +576,9 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 request_id,
                 message_cstr.as_ptr(),
-                participant_cstr.map_or(ptr::null(), |s| s.as_ptr()),
+                participant_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
     }
