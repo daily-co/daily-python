@@ -1,36 +1,26 @@
-use std::collections::HashMap;
-use std::ffi::{CStr, CString};
-use std::ptr;
-use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashMap,
+    ffi::{CStr, CString},
+    ptr,
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
-use crate::dict::DictValue;
-use crate::event::{args_from_event, method_name_from_event, request_id_from_event, Event};
-use crate::PyVideoFrame;
-use crate::GLOBAL_CONTEXT;
+use pyo3::{
+    exceptions,
+    prelude::*,
+    types::{PyBytes, PyTuple},
+};
 
 use webrtc_daily::sys::color_format::ColorFormat;
 
-use daily_core::prelude::{
-    daily_core_call_client_create, daily_core_call_client_destroy,
-    daily_core_call_client_get_network_stats, daily_core_call_client_inputs,
-    daily_core_call_client_join, daily_core_call_client_leave,
-    daily_core_call_client_participant_counts, daily_core_call_client_participants,
-    daily_core_call_client_publishing, daily_core_call_client_send_app_message,
-    daily_core_call_client_set_delegate, daily_core_call_client_set_participant_video_renderer,
-    daily_core_call_client_set_user_name, daily_core_call_client_subscription_profiles,
-    daily_core_call_client_subscriptions, daily_core_call_client_update_inputs,
-    daily_core_call_client_update_permissions, daily_core_call_client_update_publishing,
-    daily_core_call_client_update_remote_participants,
-    daily_core_call_client_update_subscription_profiles,
-    daily_core_call_client_update_subscriptions, CallClient, NativeCallClientDelegate,
-    NativeCallClientDelegateFns, NativeCallClientDelegatePtr, NativeVideoFrame,
-    NativeVideoRenderer, NativeVideoRendererFns,
-};
+use daily_core::prelude::*;
 
-use pyo3::exceptions;
-use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyTuple};
+use crate::{
+    dict::DictValue,
+    event::{args_from_event, method_name_from_event, request_id_from_event, Event},
+    PyVideoFrame, GLOBAL_CONTEXT,
+};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -527,9 +517,9 @@ impl PyCallClient {
             ptr: callback_ctx_ptr,
         });
 
-        let video_renderer = NativeCallClientVideoRenderer::new(
-            NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-            NativeCallClientVideoRendererFns::new(on_video_frame),
+        let video_renderer_delegate = NativeVideoRendererDelegate::new(
+            NativeVideoRendererDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
+            NativeVideoRendererDelegateFns::new(on_video_frame),
         );
 
         let request_id = self.maybe_register_completion(None);
@@ -541,7 +531,7 @@ impl PyCallClient {
                 participant_cstr.as_ptr(),
                 video_source_cstr.as_ptr(),
                 color_format_cstr.as_ptr(),
-                video_renderer,
+                video_renderer_delegate,
             );
         }
 
