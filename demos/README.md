@@ -18,3 +18,5 @@ pip3 install -r requirements.txt
 ```
 
 ℹ️ It's a good idea to install these dependencies in a virtual environment.
+
+View the demo file for more details, including how to run the demo.
