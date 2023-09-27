@@ -192,4 +192,32 @@ impl PyEventHandler {
     fn on_subscriptions_updated(&self, subscriptions: PyObject) -> PyResult<()> {
         Ok(())
     }
+
+    /// Event emitted when a transcription error occurs.
+    ///
+    /// :param string message: The error message
+    fn on_transcription_error(&self, message: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Emitted for all participants when a transcription starts.
+    ///
+    /// :param dict message: See :ref:`TranscriptionMessage`
+    fn on_transcription_message(&self, message: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Emitted for all participants when a transcription starts.
+    ///
+    /// :param dict status: See :ref:`TranscriptionStatus`
+    fn on_transcription_started(&self, status: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Emitted for all participants when a transcription stops.
+    ///
+    /// :param str stopped_by: The ID of the participant that stopped the transcription
+    fn on_transcription_stopped(&self, stopped_by: PyObject) -> PyResult<()> {
+        Ok(())
+    }
 }

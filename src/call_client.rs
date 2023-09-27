@@ -490,6 +490,103 @@ impl PyCallClient {
         }
     }
 
+    /// Starts a transcription service. This can be done by meeting owners or
+    /// transcription admins when transcription is enabled in the Daily domain.
+    ///
+    /// :param dict settings: See :ref:`TranscriptionSettings`
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (settings = None, completion = None))]
+    pub fn start_transcription(
+        &mut self,
+        py: Python<'_>,
+        settings: Option<PyObject>,
+        completion: Option<PyObject>,
+    ) {
+        let settings_cstr = settings
+            .map(|settings| {
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                CString::new(settings_string).expect("invalid transcription settings string")
+            })
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_start_transcription(
+                self.call_client.as_mut(),
+                request_id,
+                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+    }
+
+    /// Stops a currently running transcription service. This can be done by
+    /// meeting owners or transcription admins when transcription is enabled in
+    /// the Daily domain.
+    ///
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (completion = None))]
+    pub fn stop_transcription(&mut self, completion: Option<PyObject>) {
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_stop_transcription(self.call_client.as_mut(), request_id);
+        }
+    }
+
+    /// Sends a message to other participants, or another specific participant,
+    /// during the call.
+    ///
+    /// :param any message: The message to send (should be serializable to JSON)
+    /// :param str participant: The participant to send the message to. Or `None` to broadcast the message
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (message, participant = None , completion = None))]
+    pub fn send_app_message(
+        &mut self,
+        py: Python<'_>,
+        message: PyObject,
+        participant: Option<&str>,
+        completion: Option<PyObject>,
+    ) {
+        let message_value: DictValue = message.extract(py).unwrap();
+        let message_string = serde_json::to_string(&message_value.0).unwrap();
+        let message_cstr = CString::new(message_string).expect("invalid message string");
+
+        let participant_cstr = participant
+            .map(|p| CString::new(p).expect("invalid participant string"))
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_send_app_message(
+                self.call_client.as_mut(),
+                request_id,
+                message_cstr.as_ptr(),
+                participant_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+    }
+
+    /// Returns the latest network statistics.
+    ///
+    /// :return: See :ref:`NetworkStats`
+    /// :rtype: dict
+    pub fn get_network_stats(&mut self, py: Python<'_>) -> PyResult<PyObject> {
+        unsafe {
+            let stats_ptr = daily_core_call_client_get_network_stats(self.call_client.as_mut());
+            let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
+
+            let stats: HashMap<String, DictValue> =
+                serde_json::from_str(stats_string.as_str()).unwrap();
+
+            Ok(stats.to_object(py))
+        }
+    }
+
     /// Registers a video renderer for the given video source of the provided
     /// participant. The color format of the received frames can be chosen.
     ///
@@ -545,58 +642,6 @@ impl PyCallClient {
         }
 
         Ok(())
-    }
-
-    /// Sends a message to other participants, or another specific participant,
-    /// during the call.
-    ///
-    /// :param any message: The message to send (should be serializable to JSON)
-    /// :param str participant: The participant to send the message to. Or `None` to broadcast the message
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
-    #[pyo3(signature = (message, participant = None , completion = None))]
-    pub fn send_app_message(
-        &mut self,
-        py: Python<'_>,
-        message: PyObject,
-        participant: Option<&str>,
-        completion: Option<PyObject>,
-    ) {
-        let message_value: DictValue = message.extract(py).unwrap();
-        let message_string = serde_json::to_string(&message_value.0).unwrap();
-        let message_cstr = CString::new(message_string).expect("invalid message string");
-
-        let participant_cstr = participant
-            .map(|p| CString::new(p).expect("invalid participant string"))
-            .or(None);
-
-        let request_id = self.maybe_register_completion(completion);
-
-        unsafe {
-            daily_core_call_client_send_app_message(
-                self.call_client.as_mut(),
-                request_id,
-                message_cstr.as_ptr(),
-                participant_cstr
-                    .as_ref()
-                    .map_or(ptr::null(), |s| s.as_ptr()),
-            );
-        }
-    }
-
-    /// Returns the latest network statistics.
-    ///
-    /// :return: See :ref:`NetworkStats`
-    /// :rtype: dict
-    pub fn get_network_stats(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let stats_ptr = daily_core_call_client_get_network_stats(self.call_client.as_mut());
-            let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
-
-            let stats: HashMap<String, DictValue> =
-                serde_json::from_str(stats_string.as_str()).unwrap();
-
-            Ok(stats.to_object(py))
-        }
     }
 
     fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {

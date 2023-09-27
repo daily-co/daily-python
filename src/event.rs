@@ -49,6 +49,10 @@ pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
         "recording-stopped" => "on_recording_stopped",
         "subscription-profiles-updated" => "on_subscription_profiles_updated",
         "subscriptions-updated" => "on_subscriptions_updated",
+        "transcription-error" => "on_transcription_error",
+        "transcription-message" => "on_transcription_message",
+        "transcription-started" => "on_transcription_started",
+        "transcription-stopped" => "on_transcription_stopped",
         a => {
             tracing::debug!("unimplemented event handler {a}");
             return None;
@@ -166,6 +170,18 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "subscriptions-updated" => object
             .get("subscriptions")
             .map(|subscriptions| vec![DictValue(subscriptions.clone())]),
+        "transcription-error" => object
+            .get("message")
+            .map(|message| vec![DictValue(message.clone())]),
+        "transcription-message" => object
+            .get("msgData")
+            .map(|message| vec![DictValue(message.clone())]),
+        "transcription-started" => object
+            .get("status")
+            .map(|status| vec![DictValue(status.clone())]),
+        "transcription-stopped" => object
+            .get("updatedBy")
+            .map(|updated_by| vec![DictValue(updated_by.clone())]),
         a => panic!("args for event {a} not supported"),
     }
 }

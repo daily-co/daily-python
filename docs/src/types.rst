@@ -721,6 +721,74 @@ StreamingLayout
 
 For more details see the `layout object <https://docs.daily.co/reference/daily-js/instance-methods/start-recording#control-cloud-recording-layouts>`_.
 
+.. _TranscriptionMessage:
+
+TranscriptionMessage
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "is_final"
+     - bool
+   * - "session_id"
+     - string
+   * - "text"
+     - string
+   * - "timestamp"
+     - ISO8601
+   * - "user_id"
+     - string
+   * - "user_name"
+     - string
+
+.. _TranscriptionSettings:
+
+TranscriptionSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "language"
+     - string (default: "en", see Deepgram's `Language <https://developers.deepgram.com/docs/language>`_)
+   * - "model"
+     - string (default: "general", see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
+   * - "tier"
+     - string (default: "base", see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
+   * - "detect_language"
+     - bool (default: true, see Deepgram's `Language Detection <https://developers.deepgram.com/docs/language-detection>`_)
+   * - "profanity_filter"
+     - bool (default: false, see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
+   * - "redact"
+     - bool (default: false, see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
+
+.. _TranscriptionStatus:
+
+TranscriptionStatus
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "language"
+     - string (see Deepgram's `Language <https://developers.deepgram.com/docs/language>`_)
+   * - "model"
+     - string (see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
+   * - "tier"
+     - string (see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
+   * - "startedBy"
+     - string
+
 .. _VideoInputSettings:
 
 VideoInputSettings
