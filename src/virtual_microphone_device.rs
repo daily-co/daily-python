@@ -77,39 +77,37 @@ impl PyVirtualMicrophoneDevice {
     ///
     /// :return: The number of audio frames written
     /// :rtype: int
-    pub fn write_frames(&self, frames: PyObject) -> PyResult<PyObject> {
+    pub fn write_frames(&self, py: Python<'_>, frames: &PyBytes) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
-            Python::with_gil(|py| {
-                let py_frames: &PyBytes = frames.downcast::<PyBytes>(py).unwrap();
+            let bytes_length = frames.len()?;
 
-                let frames = py_frames.as_bytes();
-                let byte_length = frames.len();
+            // libwebrtc needs 16-bit linear PCM samples
+            if bytes_length % 2 != 0 {
+                return Err(exceptions::PyValueError::new_err(
+                    "frames bytestring should contain 16-bit samples",
+                ));
+            }
 
-                // libwebrtc needs 16-bit linear PCM samples
-                if byte_length % 2 != 0 {
-                    return Err(exceptions::PyValueError::new_err(
-                        "frames bytestring should contain 16-bit samples",
-                    ));
-                }
+            let num_frames = bytes_length / 2; // 16 bits/sample / 8 bits/byte = 2 byte/sample
 
-                let num_frames = byte_length / 2; // 16 bits/sample / 8 bits/byte = 2 byte/sample
+            // TODO(aleix): Should this be i16 aligned?
+            let bytes = frames.as_bytes();
 
-                let frames_written = unsafe {
-                    daily_core_context_virtual_microphone_device_write_frames(
-                        audio_device.as_ptr() as *mut _,
-                        frames.as_ptr() as *const _,
-                        num_frames,
-                    )
-                };
+            let frames_written = py.allow_threads(move || unsafe {
+                daily_core_context_virtual_microphone_device_write_frames(
+                    audio_device.as_ptr() as *mut _,
+                    bytes.as_ptr() as *const _,
+                    num_frames,
+                )
+            });
 
-                if frames_written > 0 {
-                    Ok(frames_written.into_py(py))
-                } else {
-                    Err(exceptions::PyIOError::new_err(
-                        "error writing audio frames to device",
-                    ))
-                }
-            })
+            if frames_written > 0 {
+                Ok(frames_written.into_py(py))
+            } else {
+                Err(exceptions::PyIOError::new_err(
+                    "error writing audio frames to device",
+                ))
+            }
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "no microphone device has been attached",

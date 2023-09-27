@@ -81,23 +81,21 @@ impl PyVirtualCameraDevice {
     /// :ref:`ColorFormat`) specified when creating the camera.
     ///
     /// :param bytestring frame: A bytestring with the video frame contents
-    pub fn write_frame(&self, frame: PyObject) -> PyResult<()> {
+    pub fn write_frame(&self, py: Python<'_>, frame: &PyBytes) -> PyResult<()> {
         if let Some(camera_device) = self.camera_device.as_ref() {
-            Python::with_gil(|py| {
-                let py_frame: &PyBytes = frame.downcast::<PyBytes>(py).unwrap();
+            let bytes_length = frame.len()?;
 
-                let length = py_frame.len()?;
+            let bytes = frame.as_bytes();
 
-                unsafe {
-                    daily_core_context_virtual_camera_device_write_frame(
-                        camera_device.as_ptr() as *mut _,
-                        py_frame.as_bytes().as_ptr() as *const _,
-                        length,
-                    )
-                };
+            py.allow_threads(move || unsafe {
+                daily_core_context_virtual_camera_device_write_frame(
+                    camera_device.as_ptr() as *mut _,
+                    bytes.as_ptr() as *const _,
+                    bytes_length,
+                )
+            });
 
-                Ok(())
-            })
+            Ok(())
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "no camera device has been attached",

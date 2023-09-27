@@ -111,6 +111,7 @@ impl PyCallClient {
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
         &mut self,
+        py: Python<'_>,
         meeting_url: &str,
         meeting_token: Option<&str>,
         client_settings: Option<PyObject>,
@@ -127,10 +128,8 @@ impl PyCallClient {
         // Client settings
         let client_settings_cstr = client_settings
             .map(|settings| {
-                let settings_string: String = Python::with_gil(|py| {
-                    let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                    serde_json::to_string(&settings_map).unwrap()
-                });
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
                 CString::new(settings_string).expect("invalid client settings string")
             })
             .or(None);
@@ -184,7 +183,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`CallAllParticipants`
     /// :rtype: dict
-    pub fn participants(&mut self) -> PyResult<PyObject> {
+    pub fn participants(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
             let participants_string = CStr::from_ptr(participants_ptr)
@@ -194,7 +193,7 @@ impl PyCallClient {
             let participants: HashMap<String, DictValue> =
                 serde_json::from_str(participants_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| participants.to_object(py)))
+            Ok(participants.to_object(py))
         }
     }
 
@@ -202,7 +201,7 @@ impl PyCallClient {
     ///
     /// :return: The number of participants in the meeting. See :ref:`ParticipantCounts`
     /// :rtype: dict
-    pub fn participant_counts(&mut self) -> PyResult<PyObject> {
+    pub fn participant_counts(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let participant_counts_ptr =
                 daily_core_call_client_participant_counts(self.call_client.as_mut());
@@ -213,7 +212,7 @@ impl PyCallClient {
             let participant_counts: HashMap<String, DictValue> =
                 serde_json::from_str(participant_counts_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| participant_counts.to_object(py)))
+            Ok(participant_counts.to_object(py))
         }
     }
 
@@ -224,11 +223,12 @@ impl PyCallClient {
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
         &mut self,
+        py: Python<'_>,
         remote_participants: PyObject,
         completion: Option<PyObject>,
     ) {
         let remote_participants_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| remote_participants.extract(py).unwrap());
+            remote_participants.extract(py).unwrap();
 
         let remote_participants_string = serde_json::to_string(&remote_participants_map).unwrap();
 
@@ -251,7 +251,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`InputSettings`
     /// :rtype: dict
-    pub fn inputs(&mut self) -> PyResult<PyObject> {
+    pub fn inputs(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
             let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
@@ -259,7 +259,7 @@ impl PyCallClient {
             let inputs: HashMap<String, DictValue> =
                 serde_json::from_str(inputs_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| inputs.to_object(py)))
+            Ok(inputs.to_object(py))
         }
     }
 
@@ -269,9 +269,13 @@ impl PyCallClient {
     /// :param dict input_settings: See :ref:`InputSettings`
     /// :param func completion: An optional completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (input_settings, completion = None))]
-    pub fn update_inputs(&mut self, input_settings: PyObject, completion: Option<PyObject>) {
-        let input_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| input_settings.extract(py).unwrap());
+    pub fn update_inputs(
+        &mut self,
+        py: Python<'_>,
+        input_settings: PyObject,
+        completion: Option<PyObject>,
+    ) {
+        let input_settings_map: HashMap<String, DictValue> = input_settings.extract(py).unwrap();
 
         let input_settings_string = serde_json::to_string(&input_settings_map).unwrap();
 
@@ -295,7 +299,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`PublishingSettings`
     /// :rtype: dict
-    pub fn publishing(&mut self) -> PyResult<PyObject> {
+    pub fn publishing(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let publishing_ptr = daily_core_call_client_publishing(self.call_client.as_mut());
             let publishing_string = CStr::from_ptr(publishing_ptr)
@@ -305,7 +309,7 @@ impl PyCallClient {
             let publishing: HashMap<String, DictValue> =
                 serde_json::from_str(publishing_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| publishing.to_object(py)))
+            Ok(publishing.to_object(py))
         }
     }
 
@@ -317,11 +321,12 @@ impl PyCallClient {
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
         &mut self,
+        py: Python<'_>,
         publishing_settings: PyObject,
         completion: Option<PyObject>,
     ) {
         let publishing_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| publishing_settings.extract(py).unwrap());
+            publishing_settings.extract(py).unwrap();
 
         let publishing_settings_string = serde_json::to_string(&publishing_settings_map).unwrap();
 
@@ -344,7 +349,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`ParticipantSubscriptions`
     /// :rtype: dict
-    pub fn subscriptions(&mut self) -> PyResult<PyObject> {
+    pub fn subscriptions(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
             let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
@@ -354,7 +359,7 @@ impl PyCallClient {
             let subscriptions: HashMap<String, DictValue> =
                 serde_json::from_str(subscriptions_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| subscriptions.to_object(py)))
+            Ok(subscriptions.to_object(py))
         }
     }
 
@@ -369,6 +374,7 @@ impl PyCallClient {
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &mut self,
+        py: Python<'_>,
         participant_settings: Option<PyObject>,
         profile_settings: Option<PyObject>,
         completion: Option<PyObject>,
@@ -376,8 +382,7 @@ impl PyCallClient {
         // Participant subscription settings
         let participant_settings_cstr = participant_settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> =
-                    Python::with_gil(|py| settings.extract(py).unwrap());
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
                 let settings_string = serde_json::to_string(&settings_map).unwrap();
                 CString::new(settings_string).expect("invalid participant settings string")
             })
@@ -386,8 +391,7 @@ impl PyCallClient {
         // Profile settings
         let profile_settings_cstr = profile_settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> =
-                    Python::with_gil(|py| settings.extract(py).unwrap());
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
                 let settings_string = serde_json::to_string(&settings_map).unwrap();
                 CString::new(settings_string).expect("invalid profile settings string")
             })
@@ -414,7 +418,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`SubscriptionProfileSettings`
     /// :rtype: dict
-    pub fn subscription_profiles(&mut self) -> PyResult<PyObject> {
+    pub fn subscription_profiles(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let profiles_ptr =
                 daily_core_call_client_subscription_profiles(self.call_client.as_mut());
@@ -423,7 +427,7 @@ impl PyCallClient {
             let profiles: HashMap<String, DictValue> =
                 serde_json::from_str(profiles_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| profiles.to_object(py)))
+            Ok(profiles.to_object(py))
         }
     }
 
@@ -434,11 +438,12 @@ impl PyCallClient {
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
         &mut self,
+        py: Python<'_>,
         profile_settings: PyObject,
         completion: Option<PyObject>,
     ) {
         let profile_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| profile_settings.extract(py).unwrap());
+            profile_settings.extract(py).unwrap();
 
         let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
         let profile_settings_cstr =
@@ -462,9 +467,13 @@ impl PyCallClient {
     /// :param dict permissions: See :ref:`ParticipantPermissions`
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
-    pub fn update_permissions(&mut self, permissions: PyObject, completion: Option<PyObject>) {
-        let permissions_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| permissions.extract(py).unwrap());
+    pub fn update_permissions(
+        &mut self,
+        py: Python<'_>,
+        permissions: PyObject,
+        completion: Option<PyObject>,
+    ) {
+        let permissions_map: HashMap<String, DictValue> = permissions.extract(py).unwrap();
 
         let permissions_string = serde_json::to_string(&permissions_map).unwrap();
         let permissions_cstr =
@@ -547,11 +556,12 @@ impl PyCallClient {
     #[pyo3(signature = (message, participant = None , completion = None))]
     pub fn send_app_message(
         &mut self,
+        py: Python<'_>,
         message: PyObject,
         participant: Option<&str>,
         completion: Option<PyObject>,
     ) {
-        let message_value: DictValue = Python::with_gil(|py| message.extract(py).unwrap());
+        let message_value: DictValue = message.extract(py).unwrap();
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
@@ -577,7 +587,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`NetworkStats`
     /// :rtype: dict
-    pub fn get_network_stats(&mut self) -> PyResult<PyObject> {
+    pub fn get_network_stats(&mut self, py: Python<'_>) -> PyResult<PyObject> {
         unsafe {
             let stats_ptr = daily_core_call_client_get_network_stats(self.call_client.as_mut());
             let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
@@ -585,7 +595,7 @@ impl PyCallClient {
             let stats: HashMap<String, DictValue> =
                 serde_json::from_str(stats_string.as_str()).unwrap();
 
-            Ok(Python::with_gil(|py| stats.to_object(py)))
+            Ok(stats.to_object(py))
         }
     }
 

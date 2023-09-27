@@ -76,7 +76,7 @@ impl PyVirtualSpeakerDevice {
     ///
     /// :return: The read audio frames as a bytestring. If no audio frames could be read, it returns an empty bytestring
     /// :rtype: bytestring.
-    pub fn read_frames(&self, num_frames: usize) -> PyResult<PyObject> {
+    pub fn read_frames(&self, py: Python<'_>, num_frames: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
             // libwebrtc provides with 16-bit linear PCM
             let bits_per_sample = 16;
@@ -84,30 +84,29 @@ impl PyVirtualSpeakerDevice {
             let num_words = num_bytes / 2;
 
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
+            let buffer_bytes = buffer.as_mut_slice();
 
-            let frames_read = unsafe {
+            let frames_read = py.allow_threads(move || unsafe {
                 daily_core_context_virtual_speaker_device_read_frames(
                     audio_device.as_ptr() as *mut _,
-                    buffer.as_mut_ptr(),
+                    buffer_bytes.as_mut_ptr(),
                     num_frames,
                 )
-            };
+            });
 
-            Python::with_gil(|py| {
-                if frames_read == num_frames as i32 {
-                    let py_bytes =
-                        unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
-                    Ok(py_bytes.into_py(py))
-                } else if frames_read == 0 {
-                    let empty_bytes: [u8; 0] = [];
-                    let py_bytes = PyBytes::new(py, &empty_bytes);
-                    Ok(py_bytes.into_py(py))
-                } else {
-                    Err(exceptions::PyIOError::new_err(
-                        "error reading audio frames from the device",
-                    ))
-                }
-            })
+            if frames_read == num_frames as i32 {
+                let py_bytes =
+                    unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
+                Ok(py_bytes.into_py(py))
+            } else if frames_read == 0 {
+                let empty_bytes: [u8; 0] = [];
+                let py_bytes = PyBytes::new(py, &empty_bytes);
+                Ok(py_bytes.into_py(py))
+            } else {
+                Err(exceptions::PyIOError::new_err(
+                    "error reading audio frames from the device",
+                ))
+            }
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "no speaker device has been attached",
