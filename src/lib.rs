@@ -115,6 +115,7 @@ impl PyDaily {
             NativeWebRtcContextDelegatePtr::new(ptr::null_mut()),
             NativeWebRtcContextDelegateFns::new(
                 get_user_media,
+                None,
                 get_enumerated_devices,
                 Some(create_audio_device_module),
                 None,
