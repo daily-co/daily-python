@@ -11,6 +11,7 @@ use pyo3::{
     prelude::*,
     types::{PyBytes, PyTuple},
 };
+use serde_json::Value;
 
 use webrtc_daily::sys::color_format::ColorFormat;
 
@@ -486,6 +487,119 @@ impl PyCallClient {
                 self.call_client.as_mut(),
                 request_id,
                 permissions_cstr.as_ptr(),
+            );
+        }
+    }
+
+    /// Starts a recording, if recording is enabled for the current room.
+    ///
+    /// :param dict streaming_settings: See :ref:`StreamingSettings`
+    /// :param str stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
+    /// :param str force_new: Whether to force a new recording
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
+    pub fn start_recording(
+        &mut self,
+        py: Python<'_>,
+        streaming_settings: Option<PyObject>,
+        stream_id: Option<&str>,
+        force_new: Option<bool>,
+        completion: Option<PyObject>,
+    ) {
+        let mut settings_map: HashMap<String, DictValue> = HashMap::new();
+
+        if let Some(stream_id) = stream_id {
+            settings_map.insert("instanceId".to_string(), DictValue(stream_id.into()));
+        }
+        if let Some(streaming_settings) = streaming_settings {
+            let dict: HashMap<String, DictValue> = streaming_settings.extract(py).unwrap();
+            let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
+            settings_map.insert(
+                "streamingSettings".to_string(),
+                DictValue(Value::Object(map)),
+            );
+        }
+        if let Some(force_new) = force_new {
+            settings_map.insert("forceNew".to_string(), DictValue(force_new.into()));
+        }
+
+        let settings_cstr = if settings_map.is_empty() {
+            None
+        } else {
+            let settings_string = serde_json::to_string(&settings_map).unwrap();
+            Some(CString::new(settings_string).expect("invalid recording settings string"))
+        };
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_start_recording(
+                self.call_client.as_mut(),
+                request_id,
+                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+    }
+
+    /// Stops an ongoing recording. If multiple recording instances are running,
+    /// each instance must be stopped individually by providing the unique
+    /// stream ID.
+    ///
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (stream_id = None, completion = None))]
+    pub fn stop_recording(&mut self, stream_id: Option<&str>, completion: Option<PyObject>) {
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_stop_recording(
+                self.call_client.as_mut(),
+                request_id,
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+    }
+
+    /// Updates an ongoing recording. If multiple recording instances are
+    /// running, each instance must be updated individually by providing the
+    /// unique stream ID.
+    ///
+    /// :param dict update_settings: See :ref:`StreamingUpdateSettings`
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
+    pub fn update_recording(
+        &mut self,
+        py: Python<'_>,
+        update_settings: PyObject,
+        stream_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) {
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let update_settings_map: HashMap<String, DictValue> = update_settings.extract(py).unwrap();
+        let update_settings_string = serde_json::to_string(&update_settings_map).unwrap();
+        let update_settings_cstr =
+            CString::new(update_settings_string).expect("invalid recording settings string");
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_update_recording(
+                self.call_client.as_mut(),
+                request_id,
+                update_settings_cstr.as_ptr(),
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
             );
         }
     }

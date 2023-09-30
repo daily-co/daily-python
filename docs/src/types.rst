@@ -713,13 +713,82 @@ SubscriptionVideoSettings
    * - "settings"
      - `ReceiveVideoSettings`_
 
-
 .. _StreamingLayout:
 
 StreamingLayout
 -----------------------------------
 
 For more details see the `layout object <https://docs.daily.co/reference/daily-js/instance-methods/start-recording#control-cloud-recording-layouts>`_.
+
+.. _StreamingSettings:
+
+StreamingSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "video"
+     - `StreamingVideoSettings`_
+   * - "audio"
+     - `StreamingAudioSettings`_
+   * - "maxDuration"
+     - number
+   * - "layout"
+     - `StreamingLayout`_
+
+.. _StreamingAudioSettings:
+
+StreamingAudioSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "bitrate"
+     - number
+
+.. _StreamingUpdateSettings:
+
+StreamingUpdateSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "layout"
+     - `StreamingLayout`_
+
+.. _StreamingVideoSettings:
+
+StreamingVideoSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "width"
+     - number
+   * - "height"
+     - number
+   * - "fps"
+     - number
+   * - "backgroundColor"
+     - string (#rrggbb or #aarrggbb)
+   * - "bitrate"
+     - number
 
 .. _TranscriptionMessage:
 
