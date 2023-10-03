@@ -76,8 +76,8 @@ for sentence in sentences_file.readlines():
   # that's not part of the audio samples.
   stream.read(44)
 
-  # Send all the audio samples to the microphone.
-  microphone.write_samples(stream.read())
+  # Send all the audio frames to the microphone.
+  microphone.write_frames(stream.read())
 
 # Let everything finish
 time.sleep(2)

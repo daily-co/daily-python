@@ -7,6 +7,7 @@
 #
 
 import argparse
+import time
 import wave
 
 from daily import *
@@ -49,7 +50,10 @@ class SendWavApp:
             total_frames = wav.getnframes()
             while sent_frames < total_frames:
                 frames = wav.readframes(1600)
-                self.__mic_device.write_samples(frames)
+                frames_read = len(frames) / 2 # 16-bit linear PCM
+                if frames_read > 0:
+                    self.__mic_device.write_frames(frames)
+                sent_frames += frames_read
             wav.rewind()
 
 def main():

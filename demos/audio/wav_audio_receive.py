@@ -44,10 +44,9 @@ class ReceiveWavApp:
 
     def receive_audio(self):
         while True:
-            buffer = self.__speaker_device.read_samples(800)
+            buffer = self.__speaker_device.read_frames(160)
             if len(buffer) > 0:
                 self.__wave.writeframesraw(buffer)
-            time.sleep(0.05)
 
 def main():
     parser = argparse.ArgumentParser()

@@ -57,9 +57,8 @@ client.join(args.meeting)
 time.sleep(3)
 
 SAMPLE_RATE = 16000
-READ_INTERVAL = 0.01
-SAMPLES_TO_READ = int(SAMPLE_RATE * READ_INTERVAL)
-SECONDS_TO_READ = 10.0
+SECONDS_TO_READ = 10
+FRAMES_TO_READ = SAMPLE_RATE * FRAMES_TO_READ
 
 print()
 print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
@@ -71,10 +70,8 @@ out_wave.setnchannels(1)
 out_wave.setsampwidth(2) # 16-bit LINEAR PCM
 out_wave.setframerate(16000)
 
-for _ in range (int(SECONDS_TO_READ / READ_INTERVAL)):
-  buffer = speaker.read_samples(SAMPLES_TO_READ)
-  out_wave.writeframesraw(buffer)
-  time.sleep(READ_INTERVAL)
+buffer = speaker.read_frames(FRAMES_TO_READ)
+out_wave.writeframesraw(buffer)
 
 out_wave.close()
 
