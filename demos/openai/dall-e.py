@@ -58,7 +58,7 @@ time.sleep(3)
 
 SAMPLE_RATE = 16000
 SECONDS_TO_READ = 10
-FRAMES_TO_READ = SAMPLE_RATE * FRAMES_TO_READ
+FRAMES_TO_READ = SAMPLE_RATE * SECONDS_TO_READ
 
 print()
 print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
