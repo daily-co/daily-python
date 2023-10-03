@@ -200,7 +200,7 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Emitted for all participants when a transcription starts.
+    /// Emitted for all participants when a transcription message is received.
     ///
     /// :param dict message: See :ref:`TranscriptionMessage`
     fn on_transcription_message(&self, message: PyObject) -> PyResult<()> {
