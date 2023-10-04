@@ -7,7 +7,7 @@ name = "daily-python"
 description = "Daily Client SDK for Python"
 license = { text = "BSD 2-Clause License" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Communications :: Conferencing"
