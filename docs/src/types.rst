@@ -831,8 +831,6 @@ TranscriptionSettings
      - string (default: "general", see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
    * - "tier"
      - string (default: "base", see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
-   * - "detect_language"
-     - bool (default: true, see Deepgram's `Language Detection <https://developers.deepgram.com/docs/language-detection>`_)
    * - "profanity_filter"
      - bool (default: false, see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
