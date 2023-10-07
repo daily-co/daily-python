@@ -37,8 +37,9 @@ impl CallClientPtr {
 unsafe impl Send for CallClientPtr {}
 
 struct CallbackContext {
-    callback: Option<PyObject>,
+    event_handler_callback: Option<PyObject>,
     completions: Arc<Mutex<HashMap<u64, PyObject>>>,
+    video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
 }
 
 #[derive(Clone)]
@@ -58,7 +59,8 @@ unsafe impl Send for CallbackContextPtr {}
 pub struct PyCallClient {
     call_client: CallClientPtr,
     completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-    callback_ctx_ptrs: Vec<CallbackContextPtr>,
+    video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
+    callback_ctx_ptr: CallbackContextPtr,
 }
 
 #[pymethods]
@@ -70,17 +72,19 @@ impl PyCallClient {
         let call_client = unsafe { daily_core_call_client_create() };
         if !call_client.is_null() {
             let completions = Arc::new(Mutex::new(HashMap::new()));
+            let video_renderers = Arc::new(Mutex::new(HashMap::new()));
 
             let callback_ctx = Arc::new(CallbackContext {
-                callback: event_handler,
+                event_handler_callback: event_handler,
                 completions: completions.clone(),
+                video_renderers: video_renderers.clone(),
             });
 
             let callback_ctx_ptr = Arc::into_raw(callback_ctx);
 
             let client_delegate = NativeCallClientDelegate::new(
                 NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-                NativeCallClientDelegateFns::new(on_event),
+                NativeCallClientDelegateFns::new(on_event, on_video_frame),
             );
 
             unsafe {
@@ -90,9 +94,10 @@ impl PyCallClient {
             Ok(Self {
                 call_client: CallClientPtr { ptr: call_client },
                 completions,
-                callback_ctx_ptrs: vec![CallbackContextPtr {
+                video_renderers,
+                callback_ctx_ptr: CallbackContextPtr {
                     ptr: callback_ctx_ptr,
-                }],
+                },
             })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
@@ -726,32 +731,23 @@ impl PyCallClient {
             )));
         }
 
-        let callback_ctx = Arc::new(CallbackContext {
-            callback: Some(callback),
-            completions: self.completions.clone(),
-        });
-
-        let callback_ctx_ptr = Arc::into_raw(callback_ctx);
-
-        self.callback_ctx_ptrs.push(CallbackContextPtr {
-            ptr: callback_ctx_ptr,
-        });
-
-        let video_renderer_delegate = NativeVideoRendererDelegate::new(
-            NativeVideoRendererDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-            NativeVideoRendererDelegateFns::new(on_video_frame),
-        );
-
         let request_id = self.maybe_register_completion(None);
+
+        // Use the request_id as our renderer_id (it will be unique anyways) and
+        // register the video renderer python callback.
+        self.video_renderers
+            .lock()
+            .unwrap()
+            .insert(request_id, callback);
 
         unsafe {
             daily_core_call_client_set_participant_video_renderer(
                 self.call_client.as_mut(),
                 request_id,
+                request_id,
                 participant_cstr.as_ptr(),
                 video_source_cstr.as_ptr(),
                 color_format_cstr.as_ptr(),
-                video_renderer_delegate,
             );
         }
 
@@ -779,14 +775,11 @@ impl Drop for PyCallClient {
             daily_core_call_client_destroy(self.call_client.ptr);
         }
 
-        // Cleanup callback contexts. The callback contexts still have one
+        // Cleanup the callback context. The callback context still has one
         // reference count (because of we drop it but increase it again every
         // time a callback happens). After the client is destroyed it is safe to
-        // simply get rid of all of them.
-        for callback_ctx_ptr in self.callback_ctx_ptrs.iter() {
-            let _callback_ctx = unsafe { Arc::from_raw(callback_ctx_ptr.ptr) };
-            // This will properly drop the CallbackContext.
-        }
+        // simply get rid of it
+        let _callback_ctx = unsafe { Arc::from_raw(self.callback_ctx_ptr.ptr) };
     }
 }
 
@@ -826,7 +819,7 @@ unsafe extern "C" fn on_event(
                 }
             }
             _ => {
-                if let Some(callback) = &callback_ctx.callback {
+                if let Some(callback) = &callback_ctx.event_handler_callback {
                     if let Some(method_name) = method_name_from_event(&event) {
                         if let Some(args) = args_from_event(&event) {
                             let py_args = PyTuple::new(py, args);
@@ -844,6 +837,7 @@ unsafe extern "C" fn on_event(
 
 unsafe extern "C" fn on_video_frame(
     delegate: *mut libc::c_void,
+    renderer_id: u64,
     peer_id: *const libc::c_char,
     frame: *const NativeVideoFrame,
 ) {
@@ -857,7 +851,13 @@ unsafe extern "C" fn on_video_frame(
 
         let callback_ctx = Arc::from_raw(callback_ctx_ptr);
 
-        if let Some(callback) = &callback_ctx.callback {
+        if let Some(callback) = callback_ctx
+            .video_renderers
+            .clone()
+            .lock()
+            .unwrap()
+            .get(&renderer_id)
+        {
             let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
             let color_format = CStr::from_ptr((*frame).color_format)
