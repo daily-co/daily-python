@@ -1,3 +1,7 @@
+mod delegate;
+
+use delegate::*;
+
 use std::{
     collections::HashMap,
     ffi::{CStr, CString},
@@ -6,22 +10,14 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use pyo3::{
-    exceptions,
-    prelude::*,
-    types::{PyBytes, PyTuple},
-};
+use pyo3::{exceptions, prelude::*};
 use serde_json::Value;
 
 use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{
-    dict::DictValue,
-    event::{args_from_event, method_name_from_event, request_id_from_event, Event},
-    PyVideoFrame, GLOBAL_CONTEXT,
-};
+use crate::{dict::DictValue, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -29,25 +25,16 @@ struct CallClientPtr {
 }
 
 impl CallClientPtr {
-    fn as_mut(&mut self) -> &mut CallClient {
-        unsafe { &mut *(self.ptr) }
+    fn as_ptr(&mut self) -> *mut CallClient {
+        self.ptr
+    }
+
+    unsafe fn as_mut(&mut self) -> &mut CallClient {
+        &mut *(self.ptr)
     }
 }
 
 unsafe impl Send for CallClientPtr {}
-
-struct CallbackContext {
-    event_handler_callback: Option<PyObject>,
-    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-    video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
-}
-
-#[derive(Clone)]
-struct CallbackContextPtr {
-    ptr: *const CallbackContext,
-}
-
-unsafe impl Send for CallbackContextPtr {}
 
 /// This class represents a call client. A call client is a participant of a
 /// Daily meeting and it can receive audio and video from other participants in
@@ -58,6 +45,7 @@ unsafe impl Send for CallbackContextPtr {}
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     call_client: CallClientPtr,
+    delegates: Arc<Mutex<PyCallClientDelegateFns>>,
     completions: Arc<Mutex<HashMap<u64, PyObject>>>,
     video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
     callback_ctx_ptr: CallbackContextPtr,
@@ -73,8 +61,13 @@ impl PyCallClient {
         if !call_client.is_null() {
             let completions = Arc::new(Mutex::new(HashMap::new()));
             let video_renderers = Arc::new(Mutex::new(HashMap::new()));
+            let delegates = Arc::new(Mutex::new(PyCallClientDelegateFns {
+                on_event: Some(on_event),
+                on_video_frame: Some(on_video_frame),
+            }));
 
             let callback_ctx = Arc::new(CallbackContext {
+                delegates: delegates.clone(),
                 event_handler_callback: event_handler,
                 completions: completions.clone(),
                 video_renderers: video_renderers.clone(),
@@ -84,7 +77,7 @@ impl PyCallClient {
 
             let client_delegate = NativeCallClientDelegate::new(
                 NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
-                NativeCallClientDelegateFns::new(on_event, on_video_frame),
+                NativeCallClientDelegateFns::new(on_event_native, on_video_frame_native),
             );
 
             unsafe {
@@ -93,6 +86,7 @@ impl PyCallClient {
 
             Ok(Self {
                 call_client: CallClientPtr { ptr: call_client },
+                delegates,
                 completions,
                 video_renderers,
                 callback_ctx_ptr: CallbackContextPtr {
@@ -769,10 +763,27 @@ impl PyCallClient {
 }
 
 impl Drop for PyCallClient {
+    // GIL acquired
     fn drop(&mut self) {
-        // This assumes the client has left the meeting.
         unsafe {
-            daily_core_call_client_destroy(self.call_client.ptr);
+            // Cleanup delegates so they are not called during destroy.
+            let mut delegates = self.delegates.lock().unwrap();
+            delegates.on_event.take();
+            delegates.on_video_frame.take();
+
+            let mut call_client = self.call_client.clone();
+
+            // We know the GIL is acquired because it is acquired before
+            // dropping a pyclass object.
+            let py = Python::assume_gil_acquired();
+
+            // Here we release the GIL so we can allow any event callbacks to
+            // finish. The event callbacks will be waiting on the GIL and
+            // execute at this point. But since we just cleanup the delegates
+            // above, the events will actually be a no-op.
+            py.allow_threads(move || {
+                daily_core_call_client_destroy(call_client.as_ptr());
+            });
         }
 
         // Cleanup the callback context. The callback context still has one
@@ -781,102 +792,4 @@ impl Drop for PyCallClient {
         // simply get rid of it
         let _callback_ctx = unsafe { Arc::from_raw(self.callback_ctx_ptr.ptr) };
     }
-}
-
-unsafe extern "C" fn on_event(
-    delegate: *mut libc::c_void,
-    event_json: *const libc::c_char,
-    _json_len: isize,
-) {
-    Python::with_gil(|py| {
-        let callback_ctx_ptr = delegate as *const CallbackContext;
-
-        // We increment the reference count because otherwise it will get
-        // dropped when Arc::from_raw() takes ownership, and we still want to
-        // keep the delegate pointer around.
-        Arc::increment_strong_count(callback_ctx_ptr);
-
-        let callback_ctx = Arc::from_raw(callback_ctx_ptr);
-
-        let event_string = CStr::from_ptr(event_json).to_string_lossy().into_owned();
-
-        let event = serde_json::from_str::<Event>(event_string.as_str()).unwrap();
-
-        match event.action.as_str() {
-            "request-completed" => {
-                if let Some(request_id) = request_id_from_event(&event) {
-                    if let Some(callback) =
-                        callback_ctx.completions.lock().unwrap().remove(&request_id)
-                    {
-                        if let Some(args) = args_from_event(&event) {
-                            let py_args = PyTuple::new(py, args);
-
-                            if let Err(error) = callback.call1(py, py_args) {
-                                error.write_unraisable(py, None);
-                            }
-                        }
-                    }
-                }
-            }
-            _ => {
-                if let Some(callback) = &callback_ctx.event_handler_callback {
-                    if let Some(method_name) = method_name_from_event(&event) {
-                        if let Some(args) = args_from_event(&event) {
-                            let py_args = PyTuple::new(py, args);
-
-                            if let Err(error) = callback.call_method1(py, method_name, py_args) {
-                                error.write_unraisable(py, None);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-unsafe extern "C" fn on_video_frame(
-    delegate: *mut libc::c_void,
-    renderer_id: u64,
-    peer_id: *const libc::c_char,
-    frame: *const NativeVideoFrame,
-) {
-    Python::with_gil(|py| {
-        let callback_ctx_ptr = delegate as *const CallbackContext;
-
-        // We increment the reference count because otherwise it will get
-        // dropped when Arc::from_raw() takes ownership, and we still want to
-        // keep the delegate pointer around.
-        Arc::increment_strong_count(callback_ctx_ptr);
-
-        let callback_ctx = Arc::from_raw(callback_ctx_ptr);
-
-        if let Some(callback) = callback_ctx
-            .video_renderers
-            .clone()
-            .lock()
-            .unwrap()
-            .get(&renderer_id)
-        {
-            let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
-
-            let color_format = CStr::from_ptr((*frame).color_format)
-                .to_string_lossy()
-                .into_owned();
-
-            let video_frame = PyVideoFrame {
-                buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
-                width: (*frame).width,
-                height: (*frame).height,
-                timestamp_us: (*frame).timestamp_us,
-                color_format: color_format.into_py(py),
-            };
-
-            let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
-
-            if let Err(error) = callback.call1(py, args) {
-                error.write_unraisable(py, None);
-            }
-        }
-    });
 }
