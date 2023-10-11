@@ -197,6 +197,10 @@ pub(crate) fn update_inner_values(
     args: Vec<DictValue>,
 ) {
     match event_action {
+        "active-speaker-changed" => {
+            let mut active_speaker = delegate_ctx.inner.active_speaker.lock().unwrap();
+            *active_speaker = args.first().unwrap().to_object(py);
+        }
         "inputs-updated" => {
             let mut inputs = delegate_ctx.inner.inputs.lock().unwrap();
             *inputs = args.first().unwrap().to_object(py);

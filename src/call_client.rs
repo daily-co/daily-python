@@ -59,6 +59,7 @@ impl PyCallClient {
         let call_client = unsafe { daily_core_call_client_create() };
         if !call_client.is_null() {
             // Get initial values
+            let active_speaker = unsafe { get_active_speaker(&mut (*call_client))? };
             let inputs = unsafe { get_inputs(&mut (*call_client))? };
             let participant_counts = unsafe { get_participant_counts(&mut (*call_client))? };
             let publishing = unsafe { get_publishing(&mut (*call_client))? };
@@ -74,6 +75,7 @@ impl PyCallClient {
                 completions: Arc::new(Mutex::new(HashMap::new())),
                 video_renderers: Arc::new(Mutex::new(HashMap::new())),
                 // Non-blocking
+                active_speaker: Arc::new(Mutex::new(active_speaker)),
                 inputs: Arc::new(Mutex::new(inputs)),
                 participant_counts: Arc::new(Mutex::new(participant_counts)),
                 publishing: Arc::new(Mutex::new(publishing)),
@@ -189,6 +191,14 @@ impl PyCallClient {
                 user_name_cstr.as_ptr(),
             );
         }
+    }
+
+    /// Returns the current active speaker.
+    ///
+    /// :return: See :ref:`Participant`
+    /// :rtype: dict
+    pub fn active_speaker(&self) -> PyResult<PyObject> {
+        Ok(self.inner.active_speaker.lock().unwrap().clone())
     }
 
     /// Returns the current participants in the meeting.
@@ -750,6 +760,18 @@ impl Drop for PyCallClient {
         // simply get rid of it
         let _delegate_ctx = unsafe { Arc::from_raw(self.delegate_ctx_ptr.ptr) };
     }
+}
+
+unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let active_speaker_ptr = daily_core_call_client_active_speaker(call_client);
+    let active_speaker_string = CStr::from_ptr(active_speaker_ptr)
+        .to_string_lossy()
+        .into_owned();
+
+    let active_speaker: Option<HashMap<String, DictValue>> =
+        serde_json::from_str(active_speaker_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(active_speaker.to_object(py)))
 }
 
 unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<PyObject> {

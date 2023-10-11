@@ -41,6 +41,7 @@ pub(crate) struct PyCallClientInner {
     pub(crate) completions: Arc<Mutex<HashMap<u64, PyObject>>>,
     pub(crate) video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
     // Non-blocking updates
+    pub(crate) active_speaker: Arc<Mutex<PyObject>>,
     pub(crate) inputs: Arc<Mutex<PyObject>>,
     pub(crate) participant_counts: Arc<Mutex<PyObject>>,
     pub(crate) publishing: Arc<Mutex<PyObject>>,
