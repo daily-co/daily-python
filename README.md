@@ -25,7 +25,7 @@ This functionality can be applied to several AI use cases, including:
 
 See the [Daily Python API docs](https://reference-python.daily.co/index.html).
 
-For demos on how to use `daily-python`, refer to the [demos](/demos) directory in this repo.
+For demos on how to use `daily-python`, refer to the [demos](https://github.com/daily-co/daily-python/tree/main/demos) directory.
 
 ## Installation
 
@@ -43,7 +43,7 @@ To upgrade:
 
 ### Requirements
 
-- Python 3.9 or newer
+- Python 3.8 or newer
 
 ## Usage
 

@@ -1,7 +1,13 @@
 #
-# This demo requires Google Speech-To-Text credentials.
+# This demo will join a Daily meeting and, given a text file with senteces (one
+# per line), will translate text into audio using Google Text-To-Speech API and
+# will send it into the meeting.
+#
+# The demo requires Google Speech-To-Text credentials.
 #
 # See https://cloud.google.com/text-to-speech/docs/before-you-begin
+#
+# Usage: python3 google_speech_to_text.py -m MEETING_URL
 #
 
 from daily import *
@@ -51,7 +57,7 @@ voice = texttospeech.VoiceSelectionParams(
 
 audio_config = texttospeech.AudioConfig(
   audio_encoding = texttospeech.AudioEncoding.LINEAR16,
-  speaking_rate = 1.2,
+  speaking_rate = 1.0,
   sample_rate_hertz = 16000
 )
 

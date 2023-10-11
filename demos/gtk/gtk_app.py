@@ -97,6 +97,15 @@ class DailyGtkApp(Gtk.Application):
             self.join(meeting_url, participant_id)
             self.__button.set_label("Leave")
 
+    def on_joined(self, data, error):
+        if not error:
+            self.__joined = True
+
+    def on_left(self, data, error):
+        self.__frame = None
+        self.__drawing_area.queue_draw()
+        self.__joined = False
+
     def join(self, meeting_url, participant_id):
         if not meeting_url or not participant_id:
             return
@@ -104,16 +113,10 @@ class DailyGtkApp(Gtk.Application):
         self.__client.set_video_renderer(participant_id,
                                          self.on_video_frame,
                                          color_format = "BGRA")
-        self.__client.join(meeting_url)
-
-        self.__joined = True
+        self.__client.join(meeting_url, completion = self.on_joined)
 
     def leave(self):
-        self.__client.leave()
-        self.__joined = False
-        self.__drawing_area.queue_draw()
-        # Let leave finish
-        time.sleep(2)
+        self.__client.leave(completion = self.on_left)
 
     def drawing_area_draw(self, area, context, w, h, data):
         if self.__joined and not self.__frame is None:

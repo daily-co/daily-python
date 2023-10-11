@@ -2,10 +2,11 @@
 
 Here you can find a few demos that use Daily's Python SDK:
 
-- **audio**: Two demos showing how to work with audio and `daily-python`. One sends audio into a meeting from a file; the other receives audio from a meeting and records it.
-- **google**: Two more audio examples: one that receives audio from a meeting and generates text, another that sends audio to a meeting from a text file.
-- **gtk**: Shows how to receive and render video frames for a participant.
-- **openai**: Shows how to send images to a meeting from a virtual camera device. This example takes spoken audio, converts it to text, and uses DALL-E to generate an image.
+- **audio**: Examples on how to send and receive RAW audio or WAV files.
+- **flask**: A demo that uses [Flask](https://flask.palletsprojects.com/) and [Celery](https://docs.celeryq.dev/) to launch multiple concurrent audio bots.
+- **google**: Audio examples using Google [Speech-To-Text](https://cloud.google.com/speech-to-text) and [Text-To-Speech](https://cloud.google.com/text-to-speech) APIs.
+- **gtk**: A native [Gtk](https://www.gtk.org/) application that shows how to receive and render video frames for a participant.
+- **openai**: A demo that takes spoken audio, converts it to text prompt, and uses [DALL-E](https://openai.com/dall-e) to generate an image.
 
 # Running
 
@@ -19,4 +20,4 @@ pip3 install -r requirements.txt
 
 ℹ️ It's a good idea to install these dependencies in a virtual environment.
 
-View the demo file for more details, including how to run the demo.
+View the demo files for more details, including how to run them.

@@ -1,7 +1,12 @@
 #
-# This demo requires Google Speech-To-Text credentials.
+# This demo will join a Daily meeting, will listen for audio for 10 seconds and
+# will use Google Speech-To-Text API to translate that audio to text.
+#
+# The demo requires Google Speech-To-Text credentials.
 #
 # See https://cloud.google.com/speech-to-text/docs/before-you-begin
+#
+# Usage: python3 google_speech_to_text.py -m MEETING_URL
 #
 
 from daily import *

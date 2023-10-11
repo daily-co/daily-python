@@ -1,31 +1,33 @@
 #
-# This demo will join a Daily meeting and record the meeting audio into a
-# WAV. The WAV file will have a sample rate of 16000, 16-bit per sample and mono
-# audio channel.
+# This demo will join a Daily meeting and record the meeting audio into standard
+# output. The recorded audio will have a sample rate of 16000, 16-bit per sample
+# and mono audio channel.
 #
-# Usage: python3 wav_audio_receive.py -m MEETING_URL -o FILE.wav
+# Usage: python3 raw_audio_receive.py -m MEETING_URL > FILE.raw
+#
+# The following example shows how to send back the recorded audio using a
+# GStreamer pipeline and raw_audio_send.py:
+#
+# gst-launch-1.0 -q filesrc location=FILE.raw ! \
+#    rawaudioparse num-channels=1 pcm-format=s16le sample-rate=16000 ! \
+#    fdsink fd=1 sync=true | python3 raw_audio_send.py -m MEETING_URL
 #
 
 import argparse
+import sys
 import time
 import threading
-import wave
 
 from daily import *
 
-class ReceiveWavApp:
-    def __init__(self, input_file_name):
+class ReceiveAudioApp:
+    def __init__(self):
         self.__speaker_device = Daily.create_speaker_device(
             "my-speaker",
             sample_rate = 16000,
             channels = 1
         )
         Daily.select_speaker_device("my-speaker")
-
-        self.__wave = wave.open(input_file_name, "wb")
-        self.__wave.setnchannels(1)
-        self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
-        self.__wave.setframerate(16000)
 
         self.__client = CallClient()
         self.__client.update_subscription_profiles({
@@ -68,24 +70,21 @@ class ReceiveWavApp:
             # Read 100ms worth of audio frames.
             buffer = self.__speaker_device.read_frames(1600)
             if len(buffer) > 0:
-                self.__wave.writeframesraw(buffer)
-
-        self.__wave.close()
+                sys.stdout.buffer.write(buffer)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-o", "--output", required = False, help = "WAV output file")
     args = parser.parse_args()
 
     Daily.init()
 
-    app = ReceiveWavApp(args.output)
+    app = ReceiveAudioApp()
 
     try:
         app.run(args.meeting)
     except KeyboardInterrupt:
-        print("Ctrl-C detected. Exiting!")
+        print("Ctrl-C detected. Exiting!", file = sys.stderr)
     finally:
         app.leave()
 

@@ -4,7 +4,13 @@
 # that text as a prompt for DALL-E to generate an image. The image will then be
 # sent to the meeting using a virtual camera device.
 #
-# Usage: python dall-e.py -m MEETING_URL
+# The demo requires Google Speech-To-Text credentials and an OpenAI API key.
+#
+# See:
+#   https://cloud.google.com/speech-to-text/docs/before-you-begin
+#   https://platform.openai.com/docs/api-reference/authentication
+#
+# Usage: python3 dall-e.py -m MEETING_URL
 #
 
 from daily import *
@@ -53,7 +59,7 @@ print(f"Joining {args.meeting} ...")
 
 client.join(args.meeting)
 
-# Make sure we are joined
+# Make sure we are joined. It would be better to use join() completion callback.
 time.sleep(3)
 
 SAMPLE_RATE = 16000
@@ -63,6 +69,8 @@ FRAMES_TO_READ = SAMPLE_RATE * SECONDS_TO_READ
 print()
 print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
 
+# We are creating a WAV file in memory so we can later grab the whole buffer and
+# send it to Google Speech-To-Text API.
 content = io.BufferedRandom(io.BytesIO())
 
 out_wave = wave.open(content, "wb")
@@ -70,15 +78,20 @@ out_wave.setnchannels(1)
 out_wave.setsampwidth(2) # 16-bit LINEAR PCM
 out_wave.setframerate(16000)
 
+# Here we are reading from the virtual speaker and writing the audio frames into
+# the in-memory WAV file.
 buffer = speaker.read_frames(FRAMES_TO_READ)
 out_wave.writeframesraw(buffer)
 
 out_wave.close()
 
+# We go to the beginning of the WAV buffer stream.
 content.seek(0)
 
+# We create and audio object with the contents of the in-memory WAV file.
 audio = speech.RecognitionAudio(content = content.read())
 
+# Configure Google Speech-To-Text so it receives 16-bit LINEAR PCM.
 config = speech.RecognitionConfig(
   encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
   sample_rate_hertz=16000,

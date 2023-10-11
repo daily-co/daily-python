@@ -1,20 +1,26 @@
 #
-# This demo will join a Daily meeting and send the audio from a WAV file into
-# the meeting. The WAV file is required to have a sample rate of 16000, 16-bit
-# per sample and mono audio channel.
+# This demo will join a Daily meeting and send raw audio received through the
+# standard input. The audio format is required to have a sample rate of 16000,
+# 16-bit per sample and mono audio channel.
 #
-# Usage: python3 wav_audio_send.py -m MEETING_URL -i FILE.wav
+# Usage: python3 raw_audio_send.py -m MEETING_URL
+#
+# The following example sends audio from a GStreamer pipeline:
+#
+# gst-launch-1.0 -q audiotestsrc is-live=true samplesperbuffer=160 ! \
+#    audio/x-raw,rate=16000,channels=1,format=S16LE ! \
+#    fdsink fd=1 sync=true | python3 raw_audio_send.py -m MEETING_URL
 #
 
 import argparse
+import sys
 import time
 import threading
-import wave
 
 from daily import *
 
-class SendWavApp:
-    def __init__(self, input_file_name):
+class SendAudioApp:
+    def __init__(self):
         self.__mic_device = Daily.create_microphone_device(
             "my-mic",
             sample_rate = 16000,
@@ -46,8 +52,7 @@ class SendWavApp:
         self.__app_inputs_updated = False
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.send_wav_file,
-                                         args = [input_file_name]);
+        self.__thread = threading.Thread(target = self.send_raw_audio);
         self.__thread.start()
 
     def on_inputs_updated(self, inputs, error):
@@ -82,37 +87,29 @@ class SendWavApp:
         if self.__app_inputs_updated and self.__app_joined:
             self.__start_event.set()
 
-    def send_wav_file(self, file_name):
+    def send_raw_audio(self):
         self.__start_event.wait()
 
         if self.__app_error:
-            print(f"Unable to send WAV file!")
+            print(f"Unable to send audio!")
             return
 
-        wav = wave.open(file_name, "rb")
-
-        sent_frames = 0
-        total_frames = wav.getnframes()
-        while not self.__app_quit and sent_frames < total_frames:
-            # Read 100ms worth of audio frames.
-            frames = wav.readframes(1600)
-            frames_read = len(frames) / 2 # 16-bit linear PCM
-            if frames_read > 0:
-                self.__mic_device.write_frames(frames)
-            sent_frames += frames_read
+        while not self.__app_quit:
+            # 3200 bytes is 100ms (1600 * 2 bytes per sample)
+            buffer = sys.stdin.buffer.read(3200)
+            if buffer:
+                self.__mic_device.write_frames(buffer)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-i", "--input", required = True, help = "WAV input file")
-
     args = parser.parse_args()
 
     Daily.init()
 
-    app = SendWavApp(args.input)
+    app = SendAudioApp()
 
-    try:
+    try :
         app.run(args.meeting)
     except KeyboardInterrupt:
         print("Ctrl-C detected. Exiting!")
