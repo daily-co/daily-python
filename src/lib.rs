@@ -1,7 +1,6 @@
 pub mod call_client;
 pub mod context;
 pub mod dict;
-pub mod event;
 pub mod event_handler;
 pub mod video_frame;
 pub mod virtual_camera_device;

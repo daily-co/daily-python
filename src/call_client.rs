@@ -1,4 +1,5 @@
-mod delegate;
+pub(crate) mod delegate;
+pub(crate) mod event;
 
 use delegate::*;
 
@@ -45,10 +46,8 @@ unsafe impl Send for CallClientPtr {}
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     call_client: CallClientPtr,
-    delegates: Arc<Mutex<PyCallClientDelegateFns>>,
-    completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-    video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
-    callback_ctx_ptr: CallbackContextPtr,
+    inner: Arc<PyCallClientInner>,
+    delegate_ctx_ptr: DelegateContextPtr,
 }
 
 #[pymethods]
@@ -59,24 +58,39 @@ impl PyCallClient {
     pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
         let call_client = unsafe { daily_core_call_client_create() };
         if !call_client.is_null() {
-            let completions = Arc::new(Mutex::new(HashMap::new()));
-            let video_renderers = Arc::new(Mutex::new(HashMap::new()));
-            let delegates = Arc::new(Mutex::new(PyCallClientDelegateFns {
-                on_event: Some(on_event),
-                on_video_frame: Some(on_video_frame),
-            }));
+            // Get initial values
+            let inputs = unsafe { get_inputs(&mut (*call_client))? };
+            let participant_counts = unsafe { get_participant_counts(&mut (*call_client))? };
+            let publishing = unsafe { get_publishing(&mut (*call_client))? };
+            let subscriptions = unsafe { get_subscriptions(&mut (*call_client))? };
+            let subscription_profiles = unsafe { get_subscription_profiles(&mut (*call_client))? };
+            let network_stats = unsafe { get_network_stats(&mut (*call_client))? };
 
-            let callback_ctx = Arc::new(CallbackContext {
-                delegates: delegates.clone(),
-                event_handler_callback: event_handler,
-                completions: completions.clone(),
-                video_renderers: video_renderers.clone(),
+            let inner = Arc::new(PyCallClientInner {
+                delegates: Arc::new(Mutex::new(PyCallClientDelegateFns {
+                    on_event: Some(on_event),
+                    on_video_frame: Some(on_video_frame),
+                })),
+                completions: Arc::new(Mutex::new(HashMap::new())),
+                video_renderers: Arc::new(Mutex::new(HashMap::new())),
+                // Non-blocking
+                inputs: Arc::new(Mutex::new(inputs)),
+                participant_counts: Arc::new(Mutex::new(participant_counts)),
+                publishing: Arc::new(Mutex::new(publishing)),
+                subscriptions: Arc::new(Mutex::new(subscriptions)),
+                subscription_profiles: Arc::new(Mutex::new(subscription_profiles)),
+                network_stats: Arc::new(Mutex::new(network_stats)),
             });
 
-            let callback_ctx_ptr = Arc::into_raw(callback_ctx);
+            let delegate_ctx = Arc::new(DelegateContext {
+                inner: inner.clone(),
+                event_handler_callback: event_handler,
+            });
+
+            let delegate_ctx_ptr = Arc::into_raw(delegate_ctx);
 
             let client_delegate = NativeCallClientDelegate::new(
-                NativeCallClientDelegatePtr::new(callback_ctx_ptr as *mut libc::c_void),
+                NativeCallClientDelegatePtr::new(delegate_ctx_ptr as *mut libc::c_void),
                 NativeCallClientDelegateFns::new(on_event_native, on_video_frame_native),
             );
 
@@ -85,12 +99,10 @@ impl PyCallClient {
             }
 
             Ok(Self {
+                inner,
                 call_client: CallClientPtr { ptr: call_client },
-                delegates,
-                completions,
-                video_renderers,
-                callback_ctx_ptr: CallbackContextPtr {
-                    ptr: callback_ctx_ptr,
+                delegate_ctx_ptr: DelegateContextPtr {
+                    ptr: delegate_ctx_ptr,
                 },
             })
         } else {
@@ -201,19 +213,8 @@ impl PyCallClient {
     ///
     /// :return: The number of participants in the meeting. See :ref:`ParticipantCounts`
     /// :rtype: dict
-    pub fn participant_counts(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let participant_counts_ptr =
-                daily_core_call_client_participant_counts(self.call_client.as_mut());
-            let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
-                .to_string_lossy()
-                .into_owned();
-
-            let participant_counts: HashMap<String, DictValue> =
-                serde_json::from_str(participant_counts_string.as_str()).unwrap();
-
-            Ok(participant_counts.to_object(py))
-        }
+    pub fn participant_counts(&self) -> PyResult<PyObject> {
+        Ok(self.inner.participant_counts.lock().unwrap().clone())
     }
 
     /// Updates remote participants.
@@ -251,16 +252,8 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`InputSettings`
     /// :rtype: dict
-    pub fn inputs(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let inputs_ptr = daily_core_call_client_inputs(self.call_client.as_mut());
-            let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
-
-            let inputs: HashMap<String, DictValue> =
-                serde_json::from_str(inputs_string.as_str()).unwrap();
-
-            Ok(inputs.to_object(py))
-        }
+    pub fn inputs(&self) -> PyResult<PyObject> {
+        Ok(self.inner.inputs.lock().unwrap().clone())
     }
 
     /// Updates input settings. This function allows you to update the call
@@ -299,18 +292,8 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`PublishingSettings`
     /// :rtype: dict
-    pub fn publishing(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let publishing_ptr = daily_core_call_client_publishing(self.call_client.as_mut());
-            let publishing_string = CStr::from_ptr(publishing_ptr)
-                .to_string_lossy()
-                .into_owned();
-
-            let publishing: HashMap<String, DictValue> =
-                serde_json::from_str(publishing_string.as_str()).unwrap();
-
-            Ok(publishing.to_object(py))
-        }
+    pub fn publishing(&self) -> PyResult<PyObject> {
+        Ok(self.inner.publishing.lock().unwrap().clone())
     }
 
     /// Updates publishing settings. This function allows you to update the call
@@ -349,18 +332,8 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`ParticipantSubscriptions`
     /// :rtype: dict
-    pub fn subscriptions(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let subscriptions_ptr = daily_core_call_client_subscriptions(self.call_client.as_mut());
-            let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
-                .to_string_lossy()
-                .into_owned();
-
-            let subscriptions: HashMap<String, DictValue> =
-                serde_json::from_str(subscriptions_string.as_str()).unwrap();
-
-            Ok(subscriptions.to_object(py))
-        }
+    pub fn subscriptions(&self) -> PyResult<PyObject> {
+        Ok(self.inner.subscriptions.lock().unwrap().clone())
     }
 
     /// Updates subscriptions and subscription profiles. This function allows
@@ -418,17 +391,8 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`SubscriptionProfileSettings`
     /// :rtype: dict
-    pub fn subscription_profiles(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let profiles_ptr =
-                daily_core_call_client_subscription_profiles(self.call_client.as_mut());
-            let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
-
-            let profiles: HashMap<String, DictValue> =
-                serde_json::from_str(profiles_string.as_str()).unwrap();
-
-            Ok(profiles.to_object(py))
-        }
+    pub fn subscription_profiles(&self) -> PyResult<PyObject> {
+        Ok(self.inner.subscription_profiles.lock().unwrap().clone())
     }
 
     /// Updates subscription profiles.
@@ -688,16 +652,8 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`NetworkStats`
     /// :rtype: dict
-    pub fn get_network_stats(&mut self, py: Python<'_>) -> PyResult<PyObject> {
-        unsafe {
-            let stats_ptr = daily_core_call_client_get_network_stats(self.call_client.as_mut());
-            let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
-
-            let stats: HashMap<String, DictValue> =
-                serde_json::from_str(stats_string.as_str()).unwrap();
-
-            Ok(stats.to_object(py))
-        }
+    pub fn get_network_stats(&self) -> PyResult<PyObject> {
+        Ok(self.inner.network_stats.lock().unwrap().clone())
     }
 
     /// Registers a video renderer for the given video source of the provided
@@ -729,7 +685,8 @@ impl PyCallClient {
 
         // Use the request_id as our renderer_id (it will be unique anyways) and
         // register the video renderer python callback.
-        self.video_renderers
+        self.inner
+            .video_renderers
             .lock()
             .unwrap()
             .insert(request_id, callback);
@@ -752,7 +709,8 @@ impl PyCallClient {
         let request_id = unsafe { GLOBAL_CONTEXT.as_ref().unwrap().next_request_id() };
 
         if let Some(completion) = completion {
-            self.completions
+            self.inner
+                .completions
                 .lock()
                 .unwrap()
                 .insert(request_id, completion);
@@ -767,7 +725,7 @@ impl Drop for PyCallClient {
     fn drop(&mut self) {
         unsafe {
             // Cleanup delegates so they are not called during destroy.
-            let mut delegates = self.delegates.lock().unwrap();
+            let mut delegates = self.inner.delegates.lock().unwrap();
             delegates.on_event.take();
             delegates.on_video_frame.take();
 
@@ -777,8 +735,8 @@ impl Drop for PyCallClient {
             // dropping a pyclass object.
             let py = Python::assume_gil_acquired();
 
-            // Here we release the GIL so we can allow any event callbacks to
-            // finish. The event callbacks will be waiting on the GIL and
+            // Here we release the GIL so we can allow any event delegates to
+            // finish. The event delegates will be waiting on the GIL and
             // execute at this point. But since we just cleanup the delegates
             // above, the events will actually be a no-op.
             py.allow_threads(move || {
@@ -786,10 +744,74 @@ impl Drop for PyCallClient {
             });
         }
 
-        // Cleanup the callback context. The callback context still has one
+        // Cleanup the delegate context. The delegate context still has one
         // reference count (because of we drop it but increase it again every
-        // time a callback happens). After the client is destroyed it is safe to
+        // time a delegate happens). After the client is destroyed it is safe to
         // simply get rid of it
-        let _callback_ctx = unsafe { Arc::from_raw(self.callback_ctx_ptr.ptr) };
+        let _delegate_ctx = unsafe { Arc::from_raw(self.delegate_ctx_ptr.ptr) };
     }
+}
+
+unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let inputs_ptr = daily_core_call_client_inputs(call_client);
+    let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
+
+    let inputs: HashMap<String, DictValue> = serde_json::from_str(inputs_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(inputs.to_object(py)))
+}
+
+unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let participant_counts_ptr = daily_core_call_client_participant_counts(call_client);
+    let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
+        .to_string_lossy()
+        .into_owned();
+
+    let participant_counts: HashMap<String, DictValue> =
+        serde_json::from_str(participant_counts_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(participant_counts.to_object(py)))
+}
+
+unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let publishing_ptr = daily_core_call_client_publishing(call_client);
+    let publishing_string = CStr::from_ptr(publishing_ptr)
+        .to_string_lossy()
+        .into_owned();
+
+    let publishing: HashMap<String, DictValue> =
+        serde_json::from_str(publishing_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(publishing.to_object(py)))
+}
+
+unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let subscriptions_ptr = daily_core_call_client_subscriptions(call_client);
+    let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
+        .to_string_lossy()
+        .into_owned();
+
+    let subscriptions: HashMap<String, DictValue> =
+        serde_json::from_str(subscriptions_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(subscriptions.to_object(py)))
+}
+
+unsafe fn get_subscription_profiles(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let profiles_ptr = daily_core_call_client_subscription_profiles(call_client);
+    let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
+
+    let profiles: HashMap<String, DictValue> =
+        serde_json::from_str(profiles_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(profiles.to_object(py)))
+}
+
+unsafe fn get_network_stats(call_client: &mut CallClient) -> PyResult<PyObject> {
+    let stats_ptr = daily_core_call_client_get_network_stats(call_client);
+    let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
+
+    let stats: HashMap<String, DictValue> = serde_json::from_str(stats_string.as_str()).unwrap();
+
+    Python::with_gil(|py| Ok(stats.to_object(py)))
 }

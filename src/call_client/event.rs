@@ -1,7 +1,11 @@
 use crate::dict::DictValue;
 
+use super::delegate::DelegateContext;
+
 use serde::Deserialize;
 use serde_json::Value;
+
+use pyo3::prelude::*;
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Event {
@@ -10,24 +14,8 @@ pub(crate) struct Event {
     pub data: DictValue,
 }
 
-pub(crate) fn request_id_from_event(event: &Event) -> Option<u64> {
-    if let Some(object) = event.data.0.as_object() {
-        if let Some(request_id) = object.get("requestId") {
-            if let Some(id) = request_id.get("id") {
-                id.as_u64()
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
-pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
-    let method_name = match event.action.as_str() {
+pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
+    let method_name = match action {
         "active-speaker-changed" => "on_active_speaker_changed",
         "app-message" => "on_app_message",
         "available-devices-updated" => "on_available_devices_updated",
@@ -60,6 +48,22 @@ pub(crate) fn method_name_from_event(event: &Event) -> Option<&str> {
     };
 
     Some(method_name)
+}
+
+pub(crate) fn request_id_from_event(event: &Event) -> Option<u64> {
+    if let Some(object) = event.data.0.as_object() {
+        if let Some(request_id) = object.get("requestId") {
+            if let Some(id) = request_id.get("id") {
+                id.as_u64()
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    }
 }
 
 pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
@@ -183,5 +187,40 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
             .get("updatedBy")
             .map(|updated_by| vec![DictValue(updated_by.clone())]),
         a => panic!("args for event {a} not supported"),
+    }
+}
+
+pub(crate) fn update_inner_values(
+    py: Python<'_>,
+    delegate_ctx: &DelegateContext,
+    event_action: &str,
+    args: Vec<DictValue>,
+) {
+    match event_action {
+        "inputs-updated" => {
+            let mut inputs = delegate_ctx.inner.inputs.lock().unwrap();
+            *inputs = args.first().unwrap().to_object(py);
+        }
+        "network-stats-updated" => {
+            let mut network_stats = delegate_ctx.inner.network_stats.lock().unwrap();
+            *network_stats = args.first().unwrap().to_object(py);
+        }
+        "participant-counts-updated" => {
+            let mut participant_counts = delegate_ctx.inner.participant_counts.lock().unwrap();
+            *participant_counts = args.first().unwrap().to_object(py);
+        }
+        "publishing-updated" => {
+            let mut publishing = delegate_ctx.inner.publishing.lock().unwrap();
+            *publishing = args.first().unwrap().to_object(py);
+        }
+        "subscription-profiles-updated" => {
+            let mut profiles = delegate_ctx.inner.subscription_profiles.lock().unwrap();
+            *profiles = args.first().unwrap().to_object(py);
+        }
+        "subscriptions-updated" => {
+            let mut subscriptions = delegate_ctx.inner.subscriptions.lock().unwrap();
+            *subscriptions = args.first().unwrap().to_object(py);
+        }
+        _ => (),
     }
 }
