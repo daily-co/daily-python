@@ -35,19 +35,18 @@ pub(crate) struct PyCallClientDelegateFns {
     pub(crate) on_video_frame: Option<PyCallClientDelegateOnVideoFrameFn>,
 }
 
-#[derive(Clone)]
 pub(crate) struct PyCallClientInner {
-    pub(crate) delegates: Arc<Mutex<PyCallClientDelegateFns>>,
-    pub(crate) completions: Arc<Mutex<HashMap<u64, PyObject>>>,
-    pub(crate) video_renderers: Arc<Mutex<HashMap<u64, PyObject>>>,
+    pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
+    pub(crate) completions: Mutex<HashMap<u64, PyObject>>,
+    pub(crate) video_renderers: Mutex<HashMap<u64, PyObject>>,
     // Non-blocking updates
-    pub(crate) active_speaker: Arc<Mutex<PyObject>>,
-    pub(crate) inputs: Arc<Mutex<PyObject>>,
-    pub(crate) participant_counts: Arc<Mutex<PyObject>>,
-    pub(crate) publishing: Arc<Mutex<PyObject>>,
-    pub(crate) subscriptions: Arc<Mutex<PyObject>>,
-    pub(crate) subscription_profiles: Arc<Mutex<PyObject>>,
-    pub(crate) network_stats: Arc<Mutex<PyObject>>,
+    pub(crate) active_speaker: Mutex<PyObject>,
+    pub(crate) inputs: Mutex<PyObject>,
+    pub(crate) participant_counts: Mutex<PyObject>,
+    pub(crate) publishing: Mutex<PyObject>,
+    pub(crate) subscriptions: Mutex<PyObject>,
+    pub(crate) subscription_profiles: Mutex<PyObject>,
+    pub(crate) network_stats: Mutex<PyObject>,
 }
 
 #[derive(Clone)]
@@ -81,13 +80,7 @@ pub(crate) unsafe extern "C" fn on_event_native(
 
         let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
 
-        let delegate = delegate_ctx
-            .inner
-            .delegates
-            .clone()
-            .lock()
-            .unwrap()
-            .on_event;
+        let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_event;
 
         if let Some(delegate) = delegate {
             let event_string = CStr::from_ptr(event_json).to_string_lossy().into_owned();
@@ -117,13 +110,7 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
 
         let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
 
-        let delegate = delegate_ctx
-            .inner
-            .delegates
-            .clone()
-            .lock()
-            .unwrap()
-            .on_video_frame;
+        let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_video_frame;
 
         if let Some(delegate) = delegate {
             delegate(py, &delegate_ctx, renderer_id, peer_id, frame);
@@ -181,7 +168,6 @@ pub(crate) unsafe fn on_video_frame(
     if let Some(callback) = delegate_ctx
         .inner
         .video_renderers
-        .clone()
         .lock()
         .unwrap()
         .get(&renderer_id)

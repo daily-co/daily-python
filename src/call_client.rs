@@ -68,20 +68,20 @@ impl PyCallClient {
             let network_stats = unsafe { get_network_stats(&mut (*call_client))? };
 
             let inner = Arc::new(PyCallClientInner {
-                delegates: Arc::new(Mutex::new(PyCallClientDelegateFns {
+                delegates: Mutex::new(PyCallClientDelegateFns {
                     on_event: Some(on_event),
                     on_video_frame: Some(on_video_frame),
-                })),
-                completions: Arc::new(Mutex::new(HashMap::new())),
-                video_renderers: Arc::new(Mutex::new(HashMap::new())),
+                }),
+                completions: Mutex::new(HashMap::new()),
+                video_renderers: Mutex::new(HashMap::new()),
                 // Non-blocking
-                active_speaker: Arc::new(Mutex::new(active_speaker)),
-                inputs: Arc::new(Mutex::new(inputs)),
-                participant_counts: Arc::new(Mutex::new(participant_counts)),
-                publishing: Arc::new(Mutex::new(publishing)),
-                subscriptions: Arc::new(Mutex::new(subscriptions)),
-                subscription_profiles: Arc::new(Mutex::new(subscription_profiles)),
-                network_stats: Arc::new(Mutex::new(network_stats)),
+                active_speaker: Mutex::new(active_speaker),
+                inputs: Mutex::new(inputs),
+                participant_counts: Mutex::new(participant_counts),
+                publishing: Mutex::new(publishing),
+                subscriptions: Mutex::new(subscriptions),
+                subscription_profiles: Mutex::new(subscription_profiles),
+                network_stats: Mutex::new(network_stats),
             });
 
             let delegate_ctx = Arc::new(DelegateContext {
