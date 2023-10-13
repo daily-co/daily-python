@@ -96,10 +96,9 @@ class SendWavApp:
         while not self.__app_quit and sent_frames < total_frames:
             # Read 100ms worth of audio frames.
             frames = wav.readframes(1600)
-            frames_read = len(frames) / 2 # 16-bit linear PCM
-            if frames_read > 0:
+            if len(frames) > 0:
                 self.__mic_device.write_frames(frames)
-            sent_frames += frames_read
+                sent_frames += 1600
 
 def main():
     parser = argparse.ArgumentParser()

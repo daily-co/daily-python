@@ -10,7 +10,7 @@ use pyo3::types::PyBytes;
 /// used to receive audio from the meeting.
 ///
 /// The audio format used by virtual speaker devices is 16-bit linear PCM.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[pyclass(name = "VirtualSpeakerDevice", module = "daily")]
 pub struct PyVirtualSpeakerDevice {
     device_name: String,
@@ -71,6 +71,11 @@ impl PyVirtualSpeakerDevice {
     /// example, if the sample rate is 16000 and there's only 1 channel, we
     /// should be able to read 160 audio frames (10ms), 320 (20ms), 480 (30ms),
     /// etc.
+    ///
+    /// To get low latency real time performance it is important that
+    /// consecutive calls to this function don't take more time than the
+    /// requested audio frames time. For example, if we request audio frames
+    /// every 10ms then we shouldn't take longer than 10ms to process them.
     ///
     /// :param int num_frames: The number of audio frames to read
     ///

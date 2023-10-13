@@ -10,7 +10,7 @@ use pyo3::types::PyBytes;
 /// devices are used to send audio to the meeting.
 ///
 /// The audio format used by virtual microphone devices is 16-bit linear PCM.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[pyclass(name = "VirtualMicrophoneDevice", module = "daily")]
 pub struct PyVirtualMicrophoneDevice {
     device_name: String,
@@ -72,6 +72,12 @@ impl PyVirtualMicrophoneDevice {
     /// to write 160 audio frames (10ms), 320 (20ms), 480 (30ms), etc. If the
     /// number of audio frames is not a multiple of 10ms worth of audio frames,
     /// silence will be added as padding.
+    ///
+    /// To get low latency real time performance it is important that
+    /// consecutive calls to this function don't take more time than the
+    /// provided audio frames time. For example, if we provide audio frames
+    /// every 10ms then we shouldn't take longer than 10ms to provide the next
+    /// ones.
     ///
     /// :param bytestring frames: A bytestring with the audio frames to write
     ///
