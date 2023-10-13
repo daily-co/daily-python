@@ -1,7 +1,7 @@
 pub(crate) mod call_client;
 pub(crate) mod context;
-pub(crate) mod dict;
 pub(crate) mod media;
+pub(crate) mod util;
 
 use call_client::{PyCallClient, PyEventHandler};
 use context::{DailyContext, GLOBAL_CONTEXT};

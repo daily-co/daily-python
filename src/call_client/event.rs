@@ -1,4 +1,4 @@
-use crate::dict::DictValue;
+use crate::util::dict::DictValue;
 
 use super::delegate::DelegateContext;
 

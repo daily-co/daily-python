@@ -2,7 +2,7 @@ pub(crate) mod delegate;
 pub(crate) mod event;
 pub(crate) mod event_handler;
 
-pub(crate) use event_handler::*;
+pub(crate) use event_handler::PyEventHandler;
 
 use delegate::*;
 
@@ -21,7 +21,7 @@ use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{dict::DictValue, GLOBAL_CONTEXT};
+use crate::{util::dict::DictValue, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
