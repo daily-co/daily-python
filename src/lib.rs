@@ -1,17 +1,13 @@
-pub mod call_client;
-pub mod context;
-pub mod dict;
-pub mod video_frame;
-pub mod virtual_camera_device;
-pub mod virtual_microphone_device;
-pub mod virtual_speaker_device;
+pub(crate) mod call_client;
+pub(crate) mod context;
+pub(crate) mod dict;
+pub(crate) mod media;
 
 use call_client::{PyCallClient, PyEventHandler};
 use context::{DailyContext, GLOBAL_CONTEXT};
-use video_frame::PyVideoFrame;
-use virtual_camera_device::PyVirtualCameraDevice;
-use virtual_microphone_device::PyVirtualMicrophoneDevice;
-use virtual_speaker_device::PyVirtualSpeakerDevice;
+use media::{
+    PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice, PyVirtualSpeakerDevice,
+};
 
 use std::env;
 use std::ffi::CString;
