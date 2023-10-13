@@ -183,9 +183,18 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "transcription-started" => object
             .get("status")
             .map(|status| vec![DictValue(status.clone())]),
-        "transcription-stopped" => object
-            .get("updatedBy")
-            .map(|updated_by| vec![DictValue(updated_by.clone())]),
+        "transcription-stopped" => {
+            if let Some(updated_by) = object.get("updatedBy") {
+                Some(vec![
+                    DictValue(updated_by.clone()),
+                    DictValue(Value::Bool(false)),
+                ])
+            } else {
+                object.get("stoppedByError").map(|stopped_by_error| {
+                    vec![DictValue(Value::Null), DictValue(stopped_by_error.clone())]
+                })
+            }
+        }
         a => panic!("args for event {a} not supported"),
     }
 }

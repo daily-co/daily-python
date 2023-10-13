@@ -384,12 +384,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "daily-common-utils"
+version = "0.1.0"
+
+[[package]]
 name = "daily-core"
 version = "0.12.0"
 dependencies = [
  "async-trait",
  "console_log",
  "daily-api-settings",
+ "daily-common-utils",
  "daily-core-types",
  "daily-settings-helpers",
  "daily-telemetry",
@@ -1114,6 +1119,7 @@ name = "mediasoupclient"
 version = "0.1.0"
 dependencies = [
  "console_log",
+ "daily-common-utils",
  "daily-telemetry",
  "futures",
  "js-sys",
@@ -1936,6 +1942,8 @@ checksum = "9d0e916b1148c8e263850e1ebcbd046f333e0683c724876bb0da63ea4373dc8a"
 name = "task_queue"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "daily-common-utils",
  "deadlock_checker",
  "futures",
  "js-sys",

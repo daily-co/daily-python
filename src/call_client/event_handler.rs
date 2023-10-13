@@ -216,8 +216,13 @@ impl PyEventHandler {
 
     /// Emitted for all participants when a transcription stops.
     ///
-    /// :param str stopped_by: The ID of the participant that stopped the transcription
-    fn on_transcription_stopped(&self, stopped_by: PyObject) -> PyResult<()> {
+    /// :param str stopped_by: The ID of the participant that stopped the transcription or None
+    /// :param str stopped_by_error: Whether the transcription was stopped by an error
+    fn on_transcription_stopped(
+        &self,
+        stopped_by: PyObject,
+        stopped_by_error: PyObject,
+    ) -> PyResult<()> {
         Ok(())
     }
 }
