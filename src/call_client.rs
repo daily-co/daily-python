@@ -1,5 +1,8 @@
 pub(crate) mod delegate;
 pub(crate) mod event;
+pub(crate) mod event_handler;
+
+pub(crate) use event_handler::*;
 
 use delegate::*;
 

@@ -1,15 +1,13 @@
 pub mod call_client;
 pub mod context;
 pub mod dict;
-pub mod event_handler;
 pub mod video_frame;
 pub mod virtual_camera_device;
 pub mod virtual_microphone_device;
 pub mod virtual_speaker_device;
 
-use call_client::PyCallClient;
+use call_client::{PyCallClient, PyEventHandler};
 use context::{DailyContext, GLOBAL_CONTEXT};
-use event_handler::PyEventHandler;
 use video_frame::PyVideoFrame;
 use virtual_camera_device::PyVirtualCameraDevice;
 use virtual_microphone_device::PyVirtualMicrophoneDevice;
