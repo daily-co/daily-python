@@ -142,16 +142,18 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
         action => {
             if let Some(method_name) = method_name_from_event_action(action) {
                 if let Some(args) = args_from_event(event) {
+                    // Update inner values asynchronously. We do it before
+                    // invoking the callback so new values are available if we
+                    // use the getters inside the callback.
+                    update_inner_values(py, delegate_ctx, action, args.clone());
+
                     if let Some(callback) = &delegate_ctx.event_handler_callback {
-                        let py_args = PyTuple::new(py, args.clone());
+                        let py_args = PyTuple::new(py, args);
 
                         if let Err(error) = callback.call_method1(py, method_name, py_args) {
                             error.write_unraisable(py, None);
                         }
                     }
-
-                    // Update inner values asynchronously.
-                    update_inner_values(py, delegate_ctx, action, args);
                 }
             }
         }
