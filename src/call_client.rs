@@ -661,6 +661,37 @@ impl PyCallClient {
         }
     }
 
+    /// Sends a chat message to Daily's Prebuilt main room.
+    ///
+    /// :param str message: The chat message to send
+    /// :param str user_name: The user name that will appear as a sender of the message
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (message, user_name = None, completion = None))]
+    pub fn send_prebuilt_chat_message(
+        &mut self,
+        message: &str,
+        user_name: Option<&str>,
+        completion: Option<PyObject>,
+    ) {
+        let message_cstr = CString::new(message).expect("invalid message string");
+
+        let user_name_cstr = user_name
+            .map(|p| CString::new(p).expect("invalid user name string"))
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_send_prebuilt_chat_message(
+                self.call_client.as_mut(),
+                request_id,
+                message_cstr.as_ptr(),
+                user_name_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                ptr::null(),
+            );
+        }
+    }
+
     /// Returns the latest network statistics.
     ///
     /// :return: See :ref:`NetworkStats`
