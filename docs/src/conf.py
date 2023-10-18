@@ -31,25 +31,6 @@ extensions = [
 ]
 
 autodoc_typehints = "description"
-# nitpicky = True
-# nitpick_ignore = [
-#     ("py:class", "pyarrow.lib.Schema"),
-#     ("py:class", "pyarrow._dataset.Dataset"),
-#     ("py:class", "pyarrow.lib.Table"),
-#     ("py:class", "pyarrow.lib.DataType"),
-#     ("py:class", "pyarrow.lib.Field"),
-#     ("py:class", "pyarrow.lib.NativeFile"),
-#     ("py:class", "pyarrow.lib.RecordBatchReader"),
-#     ("py:class", "pyarrow._fs.FileSystem"),
-#     ("py:class", "pyarrow._fs.FileInfo"),
-#     ("py:class", "pyarrow._fs.FileSelector"),
-#     ("py:class", "pyarrow._fs.FileSystemHandler"),
-#     ("py:class", "RawDeltaTable"),
-#     ("py:class", "pandas.DataFrame"),
-#     ("py:class", "pyarrow._dataset_parquet.ParquetFileWriteOptions"),
-#     ("py:class", "pathlib.Path"),
-#     ("py:class", "datetime.datetime"),
-#]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
