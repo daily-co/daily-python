@@ -152,6 +152,12 @@ class CallClient:
     def get_network_stats(self) -> Mapping[str, Any]:
         ...
 
+    def set_audio_renderer(self,
+                           participant_id: str,
+                           callback: Callable[[str, AudioData], None],
+                           audio_source: str = "microphone") -> None:
+        ...
+
     def set_video_renderer(self,
                            participant_id: str,
                            callback: Callable[[str, VideoFrame], None],
@@ -252,6 +258,29 @@ class EventHandler:
                                  stopped_by: Mapping[str, Any],
                                  stopped_by_error: Mapping[str, Any]) -> None:
         ...
+
+class AudioData:
+
+    @property
+    def bits_per_sample(self) -> int:
+        ...
+
+    @property
+    def sample_rate(self) -> int:
+        ...
+
+    @property
+    def num_channels(self) -> int:
+        ...
+
+    @property
+    def num_audio_frames(self) -> int:
+        ...
+
+    @property
+    def audio_frames(self) -> bytes:
+        ...
+
 
 class VideoFrame:
 

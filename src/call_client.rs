@@ -74,8 +74,10 @@ impl PyCallClient {
                 delegates: Mutex::new(PyCallClientDelegateFns {
                     on_event: Some(on_event),
                     on_video_frame: Some(on_video_frame),
+                    on_audio_data: Some(on_audio_data),
                 }),
                 completions: Mutex::new(HashMap::new()),
+                audio_renderers: Mutex::new(HashMap::new()),
                 video_renderers: Mutex::new(HashMap::new()),
                 // Non-blocking
                 active_speaker: Mutex::new(active_speaker),
@@ -96,7 +98,11 @@ impl PyCallClient {
 
             let client_delegate = NativeCallClientDelegate::new(
                 NativeCallClientDelegatePtr::new(delegate_ctx_ptr as *mut libc::c_void),
-                NativeCallClientDelegateFns::new(on_event_native, on_video_frame_native),
+                NativeCallClientDelegateFns::new(
+                    on_event_native,
+                    on_audio_data_native,
+                    on_video_frame_native,
+                ),
             );
 
             unsafe {
@@ -728,6 +734,45 @@ impl PyCallClient {
         Ok(self.inner.network_stats.lock().unwrap().clone())
     }
 
+    /// Registers an audio renderer for the given audio source of the provided
+    /// participant.
+    ///
+    /// :param str participant_id: The ID of the participant to receive video from
+    /// :param function callback: A callback to be called when audio data is available. It receives two arguments: the participant ID and a :class:`AudioData`
+    /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAUdio` or a custom track name)
+    #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
+    pub fn set_audio_renderer(
+        &mut self,
+        participant_id: &str,
+        callback: PyObject,
+        audio_source: &str,
+    ) -> PyResult<()> {
+        let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
+        let audio_source_cstr = CString::new(audio_source).expect("invalid audio source string");
+
+        let request_id = self.maybe_register_completion(None);
+
+        // Use the request_id as our renderer_id (it will be unique anyways) and
+        // register the video renderer python callback.
+        self.inner
+            .audio_renderers
+            .lock()
+            .unwrap()
+            .insert(request_id, callback);
+
+        unsafe {
+            daily_core_call_client_set_participant_audio_renderer(
+                self.call_client.as_mut(),
+                request_id,
+                request_id,
+                participant_cstr.as_ptr(),
+                audio_source_cstr.as_ptr(),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Registers a video renderer for the given video source of the provided
     /// participant. The color format of the received frames can be chosen.
     ///
@@ -801,6 +846,7 @@ impl Drop for PyCallClient {
                 // it inside a new scope so the lock gets released.
                 let mut delegates = self.inner.delegates.lock().unwrap();
                 delegates.on_event.take();
+                delegates.on_audio_data.take();
                 delegates.on_video_frame.take();
             }
 

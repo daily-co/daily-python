@@ -6,7 +6,8 @@ pub(crate) mod util;
 use call_client::{PyCallClient, PyEventHandler};
 use context::{DailyContext, GLOBAL_CONTEXT};
 use media::{
-    PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice, PyVirtualSpeakerDevice,
+    PyAudioData, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
+    PyVirtualSpeakerDevice,
 };
 
 use std::env;

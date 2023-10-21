@@ -16,7 +16,7 @@ use super::event::{
     Event,
 };
 
-use crate::PyVideoFrame;
+use crate::{PyAudioData, PyVideoFrame};
 
 type PyCallClientDelegateOnEventFn =
     unsafe fn(py: Python<'_>, delegate_ctx: &DelegateContext, event: &Event);
@@ -29,16 +29,26 @@ type PyCallClientDelegateOnVideoFrameFn = unsafe fn(
     frame: *const NativeVideoFrame,
 );
 
+type PyCallClientDelegateOnAudioDataFn = unsafe fn(
+    py: Python<'_>,
+    delegate_ctx: &DelegateContext,
+    renderer_id: u64,
+    peer_id: *const libc::c_char,
+    audio_data: *const NativeAudioData,
+);
+
 #[derive(Clone)]
 pub(crate) struct PyCallClientDelegateFns {
     pub(crate) on_event: Option<PyCallClientDelegateOnEventFn>,
     pub(crate) on_video_frame: Option<PyCallClientDelegateOnVideoFrameFn>,
+    pub(crate) on_audio_data: Option<PyCallClientDelegateOnAudioDataFn>,
 }
 
 pub(crate) struct PyCallClientInner {
     pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
     pub(crate) completions: Mutex<HashMap<u64, PyObject>>,
     pub(crate) video_renderers: Mutex<HashMap<u64, PyObject>>,
+    pub(crate) audio_renderers: Mutex<HashMap<u64, PyObject>>,
     // Non-blocking updates
     pub(crate) active_speaker: Mutex<PyObject>,
     pub(crate) inputs: Mutex<PyObject>,
@@ -87,6 +97,33 @@ pub(crate) unsafe extern "C" fn on_event_native(
             let event = serde_json::from_str::<Event>(event_string.as_str()).unwrap();
 
             delegate(py, &delegate_ctx, &event);
+        }
+    });
+}
+
+pub(crate) unsafe extern "C" fn on_audio_data_native(
+    delegate: *mut libc::c_void,
+    renderer_id: u64,
+    peer_id: *const libc::c_char,
+    audio_data: *const NativeAudioData,
+) {
+    // Acquire the GIL before checking if there's a delegate available. If
+    // PyCallClient is dropping it will cleanup the delegates and will
+    // temporarily release the GIL so we can proceed.
+    Python::with_gil(|py| {
+        let delegate_ctx_ptr = delegate as *const DelegateContext;
+
+        // We increment the reference count because otherwise it will get dropped
+        // when Arc::from_raw() takes ownership, and we still want to keep the
+        // delegate pointer around.
+        Arc::increment_strong_count(delegate_ctx_ptr);
+
+        let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
+
+        let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_audio_data;
+
+        if let Some(delegate) = delegate {
+            delegate(py, &delegate_ctx, renderer_id, peer_id, audio_data);
         }
     });
 }
@@ -156,6 +193,43 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     }
                 }
             }
+        }
+    }
+}
+
+pub(crate) unsafe fn on_audio_data(
+    py: Python<'_>,
+    delegate_ctx: &DelegateContext,
+    renderer_id: u64,
+    peer_id: *const libc::c_char,
+    data: *const NativeAudioData,
+) {
+    if let Some(callback) = delegate_ctx
+        .inner
+        .audio_renderers
+        .lock()
+        .unwrap()
+        .get(&renderer_id)
+    {
+        let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
+
+        let num_bytes =
+            ((*data).bits_per_sample as usize * (*data).num_channels * (*data).num_audio_frames)
+                / 8;
+
+        let audio_data = PyAudioData {
+            bits_per_sample: (*data).bits_per_sample,
+            sample_rate: (*data).sample_rate,
+            num_channels: (*data).num_channels,
+            num_audio_frames: (*data).num_audio_frames,
+            audio_frames: PyBytes::from_ptr(py, (*data).audio_frames as *const u8, num_bytes)
+                .into_py(py),
+        };
+
+        let args = PyTuple::new(py, &[peer_id.into_py(py), audio_data.into_py(py)]);
+
+        if let Err(error) = callback.call1(py, args) {
+            error.write_unraisable(py, None);
         }
     }
 }
