@@ -768,10 +768,13 @@ impl Drop for PyCallClient {
     // GIL acquired
     fn drop(&mut self) {
         unsafe {
-            // Cleanup delegates so they are not called during destroy.
-            let mut delegates = self.inner.delegates.lock().unwrap();
-            delegates.on_event.take();
-            delegates.on_video_frame.take();
+            {
+                // Cleanup delegates so they are not called during destroy. Do
+                // it inside a new scope so the lock gets released.
+                let mut delegates = self.inner.delegates.lock().unwrap();
+                delegates.on_event.take();
+                delegates.on_video_frame.take();
+            }
 
             let mut call_client = self.call_client.clone();
 
