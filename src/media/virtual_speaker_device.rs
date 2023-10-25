@@ -72,7 +72,7 @@ impl PyVirtualSpeakerDevice {
     /// should be able to read 160 audio frames (10ms), 320 (20ms), 480 (30ms),
     /// etc.
     ///
-    /// To get low latency real time performance it is important that
+    /// To get low latency real-time performance, it is important that
     /// consecutive calls to this function don't take more time than the
     /// requested audio frames time. For example, if we request audio frames
     /// every 10ms then we shouldn't take longer than 10ms to process them.

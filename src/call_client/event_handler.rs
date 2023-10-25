@@ -200,21 +200,21 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Emitted for all participants when a transcription message is received.
+    /// Event emitted when a transcription message is received.
     ///
     /// :param dict message: See :ref:`TranscriptionMessage`
     fn on_transcription_message(&self, message: PyObject) -> PyResult<()> {
         Ok(())
     }
 
-    /// Emitted for all participants when a transcription starts.
+    /// Event emitted when transcription starts.
     ///
     /// :param dict status: See :ref:`TranscriptionStatus`
     fn on_transcription_started(&self, status: PyObject) -> PyResult<()> {
         Ok(())
     }
 
-    /// Emitted for all participants when a transcription stops.
+    /// Event emitted when transcription stops.
     ///
     /// :param str stopped_by: The ID of the participant that stopped the transcription or None
     /// :param str stopped_by_error: Whether the transcription was stopped by an error

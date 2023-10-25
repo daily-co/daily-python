@@ -73,7 +73,7 @@ impl PyVirtualMicrophoneDevice {
     /// number of audio frames is not a multiple of 10ms worth of audio frames,
     /// silence will be added as padding.
     ///
-    /// To get low latency real time performance it is important that
+    /// To get low latency real-time performance, it is important that
     /// consecutive calls to this function don't take more time than the
     /// provided audio frames time. For example, if we provide audio frames
     /// every 10ms then we shouldn't take longer than 10ms to provide the next
