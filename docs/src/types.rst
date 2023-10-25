@@ -523,6 +523,8 @@ ParticipantInputs
      - bool
    * - "microphone"
      - bool
+   * - "screenShare"
+     - bool
 
 
 .. _ParticipantPermissions:
