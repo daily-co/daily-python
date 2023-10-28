@@ -9,3 +9,4 @@ pycairo==1.24.0
 pygobject==3.44.1
 pyside6==6.6
 redis==5.0.0
+yolov5==7.0.13
