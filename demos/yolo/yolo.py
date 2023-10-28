@@ -1,3 +1,11 @@
+#
+# This demo will join a Daily meeting and run YOLOv5 object detection on a single participant.
+
+# See https://pypi.org/project/yolov5/ for more information on YOLOv5.
+#
+# Usage: python3 yolo.py -u URL
+#
+
 import argparse
 import torch
 import time
