@@ -6,7 +6,7 @@
 # See https://docs.python.org/3/library/typing.html
 #
 
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Sequence
 
 class Daily:
 
@@ -72,6 +72,11 @@ class CallClient:
     def update_remote_participants(self,
                                    remote_participants: Mapping[str, Any],
                                    completion: Optional[Callable[[None, Optional[str]], None]] = None) -> None:
+        ...
+
+    def eject_remote_participants(self,
+                                  ids: Sequence[str],
+                                  completion: Optional[Callable[[None, Optional[str]], None]] = None) -> None:
         ...
 
     def inputs(self) -> Mapping[str, Any]:

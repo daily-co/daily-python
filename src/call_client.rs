@@ -260,6 +260,34 @@ impl PyCallClient {
         }
     }
 
+    /// Ejects remote participants.
+    ///
+    /// :param list ids: A list of ids of remote participants to eject
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (ids, completion = None))]
+    pub fn eject_remote_participants(
+        &mut self,
+        py: Python<'_>,
+        ids: PyObject,
+        completion: Option<PyObject>,
+    ) {
+        let ids: Vec<String> = ids.extract(py).unwrap();
+
+        let ids_string = serde_json::to_string(&ids).unwrap();
+
+        let ids_cstr = CString::new(ids_string).expect("invalid ids string");
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_eject_remote_participants(
+                self.call_client.as_mut(),
+                request_id,
+                ids_cstr.as_ptr(),
+            );
+        }
+    }
+
     /// Returns the current client inputs. The inputs define the call client
     /// video and audio sources (i.e. cameras and microphones).
     ///
