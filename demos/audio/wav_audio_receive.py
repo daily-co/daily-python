@@ -68,7 +68,7 @@ class ReceiveWavApp:
             # Read 100ms worth of audio frames.
             buffer = self.__speaker_device.read_frames(1600)
             if len(buffer) > 0:
-                self.__wave.writeframesraw(buffer)
+                self.__wave.writeframes(buffer)
 
         self.__wave.close()
 

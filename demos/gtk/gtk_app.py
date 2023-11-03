@@ -1,13 +1,13 @@
 #
 # This demo will join a Daily meeting and will receive and render video frames
-# for a given participant ID.
+# for a given participant ID. If `-a` is specified, it will also save a WAV file
+# with the audio for only that participant.
 #
-# Usage: python gtk_app.py -m MEETING_URL -p PARTICIPANT_ID
+# Usage: python gtk_app.py -m MEETING_URL -p PARTICIPANT_ID [-a]
 #
 
 import argparse
-import queue
-import time
+import wave
 
 import cairo
 import gi
@@ -20,14 +20,14 @@ import numpy as np
 from daily import *
 
 class DailyGtkApp(Gtk.Application):
-    def __init__(self, meeting_url, participant_id):
+    def __init__(self, meeting_url, participant_id, save_audio):
         super().__init__(application_id="co.daily.DailyGtkApp")
 
         self.__client = CallClient()
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "subscribed",
-                "microphone": "unsubscribed"
+                "microphone": "subscribed"
             }
         })
 
@@ -43,6 +43,13 @@ class DailyGtkApp(Gtk.Application):
         self.__joined = False
         self.__meeting_url = meeting_url
         self.__participant_id = participant_id
+
+        self.__save_audio = save_audio
+        if save_audio:
+            self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
+            self.__wave.setnchannels(1)
+            self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
+            self.__wave.setframerate(48000)
 
     def do_activate(self):
         window = Gtk.ApplicationWindow(application=self, title="daily-python Gtk demo")
@@ -105,14 +112,20 @@ class DailyGtkApp(Gtk.Application):
         self.__frame = None
         self.__drawing_area.queue_draw()
         self.__joined = False
+        if self.__save_audio:
+            self.__wave.close()
 
     def join(self, meeting_url, participant_id):
         if not meeting_url or not participant_id:
             return
 
+        if self.__save_audio:
+            self.__client.set_audio_renderer(participant_id, self.on_audio_data)
+
         self.__client.set_video_renderer(participant_id,
                                          self.on_video_frame,
                                          color_format = "BGRA")
+
         self.__client.join(meeting_url, completion = self.on_joined)
 
     def leave(self):
@@ -139,6 +152,9 @@ class DailyGtkApp(Gtk.Application):
         context.set_source_surface(cairo_surface)
         context.paint()
 
+    def on_audio_data(self, participant_id, audio_data):
+        self.__wave.writeframes(audio_data.audio_frames)
+
     def on_video_frame(self, participant_id, video_frame):
         self.__frame_width = video_frame.width
         self.__frame_height = video_frame.height
@@ -150,11 +166,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", default = "", help = "Meeting URL")
     parser.add_argument("-p", "--participant", default = "", help = "Participant ID")
+    parser.add_argument("-a", "--audio", default = False, action="store_true",
+                        help = "Store participant audio in a file (participant-ID.wav)")
     args = parser.parse_args()
 
     Daily.init()
 
-    app = DailyGtkApp(args.meeting, args.participant)
+    app = DailyGtkApp(args.meeting, args.participant, args.audio)
     exit_status = app.run()
 
 if __name__ == '__main__':
