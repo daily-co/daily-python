@@ -5,9 +5,9 @@ use pyo3::prelude::*;
 #[pyclass(name = "AudioData", module = "daily", get_all, unsendable)]
 pub struct PyAudioData {
     /// The bits per sample of the audio data
-    pub bits_per_sample: i32,
+    pub bits_per_sample: u32,
     /// The sample rate
-    pub sample_rate: i32,
+    pub sample_rate: u32,
     /// The number of audio channels
     pub num_channels: usize,
     /// The number of audio frames
