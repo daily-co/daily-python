@@ -7,6 +7,7 @@ Here you can find a few demos that use Daily's Python SDK:
 - **google**: Audio examples using Google [Speech-To-Text](https://cloud.google.com/speech-to-text) and [Text-To-Speech](https://cloud.google.com/text-to-speech) APIs.
 - **gtk**: A native [Gtk](https://www.gtk.org/) application that shows how to receive and render video frames for a participant.
 - **openai**: A demo that takes spoken audio, converts it to text prompt, and uses [DALL-E](https://openai.com/dall-e) to generate an image.
+- **qt**: A native [Qt](https://www.qt.io/qt-for-python) application that shows how to receive and render video frames for a participant.
 
 # Running
 

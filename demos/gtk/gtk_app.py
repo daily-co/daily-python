@@ -1,12 +1,18 @@
 #
 # This demo will join a Daily meeting and will receive and render video frames
-# for a given participant ID. If `-a` is specified, it will also save a WAV file
-# with the audio for only that participant.
+# for a given participant ID.
 #
-# Usage: python gtk_app.py -m MEETING_URL -p PARTICIPANT_ID [-a]
+# If `-a` is specified, it will save a WAV file with the audio for only that
+# participant.
+#
+# If `-s` is specified, it will render the screen share (if available) otherwise
+# it defaults to the participant camera.
+#
+# Usage: python gtk_app.py -m MEETING_URL -p PARTICIPANT_ID [-a] [-s]
 #
 
 import argparse
+import sys
 import wave
 
 import cairo
@@ -20,14 +26,15 @@ import numpy as np
 from daily import *
 
 class DailyGtkApp(Gtk.Application):
-    def __init__(self, meeting_url, participant_id, save_audio):
+    def __init__(self, meeting_url, participant_id, save_audio, screen_share):
         super().__init__(application_id="co.daily.DailyGtkApp")
 
         self.__client = CallClient()
         self.__client.update_subscription_profiles({
             "base": {
-                "camera": "subscribed",
-                "microphone": "subscribed"
+                "microphone": "subscribed",
+                "camera": "unsubscribed" if screen_share else "subscribed",
+                "screenVideo": "subscribed" if screen_share else "unsubscribed",
             }
         })
 
@@ -50,6 +57,10 @@ class DailyGtkApp(Gtk.Application):
             self.__wave.setnchannels(1)
             self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
             self.__wave.setframerate(48000)
+
+        self.__video_source = "camera"
+        if screen_share:
+            self.__video_source = "screenVideo"
 
     def do_activate(self):
         window = Gtk.ApplicationWindow(application=self, title="daily-python Gtk demo")
@@ -124,6 +135,7 @@ class DailyGtkApp(Gtk.Application):
 
         self.__client.set_video_renderer(participant_id,
                                          self.on_video_frame,
+                                         video_source = self.__video_source,
                                          color_format = "BGRA")
 
         self.__client.join(meeting_url, completion = self.on_joined)
@@ -168,12 +180,14 @@ def main():
     parser.add_argument("-p", "--participant", default = "", help = "Participant ID")
     parser.add_argument("-a", "--audio", default = False, action="store_true",
                         help = "Store participant audio in a file (participant-ID.wav)")
+    parser.add_argument("-s", "--screen", default = False, action="store_true",
+                        help = "Render screen share (if available) instead of camera")
     args = parser.parse_args()
 
     Daily.init()
 
-    app = DailyGtkApp(args.meeting, args.participant, args.audio)
-    exit_status = app.run()
+    app = DailyGtkApp(args.meeting, args.participant, args.audio, args.screen)
+    sys.exit(app.run())
 
 if __name__ == '__main__':
     main()
