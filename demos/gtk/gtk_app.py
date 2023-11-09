@@ -21,8 +21,6 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk
 
-import numpy as np
-
 from daily import *
 
 class DailyGtkApp(Gtk.Application):
@@ -45,7 +43,7 @@ class DailyGtkApp(Gtk.Application):
         self.__frame_width = self.__width
         self.__frame_height = self.__height
 
-        self.__black_frame = np.zeros(self.__width * self.__height * 4)
+        self.__black_frame = bytearray(self.__width * self.__height * 4)
 
         self.__joined = False
         self.__meeting_url = meeting_url
@@ -145,7 +143,7 @@ class DailyGtkApp(Gtk.Application):
 
     def drawing_area_draw(self, area, context, w, h, data):
         if self.__joined and not self.__frame is None:
-            image = self.__frame
+            image = bytearray(self.__frame.buffer)
         else:
             image = self.__black_frame
 
@@ -170,7 +168,7 @@ class DailyGtkApp(Gtk.Application):
     def on_video_frame(self, participant_id, video_frame):
         self.__frame_width = video_frame.width
         self.__frame_height = video_frame.height
-        self.__frame = np.frombuffer(video_frame.buffer, dtype=np.uint8).copy()
+        self.__frame = video_frame
         self.__drawing_area.queue_draw()
 
 

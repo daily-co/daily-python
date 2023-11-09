@@ -15,22 +15,12 @@ import argparse
 import sys
 import wave
 
-from dataclasses import dataclass
-
 from PySide6 import QtCore, QtGui, QtWidgets
-
-import numpy as np
 
 from daily import *
 
 class DailyQtWidget(QtWidgets.QWidget):
-    @dataclass
-    class VideoFrameData:
-        buffer: np.ndarray
-        width: int
-        height: int
-
-    frame_signal = QtCore.Signal(VideoFrameData)
+    frame_signal = QtCore.Signal(VideoFrame)
 
     def __init__(self, meeting_url, participant_id, save_audio, screen_share):
         super().__init__()
@@ -138,9 +128,9 @@ class DailyQtWidget(QtWidgets.QWidget):
     def leave(self):
         self.__client.leave(completion = self.on_left)
 
-    def draw_image(self, frame_data):
-        image = QtGui.QImage(frame_data.buffer, frame_data.width, frame_data.height,
-                             frame_data.width * 4, QtGui.QImage.Format.Format_ARGB32)
+    def draw_image(self, video_frame):
+        image = QtGui.QImage(video_frame.buffer, video_frame.width, video_frame.height,
+                             video_frame.width * 4, QtGui.QImage.Format.Format_ARGB32)
         scaled = image.scaled(self.__frame_width, self.__frame_height, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         pixmap = QtGui.QPixmap.fromImage(scaled)
         self.__image_label.setPixmap(pixmap)
@@ -149,9 +139,7 @@ class DailyQtWidget(QtWidgets.QWidget):
         self.__wave.writeframes(audio_data.audio_frames)
 
     def on_video_frame(self, participant_id, video_frame):
-        data = np.frombuffer(video_frame.buffer, dtype=np.uint8).copy()
-        frame_data = self.VideoFrameData(data, video_frame.width, video_frame.height)
-        self.frame_signal.emit(frame_data)
+        self.frame_signal.emit(video_frame)
 
 def main():
     parser = argparse.ArgumentParser()
