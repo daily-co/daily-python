@@ -72,11 +72,22 @@ pub(crate) struct DelegateContextPtr {
 
 unsafe impl Send for DelegateContextPtr {}
 
+// NOTE(aleix): This is a global mutex to solve an issue with
+// Python::with_gil. We call Python::with_gil from multiple threads (events,
+// video and audio renderers) and it seems that sometimes it's possible to
+// acquire the GIL more than once which leads to deadlocks. So, to temporary
+// avoid this issue we create a global mutex to protect the GIL.
+lazy_static! {
+    static ref GIL_MUTEX_HACK: Mutex<i32> = Mutex::new(0);
+}
+
 pub(crate) unsafe extern "C" fn on_event_native(
     delegate: *mut libc::c_void,
     event_json: *const libc::c_char,
     _json_len: isize,
 ) {
+    let _lock = GIL_MUTEX_HACK.lock().unwrap();
+
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
@@ -107,6 +118,8 @@ pub(crate) unsafe extern "C" fn on_audio_data_native(
     peer_id: *const libc::c_char,
     audio_data: *const NativeAudioData,
 ) {
+    let _lock = GIL_MUTEX_HACK.lock().unwrap();
+
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
@@ -134,6 +147,8 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
     peer_id: *const libc::c_char,
     frame: *const NativeVideoFrame,
 ) {
+    let _lock = GIL_MUTEX_HACK.lock().unwrap();
+
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.

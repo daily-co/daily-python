@@ -468,6 +468,7 @@ version = "0.2.0"
 dependencies = [
  "daily-core",
  "futures",
+ "lazy_static",
  "libc",
  "pyo3",
  "serde",

@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 pub(crate) mod call_client;
 pub(crate) mod context;
 pub(crate) mod media;
