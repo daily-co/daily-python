@@ -237,8 +237,7 @@ pub(crate) unsafe fn on_audio_data(
             sample_rate: (*data).sample_rate,
             num_channels: (*data).num_channels,
             num_audio_frames: (*data).num_audio_frames,
-            audio_frames: PyBytes::from_ptr(py, (*data).audio_frames as *const u8, num_bytes)
-                .into_py(py),
+            audio_frames: PyBytes::from_ptr(py, (*data).audio_frames, num_bytes).into_py(py),
         };
 
         let args = PyTuple::new(py, &[peer_id.into_py(py), audio_data.into_py(py)]);
