@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 
 /// This class represents a received video frame. It contains a bytestring with
 /// frame contents and other frame attributes such as width and height.
-#[pyclass(name = "VideoFrame", module = "daily", get_all, unsendable)]
+#[pyclass(name = "VideoFrame", module = "daily", get_all)]
 pub struct PyVideoFrame {
     /// A bytestring with the frame data in the corresponding color format
     pub buffer: PyObject,
