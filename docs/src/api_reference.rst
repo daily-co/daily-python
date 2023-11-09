@@ -1,10 +1,13 @@
 API Reference
 ====================================
 
-.. autoclass:: daily.Daily
+.. autoclass:: daily.AudioData
     :members:
 
 .. autoclass:: daily.CallClient
+    :members:
+
+.. autoclass:: daily.Daily
     :members:
 
 .. autoclass:: daily.EventHandler

@@ -737,9 +737,9 @@ impl PyCallClient {
     /// Registers an audio renderer for the given audio source of the provided
     /// participant.
     ///
-    /// :param str participant_id: The ID of the participant to receive video from
+    /// :param str participant_id: The ID of the participant to receive audio from
     /// :param function callback: A callback to be called when audio data is available. It receives two arguments: the participant ID and a :class:`AudioData`
-    /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAUdio` or a custom track name)
+    /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
     pub fn set_audio_renderer(
         &mut self,
