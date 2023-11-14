@@ -43,7 +43,7 @@ To upgrade:
 
 ### Requirements
 
-- Python 3.8 or newer
+- Python 3.7 or newer
 
 ## Usage
 
