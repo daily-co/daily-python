@@ -1,41 +1,50 @@
 import argparse
-import torch
+import queue
 import time
+import torch
+import threading
 from PIL import Image
 
-from daily import EventHandler, CallClient, Daily
+from daily import *
 
 class DailyYOLO(EventHandler):
-    def __init__(
-            self,
-            url
-        ):
+    def __init__(self):
+        self.__client = CallClient(event_handler = self)
 
-        self.url = url
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
-        self.camera = None
-        self.configure_daily()
-        self.time = time.time()
+        self.__model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        self.__camera = None
 
-        while True:
-            time.sleep(1)
+        self.__time = time.time()
 
-    def configure_daily(self):
-        Daily.init()
-        self.client = CallClient(event_handler = self)
-        self.client.join(self.url)
+        self.__queue = queue.Queue()
+
+        self.__app_quit = False
+
+        self.__thread = threading.Thread(target = self.process_frames);
+        self.__thread.start()
+
+    def run(self, meeting_url):
+        print(f"Connecting to {meeting_url}...")
+        self.__client.join(meeting_url)
+        print("Waiting for participants to join...")
+        self.__thread.join()
+
+    def leave(self):
+        self.__app_quit = True
+        self.__thread.join()
+        self.__client.leave()
 
     def on_participant_joined(self, participant):
-        print(f"on_participant_joined: {participant}")
-
-        self.client.set_video_renderer(participant["id"],
-                                         self.on_video_frame)
-
+        print(f"Participant {participant['id']} joined, analyzing frames...")
+        self.__client.set_video_renderer(participant["id"], self.on_video_frame)
 
     def setup_camera(self, video_frame):
-        if not self.camera:
-            self.camera = Daily.create_camera_device("camera", width = video_frame.width, height = video_frame.height, color_format="RGB")
-            self.client.update_inputs({
+        if not self.__camera:
+            self.__camera = Daily.create_camera_device("camera",
+                                                       width = video_frame.width,
+                                                       height = video_frame.height,
+                                                       color_format="RGB")
+            self.__client.update_inputs({
                 "camera": {
                     "isEnabled": True,
                     "settings": {
@@ -44,24 +53,41 @@ class DailyYOLO(EventHandler):
                 }
             })
 
-    def process_frame(self, video_frame):
-        if time.time() - self.time > 0.1:
-            self.time = time.time()
+    def process_frames(self):
+        while not self.__app_quit:
+            video_frame = self.__queue.get()
             image = Image.frombytes("RGBA", (video_frame.width, video_frame.height), video_frame.buffer)
-            result = self.model(image)
+            result = self.__model(image)
 
             pil = Image.fromarray(result.render()[0], mode="RGB").tobytes()
 
-            self.camera.write_frame(pil)
+            self.__camera.write_frame(pil)
 
     def on_video_frame(self, participant_id, video_frame):
-        self.setup_camera(video_frame)
-        self.process_frame(video_frame)
+        # Process ~15 frames per second (considering incoming frames at 30fps).
+        if time.time() - self.__time > 0.05:
+            self.__time = time.time()
+            self.setup_camera(video_frame)
+            self.__queue.put(video_frame)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="YOLO exmaple with Daily")
-    parser.add_argument("-u", "--url", default="", type=str, help="URL of the Daily room")
-
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
     args = parser.parse_args()
 
-    app = DailyYOLO(args.url)
+    Daily.init()
+
+    app = DailyYOLO()
+
+    try :
+        app.run(args.meeting)
+    except KeyboardInterrupt:
+        print("Ctrl-C detected. Exiting!")
+    finally:
+        app.leave()
+
+    # Let leave finish
+    time.sleep(2)
+
+if __name__ == '__main__':
+    main()
