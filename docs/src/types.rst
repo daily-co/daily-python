@@ -828,15 +828,15 @@ TranscriptionSettings
    * - Key
      - Value
    * - "language"
-     - string (default: "en", see Deepgram's `Language <https://developers.deepgram.com/docs/language>`_)
+     - string (see Deepgram's `Language <https://developers.deepgram.com/docs/language>`_)
    * - "model"
-     - string (default: "general", see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
+     - string (see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
    * - "tier"
-     - string (default: "base", see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
+     - string (see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
    * - "profanity_filter"
-     - bool (default: false, see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
+     - bool (see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
-     - bool (default: false, see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
+     - bool or list (see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
 
 .. _TranscriptionStatus:
 
