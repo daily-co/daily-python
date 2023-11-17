@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
-use pyo3::types::{PyBool, PyDict, PyFloat, PyLong, PyString};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyList, PyLong, PyString};
 
 #[repr(transparent)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -56,6 +56,10 @@ impl<'a> FromPyObject<'a> for DictValue {
             Ok(DictValue(number.into()))
         } else if let Ok(value) = ob.downcast::<PyString>() {
             Ok(DictValue(value.to_string().into()))
+        } else if let Ok(value) = ob.downcast::<PyList>() {
+            let list: Vec<DictValue> = value.extract().unwrap();
+            let vec = list.iter().map(|v| v.0.clone()).collect();
+            Ok(DictValue(Value::Array(vec)))
         } else if let Ok(value) = ob.downcast::<PyDict>() {
             let dict: HashMap<String, DictValue> = value.extract().unwrap();
             let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
