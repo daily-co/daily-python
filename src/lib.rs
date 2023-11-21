@@ -178,21 +178,24 @@ impl PyDaily {
     /// :param str device_name: The virtual speaker device name
     /// :param int sample_rate: Sample rate
     /// :param int channels: Number of channels (2 for stereo, 1 for mono)
+    /// :param bool non_blocking: Whether the speaker will be blocking or non-blocking
     ///
     /// :return: A new virtual speaker device
     /// :rtype: :class:`daily.VirtualSpeakerDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1))]
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1, non_blocking = false))]
     pub fn create_speaker_device(
         device_name: &str,
         sample_rate: u32,
         channels: u8,
+        non_blocking: bool,
     ) -> PyResult<PyVirtualSpeakerDevice> {
         unsafe {
             GLOBAL_CONTEXT.as_mut().unwrap().create_speaker_device(
                 device_name,
                 sample_rate,
                 channels,
+                non_blocking,
             )
         }
     }
@@ -205,21 +208,24 @@ impl PyDaily {
     /// :param str device_name: The virtual microphone device name. This can be used as a `deviceId` when configuring the call client inputs
     /// :param int sample_rate: Sample rate
     /// :param int channels: Number of channels (2 for stereo, 1 for mono)
+    /// :param bool non_blocking: Whether the microphone will be blocking or non-blocking
     ///
     /// :return: A new virtual microphone device
     /// :rtype: :class:`daily.VirtualMicrophoneDevice`
     #[staticmethod]
-    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1))]
+    #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1, non_blocking = false))]
     pub fn create_microphone_device(
         device_name: &str,
         sample_rate: u32,
         channels: u8,
+        non_blocking: bool,
     ) -> PyResult<PyVirtualMicrophoneDevice> {
         unsafe {
             GLOBAL_CONTEXT.as_mut().unwrap().create_microphone_device(
                 device_name,
                 sample_rate,
                 channels,
+                non_blocking,
             )
         }
     }

@@ -145,6 +145,7 @@ impl DailyContext {
         device_name: &str,
         sample_rate: u32,
         channels: u8,
+        non_blocking: bool,
     ) -> PyResult<PyVirtualSpeakerDevice> {
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual speaker device name string");
@@ -157,6 +158,7 @@ impl DailyContext {
                 device_name_cstr.as_ptr(),
                 sample_rate,
                 channels,
+                non_blocking,
             );
 
             py_device.attach_audio_device(NativeVirtualSpeakerDevice::from_unretained(
@@ -172,6 +174,7 @@ impl DailyContext {
         device_name: &str,
         sample_rate: u32,
         channels: u8,
+        non_blocking: bool,
     ) -> PyResult<PyVirtualMicrophoneDevice> {
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual microphone device name string");
@@ -184,6 +187,7 @@ impl DailyContext {
                 device_name_cstr.as_ptr(),
                 sample_rate,
                 channels,
+                non_blocking,
             );
 
             py_device.attach_audio_device(NativeVirtualMicrophoneDevice::from_unretained(
