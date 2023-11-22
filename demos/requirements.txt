@@ -5,6 +5,7 @@ google-cloud-texttospeech==2.14.1
 numpy==1.25.2
 openai==0.28.0
 pillow==10.0.1
+pyaudio==0.2.14
 pycairo==1.24.0
 pygobject==3.44.1
 pyside6==6.6
