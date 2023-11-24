@@ -23,15 +23,17 @@ pub struct PyVirtualSpeakerDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
+    non_blocking: bool,
     audio_device: Option<NativeVirtualSpeakerDevice>,
 }
 
 impl PyVirtualSpeakerDevice {
-    pub fn new(device_name: &str, sample_rate: u32, channels: u8) -> Self {
+    pub fn new(device_name: &str, sample_rate: u32, channels: u8, non_blocking: bool) -> Self {
         Self {
             device_name: device_name.to_string(),
             sample_rate,
             channels,
+            non_blocking,
             audio_device: None,
         }
     }
@@ -89,6 +91,14 @@ impl PyVirtualSpeakerDevice {
     /// :rtype: bytestring.
     pub fn read_frames(&self, py: Python<'_>, num_frames: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
+            let num_frames_10ms = (self.sample_rate / 100) as usize;
+
+            if self.non_blocking && num_frames > num_frames_10ms {
+                return Err(exceptions::PyValueError::new_err(
+                    "frames bytestring should contain less than 10ms worth of data",
+                ));
+            }
+
             // libwebrtc provides with 16-bit linear PCM
             let bits_per_sample = 16;
             let num_bytes = num_frames * (bits_per_sample * self.channels() as usize) / 8;
