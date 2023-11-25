@@ -3,7 +3,7 @@
 # for a given participant ID.
 #
 # If `-a` is specified, it will save a WAV file with the audio for only that
-# participant.
+# participant and it will also reproduce it.
 #
 # If `-s` is specified, it will render the screen share (if available) otherwise
 # it defaults to the participant camera.
@@ -16,6 +16,8 @@ import sys
 import wave
 
 from PySide6 import QtCore, QtGui, QtWidgets
+
+import pyaudio
 
 from daily import *
 
@@ -33,6 +35,11 @@ class DailyQtWidget(QtWidgets.QWidget):
                 "screenVideo": "subscribed" if screen_share else "unsubscribed",
             }
         })
+
+        # We will create the PyAudio output stream once we know the format of
+        # incoming audio.
+        self.__pyaudio = pyaudio.PyAudio()
+        self.__output_stream = None
 
         self.__frame_width = 1280
         self.__frame_height = 720
@@ -136,6 +143,14 @@ class DailyQtWidget(QtWidgets.QWidget):
         self.__image_label.setPixmap(pixmap)
 
     def on_audio_data(self, participant_id, audio_data):
+        if self.__output_stream is None:
+            self.__output_stream = self.__pyaudio.open(
+                format=pyaudio.paInt16,
+                channels=audio_data.num_channels,
+                rate=audio_data.sample_rate,
+                output=True
+            )
+        self.__output_stream.write(audio_data.audio_frames)
         self.__wave.writeframes(audio_data.audio_frames)
 
     def on_video_frame(self, participant_id, video_frame):
