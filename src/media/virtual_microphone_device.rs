@@ -124,7 +124,7 @@ impl PyVirtualMicrophoneDevice {
                 )
             });
 
-            if frames_written > 0 {
+            if frames_written >= 0 {
                 Ok(frames_written.into_py(py))
             } else {
                 Err(exceptions::PyIOError::new_err(
