@@ -8,7 +8,6 @@
 
 import argparse
 import time
-import threading
 
 from daily import *
 
@@ -16,13 +15,12 @@ import pyaudio
 
 SAMPLE_RATE=16000
 NUM_CHANNELS=1
+BYTES_PER_SAMPLE=2
 
 class PyAudioApp:
 
     def __init__(self):
         self.__app_quit = False
-        self.__app_joined = False
-        self.__app_inputs_updated = False
 
         self.__virtual_mic = Daily.create_microphone_device(
             "my-mic",
@@ -82,15 +80,11 @@ class PyAudioApp:
         if error:
             print(f"Unable to updated inputs: {error}")
             self.__app_quit = True
-        else:
-            self.__app_inputs_updated = True
 
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
             self.__app_quit = True
-        else:
-            self.__app_joined = True
 
     def run(self, meeting_url):
         self.__client.join(meeting_url, completion=self.on_joined)
@@ -105,6 +99,8 @@ class PyAudioApp:
         if self.__app_quit:
             return None, pyaudio.paAbort
 
+        # If the microphone hasn't started yet `write_frames`this will return
+        # 0. In that case, we just tell PyAudio to continue.
         self.__virtual_mic.write_frames(in_data)
 
         return None, pyaudio.paContinue
@@ -113,7 +109,12 @@ class PyAudioApp:
         if self.__app_quit:
             return None, pyaudio.paAbort
 
+        # If the speaker hasn't started yet `read_frames` will return 0. In that
+        # case, we just create silence and pass it PyAudio and tell it to
+        # continue.
         buffer = self.__virtual_speaker.read_frames(frame_count)
+        if len(buffer) == 0:
+            buffer = b'\x00' * frame_count * NUM_CHANNELS * BYTES_PER_SAMPLE
 
         return buffer, pyaudio.paContinue
 
