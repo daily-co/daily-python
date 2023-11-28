@@ -837,6 +837,8 @@ TranscriptionSettings
      - bool (see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
      - bool or list (see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
+   * - "extra"
+     - dict (any additional Deepgram settings)
 
 .. _TranscriptionStatus:
 
