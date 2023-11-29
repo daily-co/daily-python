@@ -14,14 +14,32 @@ Here you can find a few demos that use Daily's Python SDK:
 
 # Running
 
-It is assumed you have `daily-python` installed.
+The demos have a few Python dependecies. To keep things clean, it's always a
+good idea to use a virtual environment:
 
-Some of the demos need additional Python packages you can install via `pip`:
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Once the virtual environment is activated you can install the dependencies via
+`pip`:
 
 ```
 pip3 install -r requirements.txt
 ```
 
-ℹ️ It's a good idea to install these dependencies in a virtual environment.
+ℹ️ `daily-python` is not included in the `requirements.txt` file so you need to
+install it manually:
 
-View the demo files for more details, including how to run them.
+```
+pip3 install daily-python
+```
+
+⚠️ It's possible that some requirements fail to install because of missing system
+dependecies (e.g. `PyAudio` depends on the `portaudio` library). In those cases,
+it is necessary to install those dependencies manually (error messages might
+give hints on what system libraries are missing). Another alternative is to
+remove the conflicting dependecies from `requirements.txt`.
+
+Finally, view the demo files for more details, including how to run them.
