@@ -389,7 +389,7 @@ version = "0.1.0"
 
 [[package]]
 name = "daily-core"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "async-trait",
  "console_log",
@@ -464,7 +464,7 @@ dependencies = [
 
 [[package]]
 name = "daily-python"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "daily-core",
  "futures",
