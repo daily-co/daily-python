@@ -823,7 +823,7 @@ impl PyCallClient {
     }
 
     fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
-        let request_id = unsafe { GLOBAL_CONTEXT.as_ref().unwrap().next_request_id() };
+        let request_id = GLOBAL_CONTEXT.next_request_id();
 
         if let Some(completion) = completion {
             self.inner

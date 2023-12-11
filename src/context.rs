@@ -27,10 +27,11 @@ use daily_core::prelude::{
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
-// This should be initialized from Daily.init().
-pub static mut GLOBAL_CONTEXT: Option<DailyContext> = None;
+lazy_static! {
+    pub(crate) static ref GLOBAL_CONTEXT: DailyContext = DailyContext::new();
+}
 
-pub struct DailyContext {
+pub(crate) struct DailyContext {
     request_id: AtomicU64,
     device_manager: NativeDeviceManager,
 }
@@ -38,12 +39,13 @@ pub struct DailyContext {
 impl DailyContext {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let device_manager = unsafe { daily_core_context_create_device_manager() };
+        let device_manager_ptr = unsafe { daily_core_context_create_device_manager() };
+
+        let device_manager =
+            unsafe { NativeDeviceManager::from_unretained(device_manager_ptr as *mut _) };
 
         Self {
-            device_manager: unsafe {
-                NativeDeviceManager::from_unretained(device_manager as *mut _)
-            },
+            device_manager,
             request_id: AtomicU64::new(0),
         }
     }
@@ -71,7 +73,7 @@ impl DailyContext {
 
     #[allow(clippy::missing_safety_doc)]
     pub unsafe fn get_user_media(
-        &mut self,
+        &self,
         peer_connection_factory: *mut WebrtcPeerConnectionFactory,
         signaling_thread: *mut WebrtcThread,
         worker_thread: *mut WebrtcThread,
@@ -80,7 +82,7 @@ impl DailyContext {
     ) -> *mut libc::c_void {
         unsafe {
             daily_core_context_device_manager_get_user_media(
-                self.device_manager.as_mut_ptr() as *mut _,
+                self.device_manager.as_ptr() as *mut _,
                 peer_connection_factory,
                 signaling_thread,
                 worker_thread,
@@ -92,19 +94,19 @@ impl DailyContext {
 
     #[allow(clippy::missing_safety_doc)]
     pub unsafe fn create_audio_device_module(
-        &mut self,
+        &self,
         task_queue_factory: *mut WebrtcTaskQueueFactory,
     ) -> *mut WebrtcAudioDeviceModule {
         unsafe {
             daily_core_context_create_audio_device_module(
-                self.device_manager.as_mut_ptr() as *mut _,
+                self.device_manager.as_ptr() as *mut _,
                 task_queue_factory,
             )
         }
     }
 
     pub fn create_camera_device(
-        &mut self,
+        &self,
         device_name: &str,
         width: u32,
         height: u32,
@@ -120,7 +122,7 @@ impl DailyContext {
 
             unsafe {
                 let camera_device = daily_core_context_create_virtual_camera_device(
-                    self.device_manager.as_mut_ptr() as *mut _,
+                    self.device_manager.as_ptr() as *mut _,
                     device_name_cstr.as_ptr(),
                     width,
                     height,
@@ -141,7 +143,7 @@ impl DailyContext {
     }
 
     pub fn create_speaker_device(
-        &mut self,
+        &self,
         device_name: &str,
         sample_rate: u32,
         channels: u8,
@@ -155,7 +157,7 @@ impl DailyContext {
 
         unsafe {
             let speaker_device = daily_core_context_create_virtual_speaker_device(
-                self.device_manager.as_mut_ptr() as *mut _,
+                self.device_manager.as_ptr() as *mut _,
                 device_name_cstr.as_ptr(),
                 sample_rate,
                 channels,
@@ -171,7 +173,7 @@ impl DailyContext {
     }
 
     pub fn create_microphone_device(
-        &mut self,
+        &self,
         device_name: &str,
         sample_rate: u32,
         channels: u8,
@@ -185,7 +187,7 @@ impl DailyContext {
 
         unsafe {
             let microphone_device = daily_core_context_create_virtual_microphone_device(
-                self.device_manager.as_mut_ptr() as *mut _,
+                self.device_manager.as_ptr() as *mut _,
                 device_name_cstr.as_ptr(),
                 sample_rate,
                 channels,
@@ -200,7 +202,7 @@ impl DailyContext {
         Ok(py_device)
     }
 
-    pub fn select_speaker_device(&mut self, device_name: &str) -> PyResult<()> {
+    pub fn select_speaker_device(&self, device_name: &str) -> PyResult<()> {
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual speaker device name string");
 

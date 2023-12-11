@@ -7,7 +7,7 @@ pub(crate) mod media;
 pub(crate) mod util;
 
 use call_client::{PyCallClient, PyEventHandler};
-use context::{DailyContext, GLOBAL_CONTEXT};
+use context::GLOBAL_CONTEXT;
 use media::{
     PyAudioData, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
     PyVirtualSpeakerDevice,
@@ -39,14 +39,11 @@ unsafe extern "C" fn set_audio_device(
 }
 
 unsafe extern "C" fn get_audio_device(_delegate: *mut libc::c_void) -> *const libc::c_char {
-    GLOBAL_CONTEXT
-        .as_ref()
-        .unwrap()
-        .get_selected_microphone_device()
+    GLOBAL_CONTEXT.get_selected_microphone_device()
 }
 
 unsafe extern "C" fn get_enumerated_devices(_delegate: *mut libc::c_void) -> *mut libc::c_char {
-    GLOBAL_CONTEXT.as_ref().unwrap().get_enumerated_devices()
+    GLOBAL_CONTEXT.get_enumerated_devices()
 }
 
 unsafe extern "C" fn get_user_media(
@@ -57,7 +54,7 @@ unsafe extern "C" fn get_user_media(
     network_thread: *mut WebrtcThread,
     constraints: *const libc::c_char,
 ) -> *mut libc::c_void {
-    GLOBAL_CONTEXT.as_mut().unwrap().get_user_media(
+    GLOBAL_CONTEXT.get_user_media(
         peer_connection_factory,
         signaling_thread,
         worker_thread,
@@ -70,10 +67,7 @@ unsafe extern "C" fn create_audio_device_module(
     _delegate: *mut NativeRawWebRtcContextDelegate,
     task_queue_factory: *mut WebrtcTaskQueueFactory,
 ) -> *mut WebrtcAudioDeviceModule {
-    GLOBAL_CONTEXT
-        .as_mut()
-        .unwrap()
-        .create_audio_device_module(task_queue_factory)
+    GLOBAL_CONTEXT.create_audio_device_module(task_queue_factory)
 }
 
 /// This class is used to initialize the SDK and create virtual devices.
@@ -90,7 +84,6 @@ impl PyDaily {
     #[pyo3(signature = (worker_threads = 2))]
     pub fn init(worker_threads: usize) {
         unsafe {
-            GLOBAL_CONTEXT = Some(DailyContext::new());
             daily_core_set_log_level(LogLevel::Off);
         }
 
@@ -159,14 +152,7 @@ impl PyDaily {
         height: u32,
         color_format: &str,
     ) -> PyResult<PyVirtualCameraDevice> {
-        unsafe {
-            GLOBAL_CONTEXT.as_mut().unwrap().create_camera_device(
-                device_name,
-                width,
-                height,
-                color_format,
-            )
-        }
+        GLOBAL_CONTEXT.create_camera_device(device_name, width, height, color_format)
     }
 
     /// Creates a new virtual speaker device. Speaker devices are used to
@@ -190,14 +176,7 @@ impl PyDaily {
         channels: u8,
         non_blocking: bool,
     ) -> PyResult<PyVirtualSpeakerDevice> {
-        unsafe {
-            GLOBAL_CONTEXT.as_mut().unwrap().create_speaker_device(
-                device_name,
-                sample_rate,
-                channels,
-                non_blocking,
-            )
-        }
+        GLOBAL_CONTEXT.create_speaker_device(device_name, sample_rate, channels, non_blocking)
     }
 
     /// Creates a new virtual microphone device. Microphone devices are used to
@@ -220,14 +199,7 @@ impl PyDaily {
         channels: u8,
         non_blocking: bool,
     ) -> PyResult<PyVirtualMicrophoneDevice> {
-        unsafe {
-            GLOBAL_CONTEXT.as_mut().unwrap().create_microphone_device(
-                device_name,
-                sample_rate,
-                channels,
-                non_blocking,
-            )
-        }
+        GLOBAL_CONTEXT.create_microphone_device(device_name, sample_rate, channels, non_blocking)
     }
 
     /// Selects one of the previously created virtual speaker devices to be the
@@ -239,12 +211,7 @@ impl PyDaily {
     /// :param str device_name: The name of the virtual speaker device to select
     #[staticmethod]
     pub fn select_speaker_device(device_name: &str) -> PyResult<()> {
-        unsafe {
-            GLOBAL_CONTEXT
-                .as_mut()
-                .unwrap()
-                .select_speaker_device(device_name)
-        }
+        GLOBAL_CONTEXT.select_speaker_device(device_name)
     }
 }
 
