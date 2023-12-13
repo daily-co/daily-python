@@ -164,9 +164,7 @@ impl DailyContext {
                 non_blocking,
             );
 
-            py_device.attach_audio_device(NativeVirtualSpeakerDevice::from_unretained(
-                speaker_device as *mut _,
-            ));
+            py_device.attach_audio_device(NativeVirtualSpeakerDevice::from(speaker_device));
         }
 
         Ok(py_device)
@@ -194,9 +192,7 @@ impl DailyContext {
                 non_blocking,
             );
 
-            py_device.attach_audio_device(NativeVirtualMicrophoneDevice::from_unretained(
-                microphone_device as *mut _,
-            ));
+            py_device.attach_audio_device(NativeVirtualMicrophoneDevice::from(microphone_device));
         }
 
         Ok(py_device)
@@ -235,7 +231,8 @@ impl DailyContext {
             EMPTY.as_ptr().cast()
         } else {
             // NOTE(aleix): Leaking because get_audio_device() uses CStr.
-            device
+            let microphone = NativeVirtualMicrophoneDevice::from(device);
+            microphone.name()
         }
     }
 }
