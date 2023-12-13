@@ -94,6 +94,9 @@ class PyAudioApp:
     def leave(self):
         self.__app_quit = True
         self.__client.leave()
+        self.__input_stream.close()
+        self.__output_stream.close()
+        self.__pyaudio.terminate()
 
     def on_input_stream(self, in_data, frame_count, time_info, status):
         if self.__app_quit:
