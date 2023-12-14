@@ -21,17 +21,15 @@ pub struct PyVirtualMicrophoneDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
-    non_blocking: bool,
     audio_device: Option<NativeVirtualMicrophoneDevice>,
 }
 
 impl PyVirtualMicrophoneDevice {
-    pub fn new(device_name: &str, sample_rate: u32, channels: u8, non_blocking: bool) -> Self {
+    pub fn new(device_name: &str, sample_rate: u32, channels: u8) -> Self {
         Self {
             device_name: device_name.to_string(),
             sample_rate,
             channels,
-            non_blocking,
             audio_device: None,
         }
     }
@@ -73,10 +71,6 @@ impl PyVirtualMicrophoneDevice {
     /// Writes audio frames to a virtual microphone device created with
     /// :func:`Daily.create_microphone_device`.
     ///
-    /// Currently, for a non-blocking virtual microphone device, the number of
-    /// audio frames to write should be up to a maximum of 10ms worth of audio
-    /// frames (considering the configured device sample rate).
-    ///
     /// :param bytestring frames: A bytestring with the audio frames to write
     ///
     /// :return: The number of audio frames written
@@ -93,14 +87,6 @@ impl PyVirtualMicrophoneDevice {
             }
 
             let num_frames = (bytes_length / 2) / self.channels as usize;
-
-            let num_frames_10ms = (self.sample_rate / 100) as usize;
-
-            if self.non_blocking && num_frames > num_frames_10ms {
-                return Err(exceptions::PyValueError::new_err(
-                    "frames bytestring should contain less than 10ms worth of data",
-                ));
-            }
 
             // TODO(aleix): Should this be i16 aligned?
             let bytes = frames.as_bytes();

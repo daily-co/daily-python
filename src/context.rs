@@ -180,8 +180,7 @@ impl DailyContext {
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual microphone device name string");
 
-        let mut py_device =
-            PyVirtualMicrophoneDevice::new(device_name, sample_rate, channels, non_blocking);
+        let mut py_device = PyVirtualMicrophoneDevice::new(device_name, sample_rate, channels);
 
         unsafe {
             let microphone_device = daily_core_context_create_virtual_microphone_device(
