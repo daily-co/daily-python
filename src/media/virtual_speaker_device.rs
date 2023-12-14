@@ -100,8 +100,7 @@ impl PyVirtualSpeakerDevice {
             }
 
             // libwebrtc provides with 16-bit linear PCM
-            let bits_per_sample = 16;
-            let num_bytes = num_frames * (bits_per_sample * self.channels() as usize) / 8;
+            let num_bytes = num_frames * self.channels() as usize * 2;
             let num_words = num_bytes / 2;
 
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
