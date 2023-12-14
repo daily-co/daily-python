@@ -21,8 +21,6 @@ class PyAudioApp:
 
     def __init__(self, sample_rate, num_channels):
         self.__app_quit = False
-        self.__inputs_updated = False
-        self.__publishing_updated = False
         self.__sample_rate = sample_rate
         self.__num_channels = num_channels
 
@@ -70,7 +68,7 @@ class PyAudioApp:
                     }
                 }
             }
-        }, completion = self.on_inputs_updated)
+        })
         self.__client.update_publishing({
             "microphone": {
                 "isPublishing": True,
@@ -78,7 +76,7 @@ class PyAudioApp:
                     "channelConfig": "stereo" if num_channels == 2 else "mono",
                 }
             }
-        }, completion = self.on_publishing_updated)
+        })
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "unsubscribed",
@@ -90,20 +88,6 @@ class PyAudioApp:
         if error:
             print(f"Unable to join meeting: {error}")
             self.__app_quit = True
-
-    def on_inputs_updated(self, data, error):
-        if error:
-            print(f"Unable to join meeting: {error}")
-            self.__app_quit = True
-        else:
-            self.__inputs_updated = True
-
-    def on_publishing_updated(self, data, error):
-        if error:
-            print(f"Unable to join meeting: {error}")
-            self.__app_quit = True
-        else:
-            self.__publishing_updated = True
 
     def run(self, meeting_url):
         self.__client.join(meeting_url, completion=self.on_joined)
@@ -121,9 +105,9 @@ class PyAudioApp:
         if self.__app_quit:
             return None, pyaudio.paAbort
 
-        # Start writing frames when the microphone is properly configured.
-        if self.__inputs_updated and self.__publishing_updated:
-            self.__virtual_mic.write_frames(in_data)
+        # If the microphone hasn't started yet `write_frames`this will return
+        # 0. In that case, we just tell PyAudio to continue.
+        self.__virtual_mic.write_frames(in_data)
 
         return None, pyaudio.paContinue
 
