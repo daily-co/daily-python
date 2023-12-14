@@ -19,41 +19,44 @@ BYTES_PER_SAMPLE=2
 
 class PyAudioApp:
 
-    def __init__(self):
+    def __init__(self, sample_rate, num_channels):
         self.__app_quit = False
+        self.__inputs_updated = False
+        self.__publishing_updated = False
+        self.__sample_rate = sample_rate
+        self.__num_channels = num_channels
 
         self.__virtual_mic = Daily.create_microphone_device(
             "my-mic",
-            sample_rate = SAMPLE_RATE,
-            channels = NUM_CHANNELS,
+            sample_rate = sample_rate,
+            channels = num_channels,
             non_blocking = True
         )
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate = SAMPLE_RATE,
-            channels = NUM_CHANNELS,
+            sample_rate = sample_rate,
+            channels = num_channels,
             non_blocking = True
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__pyaudio = pyaudio.PyAudio()
         self.__input_stream = self.__pyaudio.open(
-            format=pyaudio.paInt16,
-            channels=NUM_CHANNELS,
-            rate=SAMPLE_RATE,
-            input=True,
-            stream_callback=self.on_input_stream
+            format = pyaudio.paInt16,
+            channels = num_channels,
+            rate = sample_rate,
+            input = True,
+            stream_callback = self.on_input_stream
         )
         self.__output_stream = self.__pyaudio.open(
-            format=pyaudio.paInt16,
-            channels=NUM_CHANNELS,
-            rate=SAMPLE_RATE,
+            format = pyaudio.paInt16,
+            channels = num_channels,
+            rate = sample_rate,
             output=True,
             stream_callback=self.on_output_stream
         )
 
         self.__client = CallClient()
-
         self.__client.update_inputs({
             "camera": False,
             "microphone": {
@@ -68,7 +71,14 @@ class PyAudioApp:
                 }
             }
         }, completion = self.on_inputs_updated)
-
+        self.__client.update_publishing({
+            "microphone": {
+                "isPublishing": True,
+                "sendSettings": {
+                    "channelConfig": "stereo" if num_channels == 2 else "mono",
+                }
+            }
+        }, completion = self.on_publishing_updated)
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "unsubscribed",
@@ -76,15 +86,24 @@ class PyAudioApp:
             }
         })
 
-    def on_inputs_updated(self, inputs, error):
-        if error:
-            print(f"Unable to updated inputs: {error}")
-            self.__app_quit = True
-
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
             self.__app_quit = True
+
+    def on_inputs_updated(self, data, error):
+        if error:
+            print(f"Unable to join meeting: {error}")
+            self.__app_quit = True
+        else:
+            self.__inputs_updated = True
+
+    def on_publishing_updated(self, data, error):
+        if error:
+            print(f"Unable to join meeting: {error}")
+            self.__app_quit = True
+        else:
+            self.__publishing_updated = True
 
     def run(self, meeting_url):
         self.__client.join(meeting_url, completion=self.on_joined)
@@ -102,9 +121,9 @@ class PyAudioApp:
         if self.__app_quit:
             return None, pyaudio.paAbort
 
-        # If the microphone hasn't started yet `write_frames`this will return
-        # 0. In that case, we just tell PyAudio to continue.
-        self.__virtual_mic.write_frames(in_data)
+        # Start writing frames when the microphone is properly configured.
+        if self.__inputs_updated and self.__publishing_updated:
+            self.__virtual_mic.write_frames(in_data)
 
         return None, pyaudio.paContinue
 
@@ -117,18 +136,20 @@ class PyAudioApp:
         # continue.
         buffer = self.__virtual_speaker.read_frames(frame_count)
         if len(buffer) == 0:
-            buffer = b'\x00' * frame_count * NUM_CHANNELS * BYTES_PER_SAMPLE
+            buffer = b'\x00' * frame_count * self.__num_channels * BYTES_PER_SAMPLE
 
         return buffer, pyaudio.paContinue
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
+    parser.add_argument("-c", "--channels", type = int, default = NUM_CHANNELS, help = "Number of channels")
+    parser.add_argument("-r", "--rate", type = int, default = SAMPLE_RATE, help = "Sample rate")
     args = parser.parse_args()
 
     Daily.init()
 
-    app = PyAudioApp()
+    app = PyAudioApp(args.rate, args.channels)
 
     try :
         app.run(args.meeting)
