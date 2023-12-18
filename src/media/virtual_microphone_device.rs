@@ -71,6 +71,9 @@ impl PyVirtualMicrophoneDevice {
     /// Writes audio frames to a virtual microphone device created with
     /// :func:`Daily.create_microphone_device`.
     ///
+    /// If less than a multiple of 10ms worth of audio frames are provided on a
+    /// blocking microphone, padding will be added up to the next multiple.
+    ///
     /// :param bytestring frames: A bytestring with the audio frames to write
     ///
     /// :return: The number of audio frames written

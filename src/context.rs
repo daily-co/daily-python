@@ -152,8 +152,7 @@ impl DailyContext {
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual speaker device name string");
 
-        let mut py_device =
-            PyVirtualSpeakerDevice::new(device_name, sample_rate, channels, non_blocking);
+        let mut py_device = PyVirtualSpeakerDevice::new(device_name, sample_rate, channels);
 
         unsafe {
             let speaker_device = daily_core_context_create_virtual_speaker_device(
