@@ -74,7 +74,7 @@ impl PyVirtualSpeakerDevice {
     ///
     /// :param int num_frames: The number of audio frames to read
     ///
-    /// :return: The read audio frames as a bytestring. If no audio frames could be read, it returns an empty bytestring
+    /// :return: The read audio frames as a bytestring
     /// :rtype: bytestring.
     pub fn read_frames(&self, py: Python<'_>, num_frames: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {

@@ -115,12 +115,9 @@ class PyAudioApp:
         if self.__app_quit:
             return None, pyaudio.paAbort
 
-        # If the speaker hasn't started yet `read_frames` will return 0. In that
-        # case, we just create silence and pass it PyAudio and tell it to
-        # continue.
+        # If the speaker hasn't started yet `read_frames` will return a buffer
+        # with silence.
         buffer = self.__virtual_speaker.read_frames(frame_count)
-        if len(buffer) == 0:
-            buffer = b'\x00' * frame_count * self.__num_channels * BYTES_PER_SAMPLE
 
         return buffer, pyaudio.paContinue
 
