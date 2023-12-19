@@ -21,8 +21,6 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk
 
-import pyaudio
-
 from daily import *
 
 class DailyGtkApp(Gtk.Application):
@@ -52,16 +50,6 @@ class DailyGtkApp(Gtk.Application):
         self.__participant_id = participant_id
 
         self.__save_audio = save_audio
-        if save_audio:
-            # We will create the PyAudio output stream once we know the format
-            # of incoming audio.
-            self.__pyaudio = pyaudio.PyAudio()
-            self.__output_stream = None
-
-            self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
-            self.__wave.setnchannels(1)
-            self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
-            self.__wave.setframerate(48000)
 
         self.__video_source = "camera"
         if screen_share:
@@ -117,6 +105,13 @@ class DailyGtkApp(Gtk.Application):
         else:
             meeting_url = self.__meeting_entry.get_text()
             participant_id = self.__participant_entry.get_text()
+
+            if self.__save_audio:
+                self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
+                self.__wave.setnchannels(1)
+                self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
+                self.__wave.setframerate(48000)
+
             self.join(meeting_url, participant_id)
             self.__button.set_label("Leave")
 
@@ -129,8 +124,6 @@ class DailyGtkApp(Gtk.Application):
         self.__drawing_area.queue_draw()
         self.__joined = False
         if self.__save_audio:
-            self.__output_stream.close()
-            self.__pyaudio.terminate()
             self.__wave.close()
 
     def join(self, meeting_url, participant_id):
@@ -172,14 +165,6 @@ class DailyGtkApp(Gtk.Application):
         context.paint()
 
     def on_audio_data(self, participant_id, audio_data):
-        if self.__output_stream is None:
-            self.__output_stream = self.__pyaudio.open(
-                format=pyaudio.paInt16,
-                channels=audio_data.num_channels,
-                rate=audio_data.sample_rate,
-                output=True
-            )
-        self.__output_stream.write(audio_data.audio_frames)
         self.__wave.writeframes(audio_data.audio_frames)
 
     def on_video_frame(self, participant_id, video_frame):
