@@ -38,11 +38,6 @@ class DailyGtkApp(Gtk.Application):
             }
         })
 
-        # We will create the PyAudio output stream once we know the format of
-        # incoming audio.
-        self.__pyaudio = pyaudio.PyAudio()
-        self.__output_stream = None
-
         self.__width = 1280
         self.__height = 720
 
@@ -58,6 +53,11 @@ class DailyGtkApp(Gtk.Application):
 
         self.__save_audio = save_audio
         if save_audio:
+            # We will create the PyAudio output stream once we know the format
+            # of incoming audio.
+            self.__pyaudio = pyaudio.PyAudio()
+            self.__output_stream = None
+
             self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
             self.__wave.setnchannels(1)
             self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
@@ -129,6 +129,8 @@ class DailyGtkApp(Gtk.Application):
         self.__drawing_area.queue_draw()
         self.__joined = False
         if self.__save_audio:
+            self.__output_stream.close()
+            self.__pyaudio.terminate()
             self.__wave.close()
 
     def join(self, meeting_url, participant_id):

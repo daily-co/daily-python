@@ -36,11 +36,6 @@ class DailyQtWidget(QtWidgets.QWidget):
             }
         })
 
-        # We will create the PyAudio output stream once we know the format of
-        # incoming audio.
-        self.__pyaudio = pyaudio.PyAudio()
-        self.__output_stream = None
-
         self.__frame_width = 1280
         self.__frame_height = 720
 
@@ -55,6 +50,11 @@ class DailyQtWidget(QtWidgets.QWidget):
 
         self.__save_audio = save_audio
         if save_audio:
+            # We will create the PyAudio output stream once we know the format
+            # of incoming audio.
+            self.__pyaudio = pyaudio.PyAudio()
+            self.__output_stream = None
+
             self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
             self.__wave.setnchannels(1)
             self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
@@ -116,6 +116,8 @@ class DailyQtWidget(QtWidgets.QWidget):
         self.__image_label.setPixmap(self.__black_frame)
         self.__joined = False
         if self.__save_audio:
+            self.__output_stream.close()
+            self.__pyaudio.terminate()
             self.__wave.close()
 
     def join(self, meeting_url, participant_id):
