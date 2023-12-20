@@ -837,6 +837,10 @@ TranscriptionSettings
      - bool (see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
      - bool or list (see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
+   * - "punctuate"
+     - bool (see Deepgram's `Punctuation <https://developers.deepgram.com/docs/punctuation>`_)
+   * - "endpointing"
+     - bool or number (see Deepgram's `Endpointing <https://developers.deepgram.com/docs/endpointing>`_)
    * - "extra"
      - dict (any additional Deepgram settings)
 
