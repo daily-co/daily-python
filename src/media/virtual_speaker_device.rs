@@ -79,7 +79,8 @@ impl PyVirtualSpeakerDevice {
     pub fn read_frames(&self, py: Python<'_>, num_frames: usize) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
             // libwebrtc provides with 16-bit linear PCM
-            let num_bytes = num_frames * self.channels() as usize * 2;
+            let bytes_per_sample = 2;
+            let num_bytes = num_frames * self.channels() as usize * bytes_per_sample;
             let num_words = num_bytes / 2;
 
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);

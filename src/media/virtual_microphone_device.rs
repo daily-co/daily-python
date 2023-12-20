@@ -81,15 +81,16 @@ impl PyVirtualMicrophoneDevice {
     pub fn write_frames(&self, py: Python<'_>, frames: &PyBytes) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.as_ref() {
             let bytes_length = frames.len()?;
+            let bytes_per_sample = 2;
 
             // libwebrtc needs 16-bit linear PCM samples
-            if bytes_length % 2 != 0 {
+            if bytes_length % bytes_per_sample != 0 {
                 return Err(exceptions::PyValueError::new_err(
                     "frames bytestring should contain 16-bit samples",
                 ));
             }
 
-            let num_frames = (bytes_length / 2) / self.channels as usize;
+            let num_frames = (bytes_length / bytes_per_sample) / self.channels as usize;
 
             // TODO(aleix): Should this be i16 aligned?
             let bytes = frames.as_bytes();
