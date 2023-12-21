@@ -230,7 +230,10 @@ impl DailyContext {
         } else {
             // NOTE(aleix): Leaking because get_audio_device() uses CStr.
             let microphone = NativeVirtualMicrophoneDevice::from(device);
-            microphone.name()
+            CString::new(microphone.name())
+                .expect("invalid virtual microphone device name")
+                .as_c_str()
+                .as_ptr()
         }
     }
 }
