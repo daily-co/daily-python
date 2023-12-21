@@ -177,9 +177,7 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "transcription-error" => object
             .get("message")
             .map(|message| vec![DictValue(message.clone())]),
-        "transcription-message" => object
-            .get("msgData")
-            .map(|message| vec![DictValue(message.clone())]),
+        "transcription-message" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "transcription-started" => object
             .get("status")
             .map(|status| vec![DictValue(status.clone())]),

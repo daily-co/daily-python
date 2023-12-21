@@ -803,18 +803,12 @@ TranscriptionMessage
 
    * - Key
      - Value
-   * - "is_final"
-     - bool
-   * - "session_id"
+   * - "participantId"
      - string
    * - "text"
      - string
    * - "timestamp"
-     - ISO8601
-   * - "user_id"
-     - string
-   * - "user_name"
-     - string
+     - string (ISO 8601)
 
 .. _TranscriptionSettings:
 
@@ -836,7 +830,7 @@ TranscriptionSettings
    * - "profanity_filter"
      - bool (see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
-     - bool or list (see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
+     - bool | list (see Deepgram's `Redaction <https://developers.deepgram.com/docs/redaction>`_)
    * - "punctuate"
      - bool (see Deepgram's `Punctuation <https://developers.deepgram.com/docs/punctuation>`_)
    * - "endpointing"
@@ -876,7 +870,7 @@ VideoInputSettings
    * - Key
      - Value
    * - "deviceId"
-     - DEVICE_ID (e.g. "my-video-camera")
+     - string (e.g. "my-video-camera")
    * - "width"
      - number
    * - "height"
