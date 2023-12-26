@@ -8,13 +8,22 @@ description = "Daily Client SDK for Python"
 license = { text = "BSD 2-Clause License" }
 readme = "README.md"
 requires-python = ">=3.7"
+keywords = ["webrtc", "audio", "video", "ai"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Topic :: Communications :: Conferencing"
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Topic :: Communications :: Conferencing",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 
 [project.urls]
-Homepage = "https://daily.co"
+Home = "https://docs.daily.co/guides/products/ai-toolkit"
+Documentation = "https://reference-python.daily.co"
+Source = "https://github.com/daily-co/daily-python"
+Website = "https://daily.co"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
