@@ -389,7 +389,7 @@ version = "0.1.0"
 
 [[package]]
 name = "daily-core"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "async-trait",
  "console_log",
