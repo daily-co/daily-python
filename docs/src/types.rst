@@ -857,6 +857,8 @@ TranscriptionStatus
      - string (see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
    * - "startedBy"
      - string
+   * - "transcriptId"
+     - string
 
 .. _VideoInputSettings:
 
