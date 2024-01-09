@@ -28,13 +28,15 @@ class Daily:
     @staticmethod
     def create_speaker_device(device_name: str,
                               sample_rate: int = 16000,
-                              channels: int = 1) -> VirtualSpeakerDevice:
+                              channels: int = 1,
+                              non_blocking: bool = False) -> VirtualSpeakerDevice:
         ...
 
     @staticmethod
     def create_microphone_device(device_name: str,
                                  sample_rate: int = 16000,
-                                 channels: int = 1) -> VirtualMicrophoneDevice:
+                                 channels: int = 1,
+                                 non_blocking: bool = False) -> VirtualMicrophoneDevice:
         ...
 
     @staticmethod
