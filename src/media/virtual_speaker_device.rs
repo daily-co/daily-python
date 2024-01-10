@@ -180,7 +180,7 @@ pub(crate) unsafe extern "C" fn on_read_frames(
 
             let py_bytes = unsafe { PyBytes::from_ptr(py, frames as *const u8, num_bytes) };
 
-            let args = PyTuple::new(py, &[py_bytes]);
+            let args = PyTuple::new(py, [py_bytes]);
 
             if let Err(error) = completion.call1(py, args) {
                 error.write_unraisable(py, None);
