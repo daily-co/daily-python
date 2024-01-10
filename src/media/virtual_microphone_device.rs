@@ -8,7 +8,10 @@ use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 use daily_core::prelude::daily_core_context_virtual_microphone_device_write_frames;
 
 use pyo3::exceptions;
-use pyo3::{prelude::*, types::PyBytes};
+use pyo3::{
+    prelude::*,
+    types::{PyBytes, PyTuple},
+};
 
 /// This class represents a virtual microphone device. Virtual microphone
 /// devices are used to send audio to the meeting.
@@ -89,12 +92,15 @@ impl PyVirtualMicrophoneDevice {
     }
 
     /// Writes audio frames to a virtual microphone device created with
-    /// :func:`Daily.create_microphone_device`.
+    /// :func:`Daily.create_microphone_device`. For non-blocking devices, the
+    /// completion callback will be called when the audio frames have been
+    /// written.
     ///
-    /// If less than a multiple of 10ms worth of audio frames are provided on a
-    /// blocking microphone, padding will be added up to the next multiple.
+    /// If less than a multiple of 10ms worth of audio frames are provided
+    /// on a blocking microphone, padding will be added up to the next multiple.
     ///
     /// :param bytestring frames: A bytestring with the audio frames to write
+    /// :param func completion: An optional completion callback with one parameter: (int)
     ///
     /// :return: The number of audio frames written
     /// :rtype: int
@@ -153,8 +159,7 @@ impl PyVirtualMicrophoneDevice {
 pub(crate) unsafe extern "C" fn on_write_frames(
     device: *mut libc::c_void,
     request_id: u64,
-    _frames: *const i16,
-    _num_frames: usize,
+    num_frames: usize,
 ) {
     let microphone: &mut PyVirtualMicrophoneDevice =
         unsafe { &mut *(device as *mut PyVirtualMicrophoneDevice) };
@@ -164,8 +169,10 @@ pub(crate) unsafe extern "C" fn on_write_frames(
     Python::with_gil(|py| {
         let completion = microphone.completions.lock().unwrap().remove(&request_id);
 
+        let args = PyTuple::new(py, &[num_frames.into_py(py)]);
+
         if let Some(completion) = completion {
-            if let Err(error) = completion.call0(py) {
+            if let Err(error) = completion.call1(py, args) {
                 error.write_unraisable(py, None);
             }
         }
