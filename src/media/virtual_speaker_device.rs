@@ -16,7 +16,6 @@ use pyo3::types::PyBytes;
 /// asynchronously (i.e. it won't wait).
 ///
 /// The audio format used by virtual speaker devices is 16-bit linear PCM.
-#[derive(Clone)]
 #[pyclass(name = "VirtualSpeakerDevice", module = "daily")]
 pub struct PyVirtualSpeakerDevice {
     device_name: String,

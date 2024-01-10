@@ -1,10 +1,14 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::{collections::HashMap, sync::Mutex};
+
+use crate::GIL_MUTEX_HACK;
+
 use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 
 use daily_core::prelude::daily_core_context_virtual_microphone_device_write_frames;
 
 use pyo3::exceptions;
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+use pyo3::{prelude::*, types::PyBytes};
 
 /// This class represents a virtual microphone device. Virtual microphone
 /// devices are used to send audio to the meeting.
@@ -15,13 +19,14 @@ use pyo3::types::PyBytes;
 /// audio frames. In contrast, a non-blocking microphone will not wait.
 ///
 /// The audio format used by virtual microphone devices is 16-bit linear PCM.
-#[derive(Clone)]
 #[pyclass(name = "VirtualMicrophoneDevice", module = "daily")]
 pub struct PyVirtualMicrophoneDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
     audio_device: Option<NativeVirtualMicrophoneDevice>,
+    request_id: AtomicU64,
+    completions: Mutex<HashMap<u64, PyObject>>,
 }
 
 impl PyVirtualMicrophoneDevice {
@@ -31,11 +36,26 @@ impl PyVirtualMicrophoneDevice {
             sample_rate,
             channels,
             audio_device: None,
+            request_id: AtomicU64::new(0),
+            completions: Mutex::new(HashMap::new()),
         }
     }
 
     pub fn attach_audio_device(&mut self, audio_device: NativeVirtualMicrophoneDevice) {
         self.audio_device = Some(audio_device);
+    }
+
+    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+        let request_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+
+        if let Some(completion) = completion {
+            self.completions
+                .lock()
+                .unwrap()
+                .insert(request_id, completion);
+        }
+
+        request_id
     }
 }
 
@@ -78,8 +98,13 @@ impl PyVirtualMicrophoneDevice {
     ///
     /// :return: The number of audio frames written
     /// :rtype: int
-    pub fn write_frames(&self, py: Python<'_>, frames: &PyBytes) -> PyResult<PyObject> {
-        if let Some(audio_device) = self.audio_device.as_ref() {
+    #[pyo3(signature = (frames, completion = None))]
+    pub fn write_frames(
+        &mut self,
+        frames: &PyBytes,
+        completion: Option<PyObject>,
+    ) -> PyResult<PyObject> {
+        if let Some(audio_device) = self.audio_device.clone() {
             let bytes_length = frames.len()?;
             let bytes_per_sample = 2;
 
@@ -95,25 +120,49 @@ impl PyVirtualMicrophoneDevice {
             // TODO(aleix): Should this be i16 aligned?
             let bytes = frames.as_bytes();
 
-            let frames_written = py.allow_threads(move || unsafe {
-                daily_core_context_virtual_microphone_device_write_frames(
-                    audio_device.as_ptr() as *mut _,
-                    bytes.as_ptr() as *const _,
-                    num_frames,
-                )
-            });
+            let request_id = self.maybe_register_completion(completion);
 
-            if frames_written >= 0 {
-                Ok(frames_written.into_py(py))
-            } else {
-                Err(exceptions::PyIOError::new_err(
-                    "error writing audio frames to device",
-                ))
-            }
+            Python::with_gil(|py| {
+                let frames_written = py.allow_threads(move || unsafe {
+                    daily_core_context_virtual_microphone_device_write_frames(
+                        audio_device.as_ptr() as *mut _,
+                        bytes.as_ptr() as *const _,
+                        num_frames,
+                        request_id,
+                        on_write_frames,
+                        self as *const PyVirtualMicrophoneDevice as *mut libc::c_void,
+                    )
+                });
+
+                if frames_written >= 0 {
+                    Ok(frames_written.into_py(py))
+                } else {
+                    Err(exceptions::PyIOError::new_err(
+                        "error writing audio frames to device",
+                    ))
+                }
+            })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
                 "no microphone device has been attached",
             ))
         }
     }
+}
+
+pub(crate) unsafe extern "C" fn on_write_frames(device: *mut libc::c_void, request_id: u64) {
+    let microphone: &mut PyVirtualMicrophoneDevice =
+        unsafe { &mut *(device as *mut PyVirtualMicrophoneDevice) };
+
+    let _lock = GIL_MUTEX_HACK.lock().unwrap();
+
+    Python::with_gil(|py| {
+        let completion = microphone.completions.lock().unwrap().remove(&request_id);
+
+        if let Some(completion) = completion {
+            if let Err(error) = completion.call0(py) {
+                error.write_unraisable(py, None);
+            }
+        }
+    })
 }
