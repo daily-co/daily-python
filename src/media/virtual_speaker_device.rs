@@ -28,17 +28,19 @@ pub struct PyVirtualSpeakerDevice {
     device_name: String,
     sample_rate: u32,
     channels: u8,
+    non_blocking: bool,
     audio_device: Option<NativeVirtualSpeakerDevice>,
     request_id: AtomicU64,
     completions: Mutex<HashMap<u64, PyObject>>,
 }
 
 impl PyVirtualSpeakerDevice {
-    pub fn new(device_name: &str, sample_rate: u32, channels: u8) -> Self {
+    pub fn new(device_name: &str, sample_rate: u32, channels: u8, non_blocking: bool) -> Self {
         Self {
             device_name: device_name.to_string(),
             sample_rate,
             channels,
+            non_blocking,
             audio_device: None,
             request_id: AtomicU64::new(0),
             completions: Mutex::new(HashMap::new()),
@@ -93,11 +95,13 @@ impl PyVirtualSpeakerDevice {
     }
 
     /// Reads audio frames from a virtual speaker device created with
-    /// :func:`Daily.create_speaker_device`.
+    /// :func:`Daily.create_speaker_device`. For non-blocking devices, the
+    /// completion callback will be called when the audio frames have been read.
     ///
     /// :param int num_frames: The number of audio frames to read
+    /// :param func completion: An optional completion callback with one parameter: (bytestring)
     ///
-    /// :return: The read audio frames as a bytestring
+    /// :return: The read audio frames as a bytestring, or an empty bytestring if no frames were read
     /// :rtype: bytestring.
     #[pyo3(signature = (num_frames, completion = None))]
     pub fn read_frames(
@@ -107,9 +111,16 @@ impl PyVirtualSpeakerDevice {
         completion: Option<PyObject>,
     ) -> PyResult<PyObject> {
         if let Some(audio_device) = self.audio_device.clone() {
-            // libwebrtc provides with 16-bit linear PCM
-            let bytes_per_sample = 2;
-            let num_bytes = num_frames * self.channels() as usize * bytes_per_sample;
+            // In the non-blocking case, we don't want to allocate memory here
+            // since we will exit the function right away and the memory won't
+            // be valid. The needed memory will be allocated internally.
+            let num_bytes = if self.non_blocking {
+                0
+            } else {
+                // libwebrtc provides with 16-bit linear PCM
+                let bytes_per_sample = 2;
+                num_frames * self.channels() as usize * bytes_per_sample
+            };
             let num_words = num_bytes / 2;
 
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
