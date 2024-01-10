@@ -150,7 +150,12 @@ impl PyVirtualMicrophoneDevice {
     }
 }
 
-pub(crate) unsafe extern "C" fn on_write_frames(device: *mut libc::c_void, request_id: u64) {
+pub(crate) unsafe extern "C" fn on_write_frames(
+    device: *mut libc::c_void,
+    request_id: u64,
+    _frames: *const i16,
+    _num_frames: usize,
+) {
     let microphone: &mut PyVirtualMicrophoneDevice =
         unsafe { &mut *(device as *mut PyVirtualMicrophoneDevice) };
 

@@ -1,10 +1,17 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::{collections::HashMap, sync::Mutex};
+
 use webrtc_daily::sys::virtual_speaker_device::NativeVirtualSpeakerDevice;
+
+use crate::GIL_MUTEX_HACK;
 
 use daily_core::prelude::daily_core_context_virtual_speaker_device_read_frames;
 
 use pyo3::exceptions;
-use pyo3::prelude::*;
-use pyo3::types::PyBytes;
+use pyo3::{
+    prelude::*,
+    types::{PyBytes, PyTuple},
+};
 
 /// This class represents a virtual speaker device. Virtual speaker devices are
 /// used to receive audio from the meeting.
@@ -22,6 +29,8 @@ pub struct PyVirtualSpeakerDevice {
     sample_rate: u32,
     channels: u8,
     audio_device: Option<NativeVirtualSpeakerDevice>,
+    request_id: AtomicU64,
+    completions: Mutex<HashMap<u64, PyObject>>,
 }
 
 impl PyVirtualSpeakerDevice {
@@ -31,11 +40,26 @@ impl PyVirtualSpeakerDevice {
             sample_rate,
             channels,
             audio_device: None,
+            request_id: AtomicU64::new(0),
+            completions: Mutex::new(HashMap::new()),
         }
     }
 
     pub fn attach_audio_device(&mut self, audio_device: NativeVirtualSpeakerDevice) {
         self.audio_device = Some(audio_device);
+    }
+
+    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+        let request_id = self.request_id.fetch_add(1, Ordering::SeqCst);
+
+        if let Some(completion) = completion {
+            self.completions
+                .lock()
+                .unwrap()
+                .insert(request_id, completion);
+        }
+
+        request_id
     }
 }
 
@@ -75,8 +99,14 @@ impl PyVirtualSpeakerDevice {
     ///
     /// :return: The read audio frames as a bytestring
     /// :rtype: bytestring.
-    pub fn read_frames(&self, py: Python<'_>, num_frames: usize) -> PyResult<PyObject> {
-        if let Some(audio_device) = self.audio_device.as_ref() {
+    #[pyo3(signature = (num_frames, completion = None))]
+    pub fn read_frames(
+        &mut self,
+        py: Python<'_>,
+        num_frames: usize,
+        completion: Option<PyObject>,
+    ) -> PyResult<PyObject> {
+        if let Some(audio_device) = self.audio_device.clone() {
             // libwebrtc provides with 16-bit linear PCM
             let bytes_per_sample = 2;
             let num_bytes = num_frames * self.channels() as usize * bytes_per_sample;
@@ -85,11 +115,16 @@ impl PyVirtualSpeakerDevice {
             let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
             let buffer_bytes = buffer.as_mut_slice();
 
+            let request_id = self.maybe_register_completion(completion);
+
             let frames_read = py.allow_threads(move || unsafe {
                 daily_core_context_virtual_speaker_device_read_frames(
                     audio_device.as_ptr() as *mut _,
                     buffer_bytes.as_mut_ptr(),
                     num_frames,
+                    request_id,
+                    on_read_frames,
+                    self as *const PyVirtualSpeakerDevice as *mut libc::c_void,
                 )
             });
 
@@ -112,4 +147,33 @@ impl PyVirtualSpeakerDevice {
             ))
         }
     }
+}
+
+pub(crate) unsafe extern "C" fn on_read_frames(
+    device: *mut libc::c_void,
+    request_id: u64,
+    frames: *mut i16,
+    num_frames: usize,
+) {
+    let speaker: &mut PyVirtualSpeakerDevice =
+        unsafe { &mut *(device as *mut PyVirtualSpeakerDevice) };
+
+    let _lock = GIL_MUTEX_HACK.lock().unwrap();
+
+    Python::with_gil(|py| {
+        let completion = speaker.completions.lock().unwrap().remove(&request_id);
+
+        if let Some(completion) = completion {
+            let bytes_per_sample = 2;
+            let num_bytes = num_frames * speaker.channels() as usize * bytes_per_sample;
+
+            let py_bytes = unsafe { PyBytes::from_ptr(py, frames as *const u8, num_bytes) };
+
+            let args = PyTuple::new(py, &[py_bytes]);
+
+            if let Err(error) = completion.call1(py, args) {
+                error.write_unraisable(py, None);
+            }
+        }
+    })
 }
