@@ -24,17 +24,22 @@ class PyAudioApp:
         self.__sample_rate = sample_rate
         self.__num_channels = num_channels
 
+        # We configure the microphone as non-blocking so we don't block PyAudio
+        # when we write the frames.
         self.__virtual_mic = Daily.create_microphone_device(
             "my-mic",
             sample_rate = sample_rate,
             channels = num_channels,
             non_blocking = True
         )
+
+        # In contrast, we configure the speaker as blocking. In this case,
+        # PyAudio's output stream callback will wait until we get the data from
+        # Daily's speaker.
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
             sample_rate = sample_rate,
             channels = num_channels,
-            non_blocking = True
         )
         Daily.select_speaker_device("my-speaker")
 
