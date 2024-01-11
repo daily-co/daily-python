@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `punctuate` and `endpointing` fields to `TranscriptionSettings`.
 
+- Added dialout support with `CallClient.start_dialout()` and
+  `CallClient.stop_dialout()`.
+
 ### Changed
 
 - Renamed `session_id` field to `participantId` in `TranscriptionMessage`.
