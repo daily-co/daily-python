@@ -660,6 +660,50 @@ impl PyCallClient {
         }
     }
 
+    /// Starts a dialout service. This can be done by meeting owners when
+    /// dialout is enabled in the Daily domain.
+    ///
+    /// :param dict settings: See :ref:`DialoutSettings`
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (settings = None, completion = None))]
+    pub fn start_dialout(
+        &mut self,
+        py: Python<'_>,
+        settings: Option<PyObject>,
+        completion: Option<PyObject>,
+    ) {
+        let settings_cstr = settings
+            .map(|settings| {
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                CString::new(settings_string).expect("invalid dialout settings string")
+            })
+            .or(None);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_start_dialout(
+                self.call_client.as_mut(),
+                request_id,
+                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+    }
+
+    /// Stops a currently running dialout service. This can be done by meeting
+    /// owners when transcription is enabled in the Daily domain.
+    ///
+    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    #[pyo3(signature = (completion = None))]
+    pub fn stop_dialout(&mut self, completion: Option<PyObject>) {
+        let request_id = self.maybe_register_completion(completion);
+
+        unsafe {
+            daily_core_call_client_stop_dialout(self.call_client.as_mut(), request_id);
+        }
+    }
+
     /// Sends a message to other participants, or another specific participant,
     /// during the call.
     ///

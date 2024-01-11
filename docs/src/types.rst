@@ -214,6 +214,23 @@ CustomVideoEncoding
      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
 
 
+.. _DialoutSettings:
+
+DialoutSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sipUri"
+     - string
+   * - "phoneNumber"
+     - string
+
+
 .. _InputSettings:
 
 InputSettings
