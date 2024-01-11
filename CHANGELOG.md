@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added dialout support with `CallClient.start_dialout()` and
   `CallClient.stop_dialout()`.
 
+- Added completion callbacks to `VirtualMicrophone.write_frames()` and
+  `VirtualSpeaker.read_frames()`. This change makes virtual devices
+  completely asynchronous if they are created with `non_blocking` set to
+  `True`.
+
 ### Changed
 
 - Renamed `session_id` field to `participantId` in `TranscriptionMessage`.
