@@ -75,7 +75,7 @@ class ReceiveWavApp:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-o", "--output", required = False, help = "WAV output file")
+    parser.add_argument("-o", "--output", required = True, help = "WAV output file")
     args = parser.parse_args()
 
     Daily.init()
