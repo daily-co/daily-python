@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `CallClient.send_app_message(None)` now properly triggers a `ValueError`
+  exception.
+
 - Fixed an issue that would cause audio crackling and popping when using
   non-blocking devices.
 

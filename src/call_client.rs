@@ -672,7 +672,13 @@ impl PyCallClient {
         message: PyObject,
         participant: Option<&str>,
         completion: Option<PyObject>,
-    ) {
+    ) -> PyResult<()> {
+        if message.is_none(py) {
+            return Err(exceptions::PyValueError::new_err(format!(
+                "invalid app message '{message}'"
+            )));
+        }
+
         let message_value: DictValue = message.extract(py).unwrap();
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
@@ -693,6 +699,8 @@ impl PyCallClient {
                     .map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
+
+        Ok(())
     }
 
     /// Sends a chat message to Daily's Prebuilt main room.
