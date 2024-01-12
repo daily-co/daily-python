@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Room deletion messages from the server are now properly handled.
+
 - `CallClient.send_app_message(None)` now properly triggers a `ValueError`
   exception.
 
