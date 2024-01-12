@@ -16,6 +16,7 @@ use std::{
 
 use pyo3::{exceptions, prelude::*};
 use serde_json::Value;
+use uuid::Uuid;
 
 use webrtc_daily::sys::color_format::ColorFormat;
 
@@ -677,6 +678,12 @@ impl PyCallClient {
             return Err(exceptions::PyValueError::new_err(format!(
                 "invalid app message '{message}'"
             )));
+        }
+
+        if let Some(participant) = participant {
+            Uuid::from_str(participant).map_err(|_| {
+                exceptions::PyValueError::new_err(format!("invalid participant ID '{participant}'"))
+            })?;
         }
 
         let message_value: DictValue = message.extract(py).unwrap();

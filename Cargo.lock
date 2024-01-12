@@ -386,6 +386,9 @@ dependencies = [
 [[package]]
 name = "daily-common-utils"
 version = "0.1.0"
+dependencies = [
+ "tracing",
+]
 
 [[package]]
 name = "daily-core"
@@ -474,6 +477,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
+ "uuid",
  "webrtc-daily",
 ]
 

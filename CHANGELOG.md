@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CallClient.send_app_message(None)` now properly triggers a `ValueError`
   exception.
 
+- If an invalid participant ID is passed to `CallClient.send_app_message()` it
+  will now trigger a `ValueError` exception.
+
 - Fixed an issue that would cause audio crackling and popping when using
   non-blocking devices.
 
