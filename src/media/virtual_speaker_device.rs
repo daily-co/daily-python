@@ -106,31 +106,37 @@ impl PyVirtualSpeakerDevice {
     #[pyo3(signature = (num_frames, completion = None))]
     pub fn read_frames(
         &mut self,
-        py: Python<'_>,
         num_frames: usize,
         completion: Option<PyObject>,
     ) -> PyResult<PyObject> {
-        if let Some(audio_device) = self.audio_device.clone() {
-            // In the non-blocking case, we don't want to allocate memory here
-            // since we will exit the function right away and the memory won't
-            // be valid. The needed memory will be allocated internally.
-            let num_bytes = if self.non_blocking {
-                0
-            } else {
-                // libwebrtc provides with 16-bit linear PCM
-                let bytes_per_sample = 2;
-                num_frames * self.channels() as usize * bytes_per_sample
-            };
-            let num_words = num_bytes / 2;
+        if self.audio_device.is_none() {
+            return Err(exceptions::PyRuntimeError::new_err(
+                "no speaker device has been attached",
+            ));
+        }
 
-            let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
+        // In the non-blocking case, we don't want to allocate memory here
+        // since we will exit the function right away and the memory won't
+        // be valid. The needed memory will be allocated internally.
+        let num_bytes = if self.non_blocking {
+            0
+        } else {
+            // libwebrtc provides with 16-bit linear PCM
+            let bytes_per_sample = 2;
+            num_frames * self.channels() as usize * bytes_per_sample
+        };
+        let num_words = num_bytes / 2;
+
+        let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
+
+        let request_id = self.maybe_register_completion(completion);
+
+        Python::with_gil(move |py| {
             let buffer_bytes = buffer.as_mut_slice();
-
-            let request_id = self.maybe_register_completion(completion);
 
             let frames_read = py.allow_threads(move || unsafe {
                 daily_core_context_virtual_speaker_device_read_frames(
-                    audio_device.as_ptr() as *mut _,
+                    self.audio_device.as_ref().unwrap().as_ptr() as *mut _,
                     buffer_bytes.as_mut_ptr(),
                     num_frames,
                     request_id,
@@ -152,11 +158,7 @@ impl PyVirtualSpeakerDevice {
                     "error reading audio frames from the device",
                 ))
             }
-        } else {
-            Err(exceptions::PyRuntimeError::new_err(
-                "no speaker device has been attached",
-            ))
-        }
+        })
     }
 }
 

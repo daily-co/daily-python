@@ -110,49 +110,49 @@ impl PyVirtualMicrophoneDevice {
         frames: &PyBytes,
         completion: Option<PyObject>,
     ) -> PyResult<PyObject> {
-        if let Some(audio_device) = self.audio_device.clone() {
-            let bytes_length = frames.len()?;
-            let bytes_per_sample = 2;
-
-            // libwebrtc needs 16-bit linear PCM samples
-            if bytes_length % bytes_per_sample != 0 {
-                return Err(exceptions::PyValueError::new_err(
-                    "frames bytestring should contain 16-bit samples",
-                ));
-            }
-
-            let num_frames = (bytes_length / bytes_per_sample) / self.channels as usize;
-
-            // TODO(aleix): Should this be i16 aligned?
-            let bytes = frames.as_bytes();
-
-            let request_id = self.maybe_register_completion(completion);
-
-            Python::with_gil(|py| {
-                let frames_written = py.allow_threads(move || unsafe {
-                    daily_core_context_virtual_microphone_device_write_frames(
-                        audio_device.as_ptr() as *mut _,
-                        bytes.as_ptr() as *const _,
-                        num_frames,
-                        request_id,
-                        on_write_frames,
-                        self as *const PyVirtualMicrophoneDevice as *mut libc::c_void,
-                    )
-                });
-
-                if frames_written >= 0 {
-                    Ok(frames_written.into_py(py))
-                } else {
-                    Err(exceptions::PyIOError::new_err(
-                        "error writing audio frames to device",
-                    ))
-                }
-            })
-        } else {
-            Err(exceptions::PyRuntimeError::new_err(
+        if self.audio_device.is_none() {
+            return Err(exceptions::PyRuntimeError::new_err(
                 "no microphone device has been attached",
-            ))
+            ));
         }
+
+        let bytes_length = frames.len()?;
+        let bytes_per_sample = 2;
+
+        // libwebrtc needs 16-bit linear PCM samples
+        if bytes_length % bytes_per_sample != 0 {
+            return Err(exceptions::PyValueError::new_err(
+                "frames bytestring should contain 16-bit samples",
+            ));
+        }
+
+        let num_frames = (bytes_length / bytes_per_sample) / self.channels as usize;
+
+        // TODO(aleix): Should this be i16 aligned?
+        let bytes = frames.as_bytes();
+
+        let request_id = self.maybe_register_completion(completion);
+
+        Python::with_gil(|py| {
+            let frames_written = py.allow_threads(move || unsafe {
+                daily_core_context_virtual_microphone_device_write_frames(
+                    self.audio_device.as_ref().unwrap().as_ptr() as *mut _,
+                    bytes.as_ptr() as *const _,
+                    num_frames,
+                    request_id,
+                    on_write_frames,
+                    self as *const PyVirtualMicrophoneDevice as *mut libc::c_void,
+                )
+            });
+
+            if frames_written >= 0 {
+                Ok(frames_written.into_py(py))
+            } else {
+                Err(exceptions::PyIOError::new_err(
+                    "error writing audio frames to device",
+                ))
+            }
+        })
     }
 }
 
