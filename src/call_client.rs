@@ -701,6 +701,7 @@ impl PyCallClient {
     #[pyo3(signature = (message, participant = None , completion = None))]
     pub fn send_app_message(
         &mut self,
+        py: Python<'_>,
         message: PyObject,
         participant: Option<&str>,
         completion: Option<PyObject>,
@@ -717,7 +718,7 @@ impl PyCallClient {
             })?;
         }
 
-        let message_value: DictValue = Python::with_gil(|py| message.extract(py).unwrap());
+        let message_value: DictValue = message.extract(py).unwrap();
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
