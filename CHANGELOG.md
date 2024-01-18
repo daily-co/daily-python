@@ -5,7 +5,7 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2024-01-18
 
 ### Added
 
@@ -22,12 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Renamed `session_id` field to `participantId` in `TranscriptionMessage`.
-
-### Deprecated
-
-<!-- for soon-to-be removed functionality -->
-
-- n/a
 
 ### Removed
 
@@ -57,18 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Emit `transcription-started` event if transcription is already started when
   joining the room.
-
-### Performance
-
-<!-- for performance-relevant changes -->
-
-- n/a
-
-### Security
-
-<!-- for security-relevant changes -->
-
-- n/a
 
 ### Other
 
