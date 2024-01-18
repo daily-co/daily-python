@@ -805,7 +805,7 @@ StreamingVideoSettings
    * - "fps"
      - number
    * - "backgroundColor"
-     - string (#rrggbb or #aarrggbb)
+     - string (#rrggbb | #aarrggbb)
    * - "bitrate"
      - number
 
@@ -851,7 +851,7 @@ TranscriptionSettings
    * - "punctuate"
      - bool (see Deepgram's `Punctuation <https://developers.deepgram.com/docs/punctuation>`_)
    * - "endpointing"
-     - bool or number (see Deepgram's `Endpointing <https://developers.deepgram.com/docs/endpointing>`_)
+     - bool | number (see Deepgram's `Endpointing <https://developers.deepgram.com/docs/endpointing>`_)
    * - "extra"
      - dict (any additional Deepgram settings)
 

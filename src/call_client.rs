@@ -648,7 +648,7 @@ impl PyCallClient {
         }
     }
 
-    /// Starts a dialout service. This can be done by meeting owners when
+    /// Starts a dial-out service. This can be done by meeting owners when
     /// dialout is enabled in the Daily domain.
     ///
     /// :param dict settings: See :ref:`DialoutSettings`
@@ -679,7 +679,7 @@ impl PyCallClient {
         }
     }
 
-    /// Stops a currently running dialout service. This can be done by meeting
+    /// Stops a currently running dial-out service. This can be done by meeting
     /// owners when transcription is enabled in the Daily domain.
     ///
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
