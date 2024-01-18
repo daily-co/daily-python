@@ -145,6 +145,14 @@ class CallClient:
     def stop_transcription(self, completion: Optional[Callable[[None, Optional[str]], None]] = None) -> None:
         ...
 
+    def start_dialout(self,
+                      settings: Optional[Mapping[str, Any]] = None,
+                      completion: Optional[Callable[[None, Optional[str]], None]] = None) -> None:
+        ...
+
+    def stop_dialout(self, completion: Optional[Callable[[None, Optional[str]], None]] = None) -> None:
+        ...
+
     def send_app_message(self,
                          message: Any,
                          participant: Optional[str] = None,
