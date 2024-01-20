@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Virtual microphones now always send audio (silence) if the user doesn't
+  provide audio frames.
+
 - Fix deadlock when registering completion callbacks inside callbacks.
 
 - Enable Opus FEC to improve audio with network packet loss.

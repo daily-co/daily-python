@@ -441,6 +441,7 @@ dependencies = [
 name = "daily-core-types"
 version = "0.1.0"
 dependencies = [
+ "daily-common-utils",
  "daily-settings-helpers",
  "futures",
  "indexmap",
@@ -1948,6 +1949,8 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "daily-common-utils",
+ "daily-type-name",
+ "daily-type-name-macro",
  "deadlock_checker",
  "futures",
  "js-sys",
