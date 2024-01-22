@@ -7,6 +7,7 @@
 #
 
 import argparse
+import threading
 import time
 
 from daily import *
@@ -21,8 +22,6 @@ class PyAudioApp:
 
     def __init__(self, sample_rate, num_channels):
         self.__app_quit = False
-        self.__sample_rate = sample_rate
-        self.__num_channels = num_channels
 
         # We configure the microphone as non-blocking so we don't block PyAudio
         # when we write the frames.
@@ -39,7 +38,7 @@ class PyAudioApp:
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
             sample_rate = sample_rate,
-            channels = num_channels,
+            channels = num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -55,8 +54,7 @@ class PyAudioApp:
             format = pyaudio.paInt16,
             channels = num_channels,
             rate = sample_rate,
-            output=True,
-            stream_callback=self.on_output_stream
+            output=True
         )
 
         self.__client = CallClient()
@@ -89,6 +87,9 @@ class PyAudioApp:
             }
         })
 
+        self.__thread = threading.Thread(target = self.send_audio_stream)
+        self.__thread.start()
+
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
@@ -102,6 +103,7 @@ class PyAudioApp:
     def leave(self):
         self.__app_quit = True
         self.__client.leave()
+        self.__thread.join()
         self.__input_stream.close()
         self.__output_stream.close()
         self.__pyaudio.terminate()
@@ -116,18 +118,10 @@ class PyAudioApp:
 
         return None, pyaudio.paContinue
 
-    def on_output_stream(self, ignore, frame_count, time_info, status):
-        if self.__app_quit:
-            return None, pyaudio.paAbort
-
-        # If the speaker hasn't started yet `read_frames` will return 0. In that
-        # case, we just create silence and pass it PyAudio and tell it to
-        # continue.
-        buffer = self.__virtual_speaker.read_frames(frame_count)
-        if len(buffer) == 0:
-            buffer = b'\x00' * frame_count * NUM_CHANNELS * BYTES_PER_SAMPLE
-
-        return buffer, pyaudio.paContinue
+    def send_audio_stream(self):
+        while not self.__app_quit:
+            buffer = self.__virtual_speaker.read_frames(160)
+            self.__output_stream.write(buffer)
 
 def main():
     parser = argparse.ArgumentParser()
