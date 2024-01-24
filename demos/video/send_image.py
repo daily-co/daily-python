@@ -24,16 +24,6 @@ class SendImageApp:
 
         self.__client = CallClient()
 
-        self.__client.update_inputs({
-            "camera": {
-                "isEnabled": True,
-                "settings": {
-                    "deviceId": "my-camera"
-                }
-            },
-            "microphone": False
-        }, completion = self.on_inputs_updated)
-
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "unsubscribed",
@@ -43,44 +33,35 @@ class SendImageApp:
 
         self.__app_quit = False
         self.__app_error = None
-        self.__app_joined = False
-        self.__app_inputs_updated = False
 
         self.__start_event = threading.Event()
         self.__thread = threading.Thread(target = self.send_image);
         self.__thread.start()
 
-    def on_inputs_updated(self, inputs, error):
-        if error:
-            print(f"Unable to updated inputs: {error}")
-            self.__app_error = error
-        else:
-            self.__app_inputs_updated = True
-        self.maybe_start()
-
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
             self.__app_error = error
-        else:
-            self.__app_joined = True
-        self.maybe_start()
+        self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, completion=self.on_joined)
+        self.__client.join(meeting_url, client_settings = {
+            "inputs": {
+                "camera": {
+                    "isEnabled": True,
+                    "settings": {
+                        "deviceId": "my-camera"
+                    }
+                },
+                "microphone": False
+            }
+        }, completion=self.on_joined)
         self.__thread.join()
 
     def leave(self):
         self.__app_quit = True
         self.__thread.join()
         self.__client.leave()
-
-    def maybe_start(self):
-        if self.__app_error:
-            self.__start_event.set()
-
-        if self.__app_inputs_updated and self.__app_joined:
-            self.__start_event.set()
 
     def send_image(self):
         self.__start_event.wait()

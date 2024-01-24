@@ -37,31 +37,12 @@ class GstApp:
 
         self.__client = CallClient()
 
-        self.__client.update_inputs({
-            "camera": {
-                "isEnabled": True,
-                "settings": {
-                    "deviceId": "my-camera"
-                }
-            },
-            "microphone": {
-                "isEnabled": True,
-                "settings": {
-                    "deviceId": "my-mic"
-                }
-            }
-        }, completion = self.on_inputs_updated)
-
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "unsubscribed",
                 "microphone": "unsubscribed"
             }
         })
-
-        self.__app_error = None
-        self.__app_joined = False
-        self.__app_inputs_updated = False
 
         self.__player = Gst.Pipeline.new("player")
 
@@ -81,21 +62,11 @@ class GstApp:
 
         self.__loop = GLib.MainLoop()
 
-    def on_inputs_updated(self, inputs, error):
-        if error:
-            print(f"Unable to updated inputs: {error}")
-            self.__app_error = error
-        else:
-            self.__app_inputs_updated = True
-        self.maybe_start()
-
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
-            self.__app_error = error
         else:
-            self.__app_joined = True
-        self.maybe_start()
+            self.__player.set_state(Gst.State.PLAYING)
 
     def on_leave(self, ignore, error):
         if error:
@@ -104,18 +75,40 @@ class GstApp:
         self.__loop.quit()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, completion=self.on_joined)
+        self.__client.join(meeting_url, client_settings = {
+            "inputs": {
+                "camera": {
+                    "isEnabled": True,
+                    "settings": {
+                        "deviceId": "my-camera"
+                    }
+                },
+                "microphone": {
+                    "isEnabled": True,
+                    "settings": {
+                        "deviceId": "my-mic"
+                    }
+                }
+            },
+            "publishing": {
+                "camera": {
+                    "isPublishing": True,
+                    "sendSettings": {
+                        "encodings": {
+                            "low": {
+                                "maxBitrate": 1000000,
+                                "maxFramerate": 30.0,
+                                "scaleResolutionDownBy": 1.0
+                            }
+                        }
+                    }
+                }
+            }
+        }, completion=self.on_joined)
         self.__loop.run()
 
     def leave(self):
         self.__client.leave(completion=self.on_leave)
-
-    def maybe_start(self):
-        if self.__app_error:
-            self.leave()
-
-        if self.__app_inputs_updated and self.__app_joined:
-            self.__player.set_state(Gst.State.PLAYING)
 
     def on_message(self, bus, message):
         t = message.type

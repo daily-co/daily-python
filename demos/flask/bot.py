@@ -24,53 +24,36 @@ class Bot:
         self.__speech_client = texttospeech.TextToSpeechClient()
 
         self.__call_client = CallClient()
-        self.__call_client.update_inputs({
-            "microphone": {
-                "isEnabled": True,
-                "settings": {
-                    "deviceId": "my-mic"
-                }
-            }
-        }, completion = self.on_inputs_updated)
 
         self.__bot_error = None
-        self.__bot_joined = False
-        self.__bot_inputs_updated = False
 
         self.__start_event = threading.Event()
         self.__thread = threading.Thread(target = self.send_audio,
                                          args = [microphone]);
         self.__thread.start()
 
-    def on_inputs_updated(self, inputs, error):
-        if error:
-            print(f"Unable to updated inputs: {error}")
-            self.__bot_error = error
-        else:
-            self.__bot_inputs_updated = True
-        self.maybe_start()
-
     def on_joined(self, data, error):
         if error:
             print(f"Unable to join meeting: {error}")
             self.__bot_error = error
-        else:
-            self.__bot_joined = True
-        self.maybe_start()
+        self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__call_client.join(meeting_url, completion = self.on_joined);
+        self.__call_client.join(meeting_url, client_settings = {
+            "inputs": {
+                "camera": False,
+                "microphone": {
+                    "isEnabled": True,
+                    "settings": {
+                        "deviceId": "my-mic"
+                    }
+                }
+            }
+        }, completion = self.on_joined);
         self.__thread.join()
 
     def leave(self):
         self.__call_client.leave();
-
-    def maybe_start(self):
-        if self.__bot_error:
-            self.__start_event.set()
-
-        if self.__bot_inputs_updated and self.__bot_joined:
-            self.__start_event.set()
 
     def send_audio(self, microphone):
         self.__start_event.wait()

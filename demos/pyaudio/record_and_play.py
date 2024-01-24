@@ -22,6 +22,7 @@ class PyAudioApp:
 
     def __init__(self, sample_rate, num_channels):
         self.__app_quit = False
+        self.__num_channels = num_channels
 
         # We configure the microphone as non-blocking so we don't block PyAudio
         # when we write the frames.
@@ -58,28 +59,7 @@ class PyAudioApp:
         )
 
         self.__client = CallClient()
-        self.__client.update_inputs({
-            "camera": False,
-            "microphone": {
-                "isEnabled": True,
-                "settings": {
-                    "deviceId": "my-mic",
-                    "customConstraints": {
-                        "autoGainControl": { "exact": True },
-                        "noiseSuppression": { "exact": True },
-                        "echoCancellation": { "exact": True },
-                    }
-                }
-            }
-        })
-        self.__client.update_publishing({
-            "microphone": {
-                "isPublishing": True,
-                "sendSettings": {
-                    "channelConfig": "stereo" if num_channels == 2 else "mono",
-                }
-            }
-        })
+
         self.__client.update_subscription_profiles({
             "base": {
                 "camera": "unsubscribed",
@@ -96,14 +76,35 @@ class PyAudioApp:
             self.__app_quit = True
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, completion=self.on_joined)
-        while not self.__app_quit:
-            time.sleep(0.1)
+        self.__client.join(meeting_url, client_settings = {
+            "inputs": {
+                "camera": False,
+                "microphone": {
+                    "isEnabled": True,
+                    "settings": {
+                        "deviceId": "my-mic",
+                        "customConstraints": {
+                            "autoGainControl": { "exact": True },
+                            "noiseSuppression": { "exact": True },
+                            "echoCancellation": { "exact": True },
+                        }
+                    }
+                }
+            },
+            "publishing": {
+                "microphone": {
+                    "isPublishing": True,
+                    "sendSettings": {
+                        "channelConfig": "stereo" if self.__num_channels == 2 else "mono",
+                    }
+                }
+            }
+        }, completion=self.on_joined)
+        self.__thread.join()
 
     def leave(self):
         self.__app_quit = True
         self.__client.leave()
-        self.__thread.join()
         self.__input_stream.close()
         self.__output_stream.close()
         self.__pyaudio.terminate()

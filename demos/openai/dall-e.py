@@ -43,20 +43,20 @@ Daily.select_speaker_device("my-speaker")
 
 client = CallClient()
 
-client.update_inputs({
-  "camera": {
-    "isEnabled": True,
-    "settings": {
-      "deviceId": "my-camera"
-    }
-  },
-  "microphone": False
-})
-
 print()
 print(f"Joining {args.meeting} ...")
 
-client.join(args.meeting)
+client.join(args.meeting, client_settings = {
+  "inputs": {
+    "camera": {
+      "isEnabled": True,
+      "settings": {
+        "deviceId": "my-camera"
+      }
+    },
+    "microphone": False
+  }
+})
 
 # Make sure we are joined. It would be better to use join() completion callback.
 time.sleep(3)

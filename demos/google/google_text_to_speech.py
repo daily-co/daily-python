@@ -31,20 +31,21 @@ microphone = Daily.create_microphone_device("my-mic", sample_rate = 16000, chann
 
 client = CallClient()
 
-# Here we tell our call client that we will be using our new virtual microphone.
-client.update_inputs({
-  "microphone": {
-    "isEnabled": True,
-    "settings": {
-      "deviceId": "my-mic"
-    }
-  }
-})
-
 print()
 print(f"Joining {args.meeting} ...")
 
-client.join(args.meeting)
+# Join and tell our call client that we will be using our new virtual
+# microphone.
+client.join(args.meeting, client_settings = {
+  "inputs": {
+    "microphone": {
+      "isEnabled": True,
+      "settings": {
+        "deviceId": "my-mic"
+      }
+    }
+  }
+})
 
 # Make sure we are joined. It would be better to use join() completion callback.
 time.sleep(3)
