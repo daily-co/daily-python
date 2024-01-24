@@ -16,7 +16,7 @@
 from daily import *
 from google.cloud import speech
 from PIL import Image
-import openai
+from openai import OpenAI
 
 import argparse
 import io
@@ -30,7 +30,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
 args = parser.parse_args()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 Daily.init()
 
@@ -88,6 +87,8 @@ out_wave.close()
 # We go to the beginning of the WAV buffer stream.
 content.seek(0)
 
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 # We create and audio object with the contents of the in-memory WAV file.
 audio = speech.RecognitionAudio(content = content.read())
 
@@ -111,14 +112,14 @@ if len(response.results) > 0 and len(response.results[0].alternatives) > 0:
   print()
   print(f"Generating image with OpenAI for '{prompt}' ...")
 
-  response = openai.Image.create(
+  response = openai_client.images.generate(
     prompt=prompt,
     n=1,
     size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}",
-    response_format="b64_json",
+    response_format="b64_json"
   )
 
-  dalle_png = b64decode(response["data"][0]["b64_json"])
+  dalle_png = b64decode(response.data[0].b64_json)
 
   dalle_stream = io.BytesIO(dalle_png)
 
