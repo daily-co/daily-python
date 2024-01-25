@@ -5,31 +5,7 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-<!-- for new functionality -->
-
-- n/a
-
-### Changed
-
-<!-- for changed functionality -->
-
-- n/a
-
-### Deprecated
-
-<!-- for soon-to-be removed functionality -->
-
-- n/a
-
-### Removed
-
-<!-- for removed functionality -->
-
-- n/a
+## [0.6.2] - 2024-02-14
 
 ### Fixed
 
@@ -49,22 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a crash which could occur if the network connection drops soon after
   joining.
 
-### Performance
-
-<!-- for performance-relevant changes -->
-
-- n/a
-
-### Security
-
-<!-- for security-relevant changes -->
-
-- n/a
-
 ### Other
 
 - Simplied demos by using `client_settings` parameter in `CallClient.join()`
   instead of a separate `CallClient.update_inputs()` call.
+
+- Updated `pyaudio` demo to only use non-blocking virtual devices.
 
 ## [0.6.1] - 2024-01-22
 
