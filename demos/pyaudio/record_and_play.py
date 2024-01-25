@@ -106,15 +106,17 @@ class PyAudioApp:
     def leave(self):
         self.__app_quit = True
         self.__client.leave()
+        # This is not very pretty (taken from PyAudio docs).
+        while self.__input_stream.is_active():
+            time.sleep(0.1)
         self.__input_stream.close()
-        self.__output_stream.close()
         self.__pyaudio.terminate()
 
     def on_input_stream(self, in_data, frame_count, time_info, status):
         if self.__app_quit:
             return None, pyaudio.paAbort
 
-        # If the microphone hasn't started yet `write_frames`this will return
+        # If the microphone hasn't started yet `write_frames` this will return
         # 0. In that case, we just tell PyAudio to continue.
         self.__virtual_mic.write_frames(in_data)
 
@@ -124,6 +126,7 @@ class PyAudioApp:
         while not self.__app_quit:
             buffer = self.__virtual_speaker.read_frames(160)
             self.__output_stream.write(buffer)
+        self.__output_stream.close()
 
 
 def main():
