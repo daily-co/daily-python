@@ -11,10 +11,11 @@ voice = texttospeech.VoiceSelectionParams(
 )
 
 audio_config = texttospeech.AudioConfig(
-    audio_encoding = texttospeech.AudioEncoding.LINEAR16,
-    speaking_rate = 1.0,
-    sample_rate_hertz = 16000
+    audio_encoding=texttospeech.AudioEncoding.LINEAR16,
+    speaking_rate=1.0,
+    sample_rate_hertz=16000
 )
+
 
 class Bot:
 
@@ -28,8 +29,8 @@ class Bot:
         self.__bot_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.send_audio,
-                                         args = [microphone]);
+        self.__thread = threading.Thread(target=self.send_audio,
+                                         args=[microphone])
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -39,7 +40,7 @@ class Bot:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__call_client.join(meeting_url, client_settings = {
+        self.__call_client.join(meeting_url, client_settings={
             "inputs": {
                 "camera": False,
                 "microphone": {
@@ -49,11 +50,11 @@ class Bot:
                     }
                 }
             }
-        }, completion = self.on_joined);
+        }, completion=self.on_joined)
         self.__thread.join()
 
     def leave(self):
-        self.__call_client.leave();
+        self.__call_client.leave()
 
     def send_audio(self, microphone):
         self.__start_event.wait()
@@ -74,7 +75,7 @@ class Bot:
             self.synthesize_sentence(microphone, sentence)
 
     def synthesize_sentence(self, microphone, sentence):
-        synthesis_input = texttospeech.SynthesisInput(text = sentence.strip())
+        synthesis_input = texttospeech.SynthesisInput(text=sentence.strip())
 
         response = self.__speech_client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
@@ -100,10 +101,13 @@ class Bot:
 # - Redis Pub/Sub
 # - More sophisticated messages queues: SQS, RabbitMQ, Kakfa
 #
+
+
 def start_bot(bot_name, meeting_url):
     Daily.init()
 
-    microphone = Daily.create_microphone_device("my-mic", sample_rate = 16000, channels = 1)
+    microphone = Daily.create_microphone_device(
+        "my-mic", sample_rate=16000, channels=1)
 
     bot = Bot(bot_name, microphone)
     bot.run(meeting_url)

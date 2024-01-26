@@ -14,9 +14,10 @@ from daily import *
 
 import pyaudio
 
-SAMPLE_RATE=16000
-NUM_CHANNELS=1
-BYTES_PER_SAMPLE=2
+SAMPLE_RATE = 16000
+NUM_CHANNELS = 1
+BYTES_PER_SAMPLE = 2
+
 
 class PyAudioApp:
 
@@ -28,9 +29,9 @@ class PyAudioApp:
         # when we write the frames.
         self.__virtual_mic = Daily.create_microphone_device(
             "my-mic",
-            sample_rate = sample_rate,
-            channels = num_channels,
-            non_blocking = True
+            sample_rate=sample_rate,
+            channels=num_channels,
+            non_blocking=True
         )
 
         # In contrast, we configure the speaker as blocking. In this case,
@@ -38,23 +39,23 @@ class PyAudioApp:
         # Daily's speaker.
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate = sample_rate,
-            channels = num_channels
+            sample_rate=sample_rate,
+            channels=num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__pyaudio = pyaudio.PyAudio()
         self.__input_stream = self.__pyaudio.open(
-            format = pyaudio.paInt16,
-            channels = num_channels,
-            rate = sample_rate,
-            input = True,
-            stream_callback = self.on_input_stream
+            format=pyaudio.paInt16,
+            channels=num_channels,
+            rate=sample_rate,
+            input=True,
+            stream_callback=self.on_input_stream
         )
         self.__output_stream = self.__pyaudio.open(
-            format = pyaudio.paInt16,
-            channels = num_channels,
-            rate = sample_rate,
+            format=pyaudio.paInt16,
+            channels=num_channels,
+            rate=sample_rate,
             output=True
         )
 
@@ -67,7 +68,7 @@ class PyAudioApp:
             }
         })
 
-        self.__thread = threading.Thread(target = self.send_audio_stream)
+        self.__thread = threading.Thread(target=self.send_audio_stream)
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -76,7 +77,7 @@ class PyAudioApp:
             self.__app_quit = True
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings = {
+        self.__client.join(meeting_url, client_settings={
             "inputs": {
                 "camera": False,
                 "microphone": {
@@ -84,9 +85,9 @@ class PyAudioApp:
                     "settings": {
                         "deviceId": "my-mic",
                         "customConstraints": {
-                            "autoGainControl": { "exact": True },
-                            "noiseSuppression": { "exact": True },
-                            "echoCancellation": { "exact": True },
+                            "autoGainControl": {"exact": True},
+                            "noiseSuppression": {"exact": True},
+                            "echoCancellation": {"exact": True},
                         }
                     }
                 }
@@ -124,18 +125,29 @@ class PyAudioApp:
             buffer = self.__virtual_speaker.read_frames(160)
             self.__output_stream.write(buffer)
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-c", "--channels", type = int, default = NUM_CHANNELS, help = "Number of channels")
-    parser.add_argument("-r", "--rate", type = int, default = SAMPLE_RATE, help = "Sample rate")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument(
+        "-c",
+        "--channels",
+        type=int,
+        default=NUM_CHANNELS,
+        help="Number of channels")
+    parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=SAMPLE_RATE,
+        help="Sample rate")
     args = parser.parse_args()
 
     Daily.init()
 
     app = PyAudioApp(args.rate, args.channels)
 
-    try :
+    try:
         app.run(args.meeting)
     except KeyboardInterrupt:
         print("Ctrl-C detected. Exiting!")
@@ -144,6 +156,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

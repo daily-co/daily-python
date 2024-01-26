@@ -12,15 +12,16 @@ import threading
 from daily import *
 from PIL import Image
 
+
 class SendImageApp:
     def __init__(self, image_file, framerate):
         self.__image = Image.open(image_file)
         self.__framerate = framerate
 
         self.__camera = Daily.create_camera_device("my-camera",
-                                                   width = self.__image.width,
-                                                   height = self.__image.height,
-                                                   color_format = "RGB")
+                                                   width=self.__image.width,
+                                                   height=self.__image.height,
+                                                   color_format="RGB")
 
         self.__client = CallClient()
 
@@ -35,7 +36,7 @@ class SendImageApp:
         self.__app_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.send_image);
+        self.__thread = threading.Thread(target=self.send_image)
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -45,7 +46,7 @@ class SendImageApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings = {
+        self.__client.join(meeting_url, client_settings={
             "inputs": {
                 "camera": {
                     "isEnabled": True,
@@ -77,18 +78,24 @@ class SendImageApp:
             self.__camera.write_frame(image_bytes)
             time.sleep(sleep_time)
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-i", "--image", required = True, help = "Image to send")
-    parser.add_argument("-f", "--framerate", type=int, required = True, help = "Framerate")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument("-i", "--image", required=True, help="Image to send")
+    parser.add_argument(
+        "-f",
+        "--framerate",
+        type=int,
+        required=True,
+        help="Framerate")
     args = parser.parse_args()
 
     Daily.init()
 
     app = SendImageApp(args.image, args.framerate)
 
-    try :
+    try:
         app.run(args.meeting)
     except KeyboardInterrupt:
         print("Ctrl-C detected. Exiting!")
@@ -97,6 +104,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

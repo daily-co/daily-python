@@ -19,6 +19,7 @@ SAMPLE_RATE = 16000
 BYTES_PER_SAMPLE = 2
 NUM_CHANNELS = 1
 
+
 def write_buffer_to_wav(filename, buffer):
     global quit
 
@@ -32,46 +33,66 @@ def write_buffer_to_wav(filename, buffer):
 
     quit = True
 
+
 def on_join(speaker, output, seconds, error):
     # Since this is a non-blocking device, this function will behave
     # asynchronously. The completion callback will be called when the audio
     # frames have been read.
     if not error:
-        speaker.read_frames(SAMPLE_RATE * seconds,
-                            completion = lambda buffer: write_buffer_to_wav(output, buffer))
-        print("buffering", end = "")
+        speaker.read_frames(
+            SAMPLE_RATE * seconds,
+            completion=lambda buffer: write_buffer_to_wav(
+                output,
+                buffer))
+        print("buffering", end="")
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-o", "--output", required = True, help = "WAV output file")
-    parser.add_argument("-s", "--seconds", type = int, default = 10, required = False,
-                        help = "Number of seconds (default: 10)")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="WAV output file")
+    parser.add_argument(
+        "-s",
+        "--seconds",
+        type=int,
+        default=10,
+        required=False,
+        help="Number of seconds (default: 10)")
     args = parser.parse_args()
 
     Daily.init()
 
     speaker = Daily.create_speaker_device(
-      "my-speaker",
-      sample_rate = SAMPLE_RATE,
-      channels = NUM_CHANNELS,
-      non_blocking = True
+        "my-speaker",
+        sample_rate=SAMPLE_RATE,
+        channels=NUM_CHANNELS,
+        non_blocking=True
     )
     Daily.select_speaker_device("my-speaker")
 
     client = CallClient()
     client.update_subscription_profiles({
-      "base": {
-        "camera": "unsubscribed",
-        "microphone": "subscribed"
-      }
+        "base": {
+            "camera": "unsubscribed",
+            "microphone": "subscribed"
+        }
     })
-    client.join(args.meeting,
-                completion = lambda data, error: on_join(speaker, args.output, args.seconds, error))
+    client.join(
+        args.meeting,
+        completion=lambda data,
+        error: on_join(
+            speaker,
+            args.output,
+            args.seconds,
+            error))
 
     try:
         while not quit:
-            print(".", end = "")
+            print(".", end="")
             sys.stdout.flush()
             time.sleep(0.2)
     except KeyboardInterrupt:
@@ -81,6 +102,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

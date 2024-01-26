@@ -19,6 +19,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from daily import *
 
+
 class DailyQtWidget(QtWidgets.QWidget):
     frame_signal = QtCore.Signal(VideoFrame)
 
@@ -39,7 +40,8 @@ class DailyQtWidget(QtWidgets.QWidget):
 
         self.frame_signal.connect(self.draw_image)
 
-        self.__black_frame = QtGui.QPixmap(self.__frame_width, self.__frame_height)
+        self.__black_frame = QtGui.QPixmap(
+            self.__frame_width, self.__frame_height)
         self.__black_frame.fill(QtGui.QColor('Black'))
 
         self.__joined = False
@@ -50,7 +52,7 @@ class DailyQtWidget(QtWidgets.QWidget):
         if save_audio:
             self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
             self.__wave.setnchannels(1)
-            self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
+            self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
             self.__wave.setframerate(48000)
 
         self.__video_source = "camera"
@@ -100,9 +102,10 @@ class DailyQtWidget(QtWidgets.QWidget):
             participant_id = self.__participant_textedit.text()
 
             if self.__save_audio:
-                self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
+                self.__wave = wave.open(
+                    f"participant-{participant_id}.wav", "wb")
                 self.__wave.setnchannels(1)
-                self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
+                self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
                 self.__wave.setframerate(48000)
 
             self.join(meeting_url, participant_id)
@@ -123,22 +126,30 @@ class DailyQtWidget(QtWidgets.QWidget):
             return
 
         if self.__save_audio:
-            self.__client.set_audio_renderer(participant_id, self.on_audio_data)
+            self.__client.set_audio_renderer(
+                participant_id, self.on_audio_data)
 
         self.__client.set_video_renderer(participant_id,
                                          self.on_video_frame,
-                                         video_source = self.__video_source,
-                                         color_format = "BGRA")
+                                         video_source=self.__video_source,
+                                         color_format="BGRA")
 
-        self.__client.join(meeting_url, completion = self.on_joined)
+        self.__client.join(meeting_url, completion=self.on_joined)
 
     def leave(self):
-        self.__client.leave(completion = self.on_left)
+        self.__client.leave(completion=self.on_left)
 
     def draw_image(self, video_frame):
-        image = QtGui.QImage(video_frame.buffer, video_frame.width, video_frame.height,
-                             video_frame.width * 4, QtGui.QImage.Format.Format_ARGB32)
-        scaled = image.scaled(self.__frame_width, self.__frame_height, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        image = QtGui.QImage(
+            video_frame.buffer,
+            video_frame.width,
+            video_frame.height,
+            video_frame.width * 4,
+            QtGui.QImage.Format.Format_ARGB32)
+        scaled = image.scaled(
+            self.__frame_width,
+            self.__frame_height,
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         pixmap = QtGui.QPixmap.fromImage(scaled)
         self.__image_label.setPixmap(pixmap)
 
@@ -148,25 +159,43 @@ class DailyQtWidget(QtWidgets.QWidget):
     def on_video_frame(self, participant_id, video_frame):
         self.frame_signal.emit(video_frame)
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", default = "", help = "Meeting URL")
-    parser.add_argument("-p", "--participant", default = "", help = "Participant ID")
-    parser.add_argument("-a", "--audio", default = False, action="store_true",
-                        help = "Store participant audio in a file (participant-ID.wav)")
-    parser.add_argument("-s", "--screen", default = False, action="store_true",
-                        help = "Render screen share (if available) instead of camera")
+    parser.add_argument("-m", "--meeting", default="", help="Meeting URL")
+    parser.add_argument(
+        "-p",
+        "--participant",
+        default="",
+        help="Participant ID")
+    parser.add_argument(
+        "-a",
+        "--audio",
+        default=False,
+        action="store_true",
+        help="Store participant audio in a file (participant-ID.wav)")
+    parser.add_argument(
+        "-s",
+        "--screen",
+        default=False,
+        action="store_true",
+        help="Render screen share (if available) instead of camera")
     args = parser.parse_args()
 
     Daily.init()
 
     app = QtWidgets.QApplication([])
 
-    widget = DailyQtWidget(args.meeting, args.participant, args.audio, args.screen)
+    widget = DailyQtWidget(
+        args.meeting,
+        args.participant,
+        args.audio,
+        args.screen)
     widget.resize(1280, 720)
     widget.show()
 
     sys.exit(app.exec())
+
 
 if __name__ == '__main__':
     main()

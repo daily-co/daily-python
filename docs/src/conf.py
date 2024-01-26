@@ -6,6 +6,7 @@ import sys
 
 import toml
 
+
 def get_release_version() -> str:
     """Get the release version from the Cargo.toml file.
 

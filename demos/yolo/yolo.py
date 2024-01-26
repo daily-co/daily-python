@@ -7,11 +7,13 @@ from PIL import Image
 
 from daily import *
 
+
 class DailyYOLO(EventHandler):
     def __init__(self):
-        self.__client = CallClient(event_handler = self)
+        self.__client = CallClient(event_handler=self)
 
-        self.__model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        self.__model = torch.hub.load(
+            'ultralytics/yolov5', 'yolov5s', pretrained=True)
         self.__camera = None
 
         self.__time = time.time()
@@ -20,7 +22,7 @@ class DailyYOLO(EventHandler):
 
         self.__app_quit = False
 
-        self.__thread = threading.Thread(target = self.process_frames);
+        self.__thread = threading.Thread(target=self.process_frames)
         self.__thread.start()
 
     def run(self, meeting_url):
@@ -36,14 +38,16 @@ class DailyYOLO(EventHandler):
 
     def on_participant_joined(self, participant):
         print(f"Participant {participant['id']} joined, analyzing frames...")
-        self.__client.set_video_renderer(participant["id"], self.on_video_frame)
+        self.__client.set_video_renderer(
+            participant["id"], self.on_video_frame)
 
     def setup_camera(self, video_frame):
         if not self.__camera:
-            self.__camera = Daily.create_camera_device("camera",
-                                                       width = video_frame.width,
-                                                       height = video_frame.height,
-                                                       color_format="RGB")
+            self.__camera = Daily.create_camera_device(
+                "camera",
+                width=video_frame.width,
+                height=video_frame.height,
+                color_format="RGB")
             self.__client.update_inputs({
                 "camera": {
                     "isEnabled": True,
@@ -56,7 +60,8 @@ class DailyYOLO(EventHandler):
     def process_frames(self):
         while not self.__app_quit:
             video_frame = self.__queue.get()
-            image = Image.frombytes("RGBA", (video_frame.width, video_frame.height), video_frame.buffer)
+            image = Image.frombytes(
+                "RGBA", (video_frame.width, video_frame.height), video_frame.buffer)
             result = self.__model(image)
 
             pil = Image.fromarray(result.render()[0], mode="RGB").tobytes()
@@ -70,16 +75,17 @@ class DailyYOLO(EventHandler):
             self.setup_camera(video_frame)
             self.__queue.put(video_frame)
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     args = parser.parse_args()
 
     Daily.init()
 
     app = DailyYOLO()
 
-    try :
+    try:
         app.run(args.meeting)
     except KeyboardInterrupt:
         print("Ctrl-C detected. Exiting!")
@@ -88,6 +94,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

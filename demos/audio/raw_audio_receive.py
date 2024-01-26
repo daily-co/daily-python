@@ -20,12 +20,13 @@ import threading
 
 from daily import *
 
+
 class ReceiveAudioApp:
     def __init__(self):
         self.__speaker_device = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate = 16000,
-            channels = 1
+            sample_rate=16000,
+            channels=1
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -41,7 +42,7 @@ class ReceiveAudioApp:
         self.__app_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.receive_audio);
+        self.__thread = threading.Thread(target=self.receive_audio)
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -51,7 +52,7 @@ class ReceiveAudioApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, completion = self.on_joined)
+        self.__client.join(meeting_url, completion=self.on_joined)
         self.__thread.join()
 
     def leave(self):
@@ -72,9 +73,10 @@ class ReceiveAudioApp:
             if len(buffer) > 0:
                 sys.stdout.buffer.write(buffer)
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     args = parser.parse_args()
 
     Daily.init()
@@ -84,12 +86,13 @@ def main():
     try:
         app.run(args.meeting)
     except KeyboardInterrupt:
-        print("Ctrl-C detected. Exiting!", file = sys.stderr)
+        print("Ctrl-C detected. Exiting!", file=sys.stderr)
     finally:
         app.leave()
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

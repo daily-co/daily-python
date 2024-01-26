@@ -5,6 +5,7 @@
 # Usage: python3 media_player.py -m MEETING_URL -i FILE
 #
 
+from gi.repository import Gst, GstApp, GLib
 import argparse
 import time
 
@@ -14,25 +15,25 @@ import gi
 
 gi.require_version('Gst', '1.0')
 gi.require_version('GstApp', '1.0')
-from gi.repository import Gst, GstApp, GLib
 
 VIDEO_WIDTH = 1280
 VIDEO_HEIGHT = 720
 AUDIO_SAMPLE_RATE = 48000
 AUDIO_CHANNELS = 2
 
+
 class GstApp:
 
     def __init__(self, filename):
         self.__camera = Daily.create_camera_device("my-camera",
-                                                   width = VIDEO_WIDTH,
-                                                   height = VIDEO_HEIGHT,
-                                                   color_format = "I420")
+                                                   width=VIDEO_WIDTH,
+                                                   height=VIDEO_HEIGHT,
+                                                   color_format="I420")
         self.__microphone = Daily.create_microphone_device(
             "my-mic",
-            sample_rate = AUDIO_SAMPLE_RATE,
-            channels = AUDIO_CHANNELS,
-            non_blocking = True
+            sample_rate=AUDIO_SAMPLE_RATE,
+            channels=AUDIO_CHANNELS,
+            non_blocking=True
         )
 
         self.__client = CallClient()
@@ -75,7 +76,7 @@ class GstApp:
         self.__loop.quit()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings = {
+        self.__client.join(meeting_url, client_settings={
             "inputs": {
                 "camera": {
                     "isEnabled": True,
@@ -132,7 +133,8 @@ class GstApp:
         audioconvert = Gst.ElementFactory.make("audioconvert", None)
         audioresample = Gst.ElementFactory.make("audioresample", None)
         audiocapsfilter = Gst.ElementFactory.make("capsfilter", None)
-        audiocaps = Gst.Caps.from_string(f"audio/x-raw,format=S16LE,rate={AUDIO_SAMPLE_RATE},channels={AUDIO_CHANNELS},layout=interleaved")
+        audiocaps = Gst.Caps.from_string(
+            f"audio/x-raw,format=S16LE,rate={AUDIO_SAMPLE_RATE},channels={AUDIO_CHANNELS},layout=interleaved")
         audiocapsfilter.set_property("caps", audiocaps)
         appsink_audio = Gst.ElementFactory.make("appsink", None)
         appsink_audio.set_property("emit-signals", True)
@@ -162,7 +164,8 @@ class GstApp:
         videoconvert = Gst.ElementFactory.make("videoconvert", None)
         videoscale = Gst.ElementFactory.make("videoscale", None)
         videocapsfilter = Gst.ElementFactory.make("capsfilter", None)
-        videocaps = Gst.Caps.from_string(f"video/x-raw,format=I420,width={VIDEO_WIDTH},height={VIDEO_HEIGHT}")
+        videocaps = Gst.Caps.from_string(
+            f"video/x-raw,format=I420,width={VIDEO_WIDTH},height={VIDEO_HEIGHT}")
         videocapsfilter.set_property("caps", videocaps)
 
         appsink_video = Gst.ElementFactory.make("appsink", None)
@@ -202,10 +205,11 @@ class GstApp:
         buffer.unmap(info)
         return Gst.FlowReturn.OK
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-i", "--input", required = True, help = "Video file")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument("-i", "--input", required=True, help="Video file")
 
     args = parser.parse_args()
 
@@ -223,6 +227,7 @@ def main():
 
     # Let leave finish
     time.sleep(3)
+
 
 if __name__ == '__main__':
     main()

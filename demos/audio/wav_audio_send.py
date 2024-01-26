@@ -13,12 +13,13 @@ import wave
 
 from daily import *
 
+
 class SendWavApp:
     def __init__(self, input_file_name):
         self.__mic_device = Daily.create_microphone_device(
             "my-mic",
-            sample_rate = 16000,
-            channels = 1
+            sample_rate=16000,
+            channels=1
         )
 
         self.__client = CallClient()
@@ -34,8 +35,8 @@ class SendWavApp:
         self.__app_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.send_wav_file,
-                                         args = [input_file_name]);
+        self.__thread = threading.Thread(target=self.send_wav_file,
+                                         args=[input_file_name])
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -45,7 +46,7 @@ class SendWavApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings = {
+        self.__client.join(meeting_url, client_settings={
             "inputs": {
                 "camera": False,
                 "microphone": {
@@ -81,10 +82,11 @@ class SendWavApp:
                 self.__mic_device.write_frames(frames)
                 sent_frames += 1600
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-i", "--input", required = True, help = "WAV input file")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument("-i", "--input", required=True, help="WAV input file")
 
     args = parser.parse_args()
 
@@ -101,6 +103,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

@@ -13,18 +13,19 @@ import wave
 
 from daily import *
 
+
 class ReceiveWavApp:
     def __init__(self, input_file_name):
         self.__speaker_device = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate = 16000,
-            channels = 1
+            sample_rate=16000,
+            channels=1
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__wave = wave.open(input_file_name, "wb")
         self.__wave.setnchannels(1)
-        self.__wave.setsampwidth(2) # 16-bit LINEAR PCM
+        self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
         self.__wave.setframerate(16000)
 
         self.__client = CallClient()
@@ -39,7 +40,7 @@ class ReceiveWavApp:
         self.__app_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target = self.receive_audio);
+        self.__thread = threading.Thread(target=self.receive_audio)
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -49,7 +50,7 @@ class ReceiveWavApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, completion = self.on_joined)
+        self.__client.join(meeting_url, completion=self.on_joined)
         self.__thread.join()
 
     def leave(self):
@@ -72,10 +73,15 @@ class ReceiveWavApp:
 
         self.__wave.close()
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
-    parser.add_argument("-o", "--output", required = True, help = "WAV output file")
+    parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="WAV output file")
     args = parser.parse_args()
 
     Daily.init()
@@ -91,6 +97,7 @@ def main():
 
     # Let leave finish
     time.sleep(2)
+
 
 if __name__ == '__main__':
     main()

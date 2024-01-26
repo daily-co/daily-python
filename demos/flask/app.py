@@ -6,6 +6,7 @@ from billiard.context import Process
 
 from bot import start_bot
 
+
 def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
         def __call__(self, *args: object, **kwargs: object) -> object:
@@ -17,6 +18,7 @@ def celery_init_app(app: Flask) -> Celery:
     celery_app.set_default()
     app.extensions["celery"] = celery_app
     return celery_app
+
 
 app = Flask(__name__)
 app.config.from_mapping(
@@ -30,11 +32,13 @@ app.config.from_prefixed_env()
 
 celery = celery_init_app(app)
 
+
 @celery.task
 def create_bot(bot_name, meeting_url):
     process = Process(target=start_bot, args=(bot_name, meeting_url))
     process.start()
     process.join()
+
 
 @app.route("/", methods=["POST"])
 def new_bot():

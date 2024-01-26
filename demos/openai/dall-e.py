@@ -27,7 +27,7 @@ import wave
 from base64 import b64decode
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--meeting", required = True, help = "Meeting URL")
+parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
 args = parser.parse_args()
 
 
@@ -36,8 +36,13 @@ Daily.init()
 CAMERA_WIDTH = 1024
 CAMERA_HEIGHT = 1024
 
-speaker = Daily.create_speaker_device("my-speaker", sample_rate = 16000, channels = 1)
-camera = Daily.create_camera_device("my-camera", width = CAMERA_WIDTH, height = CAMERA_HEIGHT, color_format = "RGB")
+speaker = Daily.create_speaker_device(
+    "my-speaker", sample_rate=16000, channels=1)
+camera = Daily.create_camera_device(
+    "my-camera",
+    width=CAMERA_WIDTH,
+    height=CAMERA_HEIGHT,
+    color_format="RGB")
 
 Daily.select_speaker_device("my-speaker")
 
@@ -46,19 +51,20 @@ client = CallClient()
 print()
 print(f"Joining {args.meeting} ...")
 
-client.join(args.meeting, client_settings = {
-  "inputs": {
-    "camera": {
-      "isEnabled": True,
-      "settings": {
-        "deviceId": "my-camera"
-      }
-    },
-    "microphone": False
-  }
+client.join(args.meeting, client_settings={
+    "inputs": {
+        "camera": {
+            "isEnabled": True,
+            "settings": {
+                "deviceId": "my-camera"
+            }
+        },
+        "microphone": False
+    }
 })
 
-# Make sure we are joined. It would be better to use join() completion callback.
+# Make sure we are joined. It would be better to use join() completion
+# callback.
 time.sleep(3)
 
 SAMPLE_RATE = 16000
@@ -66,7 +72,8 @@ SECONDS_TO_READ = 10
 FRAMES_TO_READ = SAMPLE_RATE * SECONDS_TO_READ
 
 print()
-print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
+print(
+    f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
 
 # We are creating a WAV file in memory so we can later grab the whole buffer and
 # send it to Google Speech-To-Text API.
@@ -74,7 +81,7 @@ content = io.BufferedRandom(io.BytesIO())
 
 out_wave = wave.open(content, "wb")
 out_wave.setnchannels(1)
-out_wave.setsampwidth(2) # 16-bit LINEAR PCM
+out_wave.setsampwidth(2)  # 16-bit LINEAR PCM
 out_wave.setframerate(16000)
 
 # Here we are reading from the virtual speaker and writing the audio frames into
@@ -90,13 +97,13 @@ content.seek(0)
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # We create and audio object with the contents of the in-memory WAV file.
-audio = speech.RecognitionAudio(content = content.read())
+audio = speech.RecognitionAudio(content=content.read())
 
 # Configure Google Speech-To-Text so it receives 16-bit LINEAR PCM.
 config = speech.RecognitionConfig(
-  encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-  sample_rate_hertz=16000,
-  language_code="en-US",
+    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+    sample_rate_hertz=16000,
+    language_code="en-US",
 )
 
 speech_client = speech.SpeechClient()
@@ -107,31 +114,31 @@ print(f"Transcribing with Google Speech-To-Text API ...")
 response = speech_client.recognize(config=config, audio=audio)
 
 if len(response.results) > 0 and len(response.results[0].alternatives) > 0:
-  prompt = response.results[0].alternatives[0].transcript
+    prompt = response.results[0].alternatives[0].transcript
 
-  print()
-  print(f"Generating image with OpenAI for '{prompt}' ...")
+    print()
+    print(f"Generating image with OpenAI for '{prompt}' ...")
 
-  response = openai_client.images.generate(
-    prompt=prompt,
-    n=1,
-    size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}",
-    response_format="b64_json"
-  )
+    response = openai_client.images.generate(
+        prompt=prompt,
+        n=1,
+        size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}",
+        response_format="b64_json"
+    )
 
-  dalle_png = b64decode(response.data[0].b64_json)
+    dalle_png = b64decode(response.data[0].b64_json)
 
-  dalle_stream = io.BytesIO(dalle_png)
+    dalle_stream = io.BytesIO(dalle_png)
 
-  dalle_im = Image.open(dalle_stream)
+    dalle_im = Image.open(dalle_stream)
 
-  try:
-    # This is a live video stream so we need to keep drawing the image.
-    while True:
-      camera.write_frame(dalle_im.tobytes())
-      time.sleep(0.033)
-  except KeyboardInterrupt:
-    pass
+    try:
+        # This is a live video stream so we need to keep drawing the image.
+        while True:
+            camera.write_frame(dalle_im.tobytes())
+            time.sleep(0.033)
+    except KeyboardInterrupt:
+        pass
 
 client.leave()
 
