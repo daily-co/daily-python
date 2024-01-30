@@ -214,7 +214,7 @@ impl PyCallClient {
 
     /// Returns the current participants in the meeting.
     ///
-    /// :return: See :ref:`CallAllParticipants`
+    /// :return: See :ref:`CallParticipants`
     /// :rtype: dict
     pub fn participants(&mut self) -> PyResult<PyObject> {
         unsafe {

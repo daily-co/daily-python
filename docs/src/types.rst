@@ -93,25 +93,10 @@ CallParticipants
 
    * - Key
      - Value
+   * - "local"
+     - `Participant`_
    * - PARTICIPANT_UUID
      - `Participant`_
-
-
-.. _CallAllParticipants:
-
-CallAllParticipants
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "localPeerId"
-     - string
-   * - "allParticipants"
-     - `CallParticipants`_
 
 
 .. _CanAdminPermission:
