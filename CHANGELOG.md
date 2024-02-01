@@ -5,6 +5,62 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+<!-- for new functionality -->
+
+- n/a
+
+### Changed
+
+<!-- for changed functionality -->
+
+- n/a
+
+### Deprecated
+
+<!-- for soon-to-be removed functionality -->
+
+- n/a
+
+### Removed
+
+<!-- for removed functionality -->
+
+- n/a
+
+### Fixed
+
+- Enable Opus FEC to improve audio with network packet loss.
+
+- Fixed multiple issues which could cause a deadlock during network
+  reconnection.
+
+- Ensure that `CallClient.update_inputs()` continues to be usable while the
+  network is down.
+
+- Fixed a crash which could occur if the network connection drops soon after
+  joining.
+
+### Performance
+
+<!-- for performance-relevant changes -->
+
+- n/a
+
+### Security
+
+<!-- for security-relevant changes -->
+
+- n/a
+
+### Other
+
+- Simplied demos by using `client_settings` parameter in `CallClient.join()`
+  instead of a separate `CallClient.update_inputs()` call.
+
 ## [0.6.1] - 2024-01-22
 
 ### Fixed
