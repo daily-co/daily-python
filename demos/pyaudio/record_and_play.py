@@ -16,7 +16,6 @@ import pyaudio
 
 SAMPLE_RATE = 16000
 NUM_CHANNELS = 1
-BYTES_PER_SAMPLE = 2
 
 
 class PyAudioApp:

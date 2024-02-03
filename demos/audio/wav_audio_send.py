@@ -1,7 +1,6 @@
 #
 # This demo will join a Daily meeting and send the audio from a WAV file into
-# the meeting. The WAV file is required to have a sample rate of 16000, 16-bit
-# per sample and mono audio channel.
+# the meeting.
 #
 # Usage: python3 wav_audio_send.py -m MEETING_URL -i FILE.wav
 #
@@ -13,13 +12,16 @@ import wave
 
 from daily import *
 
+SAMPLE_RATE = 16000
+NUM_CHANNELS = 1
+
 
 class SendWavApp:
-    def __init__(self, input_file_name):
+    def __init__(self, input_file_name, sample_rate, num_channels):
         self.__mic_device = Daily.create_microphone_device(
             "my-mic",
-            sample_rate=16000,
-            channels=1
+            sample_rate=sample_rate,
+            channels=num_channels
         )
 
         self.__client = CallClient()
@@ -75,24 +77,37 @@ class SendWavApp:
 
         sent_frames = 0
         total_frames = wav.getnframes()
+        sample_rate = wav.getframerate()
         while not self.__app_quit and sent_frames < total_frames:
             # Read 100ms worth of audio frames.
-            frames = wav.readframes(1600)
+            frames = wav.readframes(int(sample_rate / 10))
             if len(frames) > 0:
                 self.__mic_device.write_frames(frames)
-                sent_frames += 1600
+                sent_frames += sample_rate / 10
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument("-i", "--input", required=True, help="WAV input file")
+    parser.add_argument(
+        "-c",
+        "--channels",
+        type=int,
+        default=NUM_CHANNELS,
+        help="Number of channels")
+    parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=SAMPLE_RATE,
+        help="Sample rate")
 
     args = parser.parse_args()
 
     Daily.init()
 
-    app = SendWavApp(args.input)
+    app = SendWavApp(args.input, args.rate, args.channels)
 
     try:
         app.run(args.meeting)

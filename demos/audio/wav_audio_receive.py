@@ -1,7 +1,6 @@
 #
 # This demo will join a Daily meeting and record the meeting audio into a
-# WAV. The WAV file will have a sample rate of 16000, 16-bit per sample and mono
-# audio channel.
+# WAV.
 #
 # Usage: python3 wav_audio_receive.py -m MEETING_URL -o FILE.wav
 #
@@ -14,19 +13,24 @@ import wave
 from daily import *
 
 
+SAMPLE_RATE = 16000
+NUM_CHANNELS = 1
+
+
 class ReceiveWavApp:
-    def __init__(self, input_file_name):
+    def __init__(self, input_file_name, sample_rate, num_channels):
+        self.__sample_rate = sample_rate
         self.__speaker_device = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate=16000,
-            channels=1
+            sample_rate=sample_rate,
+            channels=num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__wave = wave.open(input_file_name, "wb")
-        self.__wave.setnchannels(1)
+        self.__wave.setnchannels(num_channels)
         self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
-        self.__wave.setframerate(16000)
+        self.__wave.setframerate(sample_rate)
 
         self.__client = CallClient()
         self.__client.update_subscription_profiles({
@@ -67,7 +71,8 @@ class ReceiveWavApp:
 
         while not self.__app_quit:
             # Read 100ms worth of audio frames.
-            buffer = self.__speaker_device.read_frames(1600)
+            buffer = self.__speaker_device.read_frames(
+                int(self.__sample_rate / 10))
             if len(buffer) > 0:
                 self.__wave.writeframes(buffer)
 
@@ -78,6 +83,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument(
+        "-c",
+        "--channels",
+        type=int,
+        default=NUM_CHANNELS,
+        help="Number of channels")
+    parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=SAMPLE_RATE,
+        help="Sample rate")
+    parser.add_argument(
         "-o",
         "--output",
         required=True,
@@ -86,7 +103,7 @@ def main():
 
     Daily.init()
 
-    app = ReceiveWavApp(args.output)
+    app = ReceiveWavApp(args.output, args.rate, args.channels)
 
     try:
         app.run(args.meeting)
