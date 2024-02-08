@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix deadlock when registering completion callbacks inside callbacks.
+
 - Enable Opus FEC to improve audio with network packet loss.
 
 - Fixed multiple issues which could cause a deadlock during network

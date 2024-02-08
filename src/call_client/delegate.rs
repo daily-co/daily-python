@@ -94,6 +94,8 @@ pub(crate) unsafe extern "C" fn on_event_native(
 
         let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
 
+        // Don't lock in the if statement otherwise the lock is held throughout
+        // the delegate call.
         let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_event;
 
         if let Some(delegate) = delegate {
@@ -126,6 +128,8 @@ pub(crate) unsafe extern "C" fn on_audio_data_native(
 
         let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
 
+        // Don't lock in the if statement otherwise the lock is held throughout
+        // the delegate call.
         let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_audio_data;
 
         if let Some(delegate) = delegate {
@@ -155,6 +159,8 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
 
         let delegate_ctx = Arc::from_raw(delegate_ctx_ptr);
 
+        // Don't lock in the if statement otherwise the lock is held throughout
+        // the delegate call.
         let delegate = delegate_ctx.inner.delegates.lock().unwrap().on_video_frame;
 
         if let Some(delegate) = delegate {
@@ -167,17 +173,19 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
     match event.action.as_str() {
         "request-completed" => {
             if let Some(request_id) = request_id_from_event(event) {
-                if let Some(delegate) = delegate_ctx
+                // Don't lock in the if statement otherwise the lock is held
+                // throughout the callback call.
+                let callback = delegate_ctx
                     .inner
                     .completions
                     .lock()
                     .unwrap()
-                    .remove(&request_id)
-                {
+                    .remove(&request_id);
+                if let Some(callback) = callback {
                     if let Some(args) = args_from_event(event) {
                         let py_args = PyTuple::new(py, args);
 
-                        if let Err(error) = delegate.call1(py, py_args) {
+                        if let Err(error) = callback.call1(py, py_args) {
                             error.write_unraisable(py, None);
                         }
                     }
@@ -212,13 +220,17 @@ pub(crate) unsafe fn on_audio_data(
     peer_id: *const libc::c_char,
     data: *const NativeAudioData,
 ) {
-    if let Some(callback) = delegate_ctx
+    // Don't lock in the if statement otherwise the lock is held throughout the
+    // callback call.
+    let callback = delegate_ctx
         .inner
         .audio_renderers
         .lock()
         .unwrap()
         .get(&renderer_id)
-    {
+        .cloned();
+
+    if let Some(callback) = callback {
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
         let num_bytes =
@@ -248,13 +260,17 @@ pub(crate) unsafe fn on_video_frame(
     peer_id: *const libc::c_char,
     frame: *const NativeVideoFrame,
 ) {
-    if let Some(callback) = delegate_ctx
+    // Don't lock in the if statement otherwise the lock is held throughout the
+    // callback call.
+    let callback = delegate_ctx
         .inner
         .video_renderers
         .lock()
         .unwrap()
         .get(&renderer_id)
-    {
+        .cloned();
+
+    if let Some(callback) = callback {
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
         let color_format = CStr::from_ptr((*frame).color_format)
