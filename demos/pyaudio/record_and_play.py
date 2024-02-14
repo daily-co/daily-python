@@ -39,7 +39,8 @@ class PyAudioApp:
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
             sample_rate=sample_rate,
-            channels=num_channels
+            channels=num_channels,
+            non_blocking=True
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -121,10 +122,17 @@ class PyAudioApp:
 
         return None, pyaudio.paContinue
 
-    def send_audio_stream(self):
-        while not self.__app_quit:
-            buffer = self.__virtual_speaker.read_frames(160)
+    def on_speaker_frames(self, buffer):
+        if not self.__app_quit:
             self.__output_stream.write(buffer)
+            self.__virtual_speaker.read_frames(
+                64, completion=self.on_speaker_frames)
+
+    def send_audio_stream(self):
+        self.__virtual_speaker.read_frames(
+            64, completion=self.on_speaker_frames)
+        while not self.__app_quit:
+            time.sleep(0.1)
         self.__output_stream.close()
 
 
