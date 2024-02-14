@@ -332,7 +332,7 @@ class VirtualCameraDevice:
     def color_format(self) -> str:
         ...
 
-    def write_frame(self, frame: bytes) -> None:
+    def write_frame(self, frame: bytes, completion: Optional[Callable[[bytes], None]] = None) -> None:
         ...
 
 class VirtualMicrophoneDevice:
@@ -366,5 +366,5 @@ class VirtualSpeakerDevice:
     def channels(self) -> int:
         ...
 
-    def read_frames(self, num_frame: int) -> bytes:
+    def read_frames(self, num_frame: int, completion: Optional[Callable[[bytes], None]] = None) -> bytes:
         ...
