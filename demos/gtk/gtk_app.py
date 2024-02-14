@@ -12,7 +12,6 @@
 #
 
 from daily import *
-from gi.repository import GLib, Gtk
 import argparse
 import sys
 import wave
@@ -20,7 +19,10 @@ import wave
 import cairo
 import gi
 
+# autopep8: off
 gi.require_version("Gtk", "4.0")
+from gi.repository import GLib, Gtk
+# autopep8: on
 
 
 class DailyGtkApp(Gtk.Application):
