@@ -377,7 +377,7 @@ class VirtualCameraDevice:
 
     def write_frame(self,
                     frame: bytes,
-                    completion: Optional[Callable[[bytes],
+                    completion: Optional[Callable[[int],
                                                   None]] = None) -> None:
         ...
 
