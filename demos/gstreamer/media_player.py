@@ -7,7 +7,6 @@
 
 from gi.repository import Gst, GstApp, GLib
 import argparse
-import time
 
 from daily import *
 
@@ -69,12 +68,6 @@ class GstApp:
         else:
             self.__player.set_state(Gst.State.PLAYING)
 
-    def on_leave(self, ignore, error):
-        if error:
-            print(f"Error leaving meeting: {error}")
-        self.__player.set_state(Gst.State.NULL)
-        self.__loop.quit()
-
     def run(self, meeting_url):
         self.__client.join(meeting_url, client_settings={
             "inputs": {
@@ -109,7 +102,10 @@ class GstApp:
         self.__loop.run()
 
     def leave(self):
-        self.__client.leave(completion=self.on_leave)
+        self.__client.leave()
+        self.__client.release()
+        self.__player.set_state(Gst.State.NULL)
+        self.__loop.quit()
 
     def on_message(self, bus, message):
         t = message.type
@@ -224,9 +220,6 @@ def main():
         print("Ctrl-C detected. Exiting!")
     finally:
         app.leave()
-
-    # Let leave finish
-    time.sleep(3)
 
 
 if __name__ == '__main__':

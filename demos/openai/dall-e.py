@@ -20,7 +20,6 @@ from openai import OpenAI
 
 import argparse
 import io
-import json
 import os
 import time
 import wave
@@ -141,6 +140,4 @@ if len(response.results) > 0 and len(response.results[0].alternatives) > 0:
         pass
 
 client.leave()
-
-# Let leave finish
-time.sleep(2)
+client.release()

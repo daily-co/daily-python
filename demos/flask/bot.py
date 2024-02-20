@@ -1,5 +1,4 @@
 import io
-import time
 import threading
 
 from daily import *
@@ -55,6 +54,7 @@ class Bot:
 
     def leave(self):
         self.__call_client.leave()
+        self.__call_client.release()
 
     def send_audio(self, microphone):
         self.__start_event.wait()

@@ -16,7 +16,6 @@ from google.cloud import texttospeech
 import argparse
 import io
 import time
-import wave
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
@@ -96,6 +95,4 @@ for sentence in sentences_file.readlines():
 time.sleep(2)
 
 client.leave()
-
-# Let leave finish
-time.sleep(2)
+client.release()

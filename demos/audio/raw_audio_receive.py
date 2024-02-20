@@ -15,7 +15,6 @@
 
 import argparse
 import sys
-import time
 import threading
 
 from daily import *
@@ -59,6 +58,7 @@ class ReceiveAudioApp:
         self.__app_quit = True
         self.__thread.join()
         self.__client.leave()
+        self.__client.release()
 
     def receive_audio(self):
         self.__start_event.wait()
@@ -89,9 +89,6 @@ def main():
         print("Ctrl-C detected. Exiting!", file=sys.stderr)
     finally:
         app.leave()
-
-    # Let leave finish
-    time.sleep(2)
 
 
 if __name__ == '__main__':

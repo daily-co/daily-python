@@ -88,6 +88,4 @@ for result in response.results:
     print(f"Transcript: {result.alternatives[0].transcript}")
 
 client.leave()
-
-# Let leave finish
-time.sleep(2)
+client.release()

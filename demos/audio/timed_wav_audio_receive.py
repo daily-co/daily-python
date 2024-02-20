@@ -99,9 +99,7 @@ def main():
         print("Ctrl-C detected. Exiting!")
     finally:
         client.leave()
-
-    # Let leave finish
-    time.sleep(2)
+        client.release()
 
 
 if __name__ == '__main__':

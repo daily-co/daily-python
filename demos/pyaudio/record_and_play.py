@@ -106,6 +106,7 @@ class PyAudioApp:
     def leave(self):
         self.__app_quit = True
         self.__client.leave()
+        self.__client.release()
         # This is not very pretty (taken from PyAudio docs).
         while self.__input_stream.is_active():
             time.sleep(0.1)
@@ -163,9 +164,6 @@ def main():
         print("Ctrl-C detected. Exiting!")
     finally:
         app.leave()
-
-    # Let leave finish
-    time.sleep(2)
 
 
 if __name__ == '__main__':

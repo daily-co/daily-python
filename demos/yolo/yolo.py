@@ -35,6 +35,7 @@ class DailyYOLO(EventHandler):
         self.__app_quit = True
         self.__thread.join()
         self.__client.leave()
+        self.__client.release()
 
     def on_participant_joined(self, participant):
         print(f"Participant {participant['id']} joined, analyzing frames...")
@@ -91,9 +92,6 @@ def main():
         print("Ctrl-C detected. Exiting!")
     finally:
         app.leave()
-
-    # Let leave finish
-    time.sleep(2)
 
 
 if __name__ == '__main__':
