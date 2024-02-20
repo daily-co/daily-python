@@ -5,15 +5,17 @@
 # Usage: python3 media_player.py -m MEETING_URL -i FILE
 #
 
-from gi.repository import Gst, GstApp, GLib
 import argparse
 
 from daily import *
 
 import gi
 
+# autopep8: off
 gi.require_version('Gst', '1.0')
 gi.require_version('GstApp', '1.0')
+from gi.repository import Gst, GstApp, GLib
+# autopep8: on
 
 VIDEO_WIDTH = 1280
 VIDEO_HEIGHT = 720
