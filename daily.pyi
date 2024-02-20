@@ -53,6 +53,9 @@ class CallClient:
     def __init__(self, event_handler: Optional[EventHandler] = None) -> None:
         ...
 
+    def release(self) -> None:
+        ...
+
     def join(self,
              meeting_url: str,
              meeting_token: Optional[str] = None,

@@ -5,6 +5,91 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+<!-- for new functionality -->
+
+- Added new `CallClient.release()` function to allow freeing resources even in
+  the event of `EventHandler` circular dependencies. It is common to have the
+  following code:
+
+```python
+class MyClient(EventHandler):
+
+  def __init__(self):
+    self.call_client=CallClient(event_handler=self)
+
+  ...
+```
+
+  If `MyClient` is a single application there shouldn't be any issues with
+  freeing resources when the application ends. However, if we have an
+  application that wants to create and release multiple `CallClient` instances
+  the previous approach won't work with Python's garbage collection since
+  there's a circular dependency. To solve this, we can now do:
+
+
+```python
+class MyClient(EventHandler):
+
+  def __init__(self):
+    self.call_client=CallClient(event_handler=self)
+
+  def leave(self):
+    self.call_client.leave()
+    self.call_client.release()
+
+  ...
+```
+
+  The new `CallClient.release()` function also blocks until all previous
+  asynchronous operations have completed, so it's another convenient way to
+  know, for example, when `CallClient.leave()` finishes.
+
+### Changed
+
+<!-- for changed functionality -->
+
+- n/a
+
+### Deprecated
+
+<!-- for soon-to-be removed functionality -->
+
+- n/a
+
+### Removed
+
+<!-- for removed functionality -->
+
+- n/a
+
+### Fixed
+
+<!-- for fixed bugs -->
+
+- n/a
+
+### Performance
+
+<!-- for performance-relevant changes -->
+
+- n/a
+
+### Security
+
+<!-- for security-relevant changes -->
+
+- n/a
+
+### Other
+
+<!-- for everything else -->
+
+- n/a
+
 ## [0.6.4] - 2024-02-28
 
 ### Fixed

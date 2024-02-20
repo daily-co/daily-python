@@ -47,6 +47,7 @@ pub(crate) struct PyCallClientDelegateFns {
 }
 
 pub(crate) struct PyCallClientInner {
+    pub(crate) event_handler_callback: Mutex<Option<PyObject>>,
     pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
     pub(crate) completions: Mutex<HashMap<u64, PyObject>>,
     pub(crate) video_renderers: Mutex<HashMap<u64, PyObject>>,
@@ -64,7 +65,6 @@ pub(crate) struct PyCallClientInner {
 #[derive(Clone)]
 pub(crate) struct DelegateContext {
     pub(crate) inner: Arc<PyCallClientInner>,
-    pub(crate) event_handler_callback: Option<PyObject>,
 }
 
 #[derive(Clone)]
@@ -200,7 +200,9 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     // use the getters inside the callback.
                     update_inner_values(py, delegate_ctx, action, args.clone());
 
-                    if let Some(callback) = &delegate_ctx.event_handler_callback {
+                    let callback = delegate_ctx.inner.event_handler_callback.lock().unwrap();
+
+                    if let Some(callback) = callback.as_ref() {
                         let py_args = PyTuple::new(py, args);
 
                         if let Err(error) = callback.call_method1(py, method_name, py_args) {
