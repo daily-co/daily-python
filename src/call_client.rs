@@ -49,7 +49,7 @@ unsafe impl Send for CallClientPtr {}
 /// :param class event_handler: A subclass of :class:`daily.EventHandler`
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
-    call_client: Option<CallClientPtr>,
+    call_client: Mutex<Option<CallClientPtr>>,
     inner: Arc<PyCallClientInner>,
     delegate_ctx_ptr: DelegateContextPtr,
 }
@@ -57,7 +57,7 @@ pub struct PyCallClient {
 impl PyCallClient {
     fn check_released(&self) -> PyResult<CallClientPtr> {
         // If we have already been released throw an exception.
-        if let Some(call_client) = self.call_client.as_ref() {
+        if let Some(call_client) = self.call_client.lock().unwrap().as_ref() {
             Ok(call_client.clone())
         } else {
             Err(exceptions::PyRuntimeError::new_err(
@@ -151,7 +151,7 @@ impl PyCallClient {
 
             Ok(Self {
                 inner,
-                call_client: Some(CallClientPtr { ptr: call_client }),
+                call_client: Mutex::new(Some(CallClientPtr { ptr: call_client })),
                 delegate_ctx_ptr: DelegateContextPtr {
                     ptr: delegate_ctx_ptr,
                 },
@@ -171,9 +171,17 @@ impl PyCallClient {
     /// during garbage collection. However, that's not guaranteed (e.g. if
     /// there's a circular dependency with the registered event handler),
     /// therefore it is strongly recommended to always call this function.
-    pub fn release(&mut self, py: Python<'_>) -> PyResult<()> {
+    pub fn release(&self, py: Python<'_>) -> PyResult<()> {
+        // Hold the call client lock for the whole function so no one else can
+        // grab it while we are releasing.
+        let mut call_client = self.call_client.lock().unwrap();
+
         // If we have already been released throw an exception.
-        let call_client = self.check_released()?;
+        if call_client.is_none() {
+            return Err(exceptions::PyRuntimeError::new_err(
+                "this object has already been released",
+            ));
+        }
 
         {
             // Cleanup video/audio delegates so they are not called during
@@ -186,14 +194,14 @@ impl PyCallClient {
             delegates.on_video_frame.take();
         }
 
-        let mut call_client = call_client.clone();
+        let mut call_client_cpy = call_client.as_ref().unwrap().clone();
 
         // Here we release the GIL so we can allow any event delegates to
         // finish. The event delegates will be waiting on the GIL and
         // execute at this point. But since we just cleanup the delegates
         // above, the events will actually be a no-op.
         py.allow_threads(move || unsafe {
-            daily_core_call_client_destroy(call_client.as_ptr());
+            daily_core_call_client_destroy(call_client_cpy.as_ptr());
         });
 
         // Remove any reference to the Python's event handler. This should get
@@ -207,7 +215,7 @@ impl PyCallClient {
         let _delegate_ctx = unsafe { Arc::from_raw(self.delegate_ctx_ptr.ptr) };
 
         // Release the call client pointer. We won't need it anymore.
-        self.call_client.take();
+        *call_client = None;
 
         Ok(())
     }
