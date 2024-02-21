@@ -49,10 +49,36 @@ unsafe impl Send for CallClientPtr {}
 /// :param class event_handler: A subclass of :class:`daily.EventHandler`
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
-    released: Mutex<bool>,
-    call_client: CallClientPtr,
+    call_client: Option<CallClientPtr>,
     inner: Arc<PyCallClientInner>,
     delegate_ctx_ptr: DelegateContextPtr,
+}
+
+impl PyCallClient {
+    fn check_released(&self) -> PyResult<CallClientPtr> {
+        // If we have already been released throw an exception.
+        if let Some(call_client) = self.call_client.as_ref() {
+            Ok(call_client.clone())
+        } else {
+            Err(exceptions::PyRuntimeError::new_err(
+                "this object has already been released",
+            ))
+        }
+    }
+
+    fn maybe_register_completion(&self, completion: Option<PyObject>) -> u64 {
+        let request_id = GLOBAL_CONTEXT.next_request_id();
+
+        if let Some(completion) = completion {
+            self.inner
+                .completions
+                .lock()
+                .unwrap()
+                .insert(request_id, completion);
+        }
+
+        request_id
+    }
 }
 
 #[pymethods]
@@ -125,8 +151,7 @@ impl PyCallClient {
 
             Ok(Self {
                 inner,
-                released: Mutex::new(false),
-                call_client: CallClientPtr { ptr: call_client },
+                call_client: Some(CallClientPtr { ptr: call_client }),
                 delegate_ctx_ptr: DelegateContextPtr {
                     ptr: delegate_ctx_ptr,
                 },
@@ -146,13 +171,9 @@ impl PyCallClient {
     /// during garbage collection. However, that's not guaranteed (e.g. if
     /// there's a circular dependency with the registered event handler),
     /// therefore it is strongly recommended to always call this function.
-    pub fn release(&mut self, py: Python<'_>) {
-        let mut released = self.released.lock().unwrap();
-
-        // If we have already been released just return.
-        if *released {
-            return;
-        }
+    pub fn release(&mut self, py: Python<'_>) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let call_client = self.check_released()?;
 
         {
             // Cleanup video/audio delegates so they are not called during
@@ -165,7 +186,7 @@ impl PyCallClient {
             delegates.on_video_frame.take();
         }
 
-        let mut call_client = self.call_client.clone();
+        let mut call_client = call_client.clone();
 
         // Here we release the GIL so we can allow any event delegates to
         // finish. The event delegates will be waiting on the GIL and
@@ -185,7 +206,10 @@ impl PyCallClient {
         // simply get rid of it.
         let _delegate_ctx = unsafe { Arc::from_raw(self.delegate_ctx_ptr.ptr) };
 
-        *released = true;
+        // Release the call client pointer. We won't need it anymore.
+        self.call_client.take();
+
+        Ok(())
     }
 
     /// Join a meeting given the `meeting_url` and the optional `meeting_token`
@@ -198,18 +222,14 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
-        &mut self,
+        &self,
         meeting_url: &str,
         meeting_token: Option<&str>,
         client_settings: Option<PyObject>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         // Meeting URL
         let meeting_url_cstr = CString::new(meeting_url).expect("invalid meeting URL string");
@@ -233,7 +253,7 @@ impl PyCallClient {
         unsafe {
             let request_id = self.maybe_register_completion(completion);
             daily_core_call_client_join(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 meeting_url_cstr.as_ptr(),
                 meeting_token_cstr
@@ -252,17 +272,13 @@ impl PyCallClient {
     ///
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
-    pub fn leave(&mut self, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn leave(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let request_id = self.maybe_register_completion(completion);
         unsafe {
-            daily_core_call_client_leave(self.call_client.as_mut(), request_id);
+            daily_core_call_client_leave(call_client.as_mut(), request_id);
         }
 
         Ok(())
@@ -273,20 +289,16 @@ impl PyCallClient {
     ///
     /// :param str user_name: This client's user name
     #[pyo3(signature = (user_name))]
-    pub fn set_user_name(&mut self, user_name: &str) -> PyResult<()> {
+    pub fn set_user_name(&self, user_name: &str) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let user_name_cstr = CString::new(user_name).expect("invalid user name string");
 
         let request_id = self.maybe_register_completion(None);
         unsafe {
             daily_core_call_client_set_user_name(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 user_name_cstr.as_ptr(),
             );
@@ -301,11 +313,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn active_speaker(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.active_speaker.lock().unwrap().clone())
     }
@@ -314,16 +322,12 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`CallParticipants`
     /// :rtype: dict
-    pub fn participants(&mut self) -> PyResult<PyObject> {
+    pub fn participants(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         unsafe {
-            let participants_ptr = daily_core_call_client_participants(self.call_client.as_mut());
+            let participants_ptr = daily_core_call_client_participants(call_client.as_mut());
             let participants_string = CStr::from_ptr(participants_ptr)
                 .to_string_lossy()
                 .into_owned();
@@ -341,11 +345,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn participant_counts(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.participant_counts.lock().unwrap().clone())
     }
@@ -356,16 +356,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
-        &mut self,
+        &self,
         remote_participants: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let remote_participants_map: HashMap<String, DictValue> =
             Python::with_gil(|py| remote_participants.extract(py).unwrap());
@@ -379,7 +375,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_remote_participants(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 remote_participants_cstr.as_ptr(),
             );
@@ -394,16 +390,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (ids, completion = None))]
     pub fn eject_remote_participants(
-        &mut self,
+        &self,
         ids: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let ids: Vec<String> = Python::with_gil(|py| ids.extract(py).unwrap());
 
@@ -415,7 +407,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_eject_remote_participants(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 ids_cstr.as_ptr(),
             );
@@ -431,11 +423,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn inputs(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.inputs.lock().unwrap().clone())
     }
@@ -447,16 +435,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (input_settings, completion = None))]
     pub fn update_inputs(
-        &mut self,
+        &self,
         input_settings: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let input_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| input_settings.extract(py).unwrap());
@@ -470,7 +454,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_inputs(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 input_settings_cstr.as_ptr(),
             );
@@ -487,11 +471,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn publishing(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.publishing.lock().unwrap().clone())
     }
@@ -503,16 +483,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (:ref:`PublishingSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
-        &mut self,
+        &self,
         publishing_settings: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let publishing_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| publishing_settings.extract(py).unwrap());
@@ -526,7 +502,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_publishing(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 publishing_settings_cstr.as_ptr(),
             );
@@ -542,11 +518,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn subscriptions(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.subscriptions.lock().unwrap().clone())
     }
@@ -561,17 +533,13 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (:ref:`ParticipantSubscriptions`, :ref:`CallClientError`)
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
-        &mut self,
+        &self,
         participant_settings: Option<PyObject>,
         profile_settings: Option<PyObject>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         // Participant subscription settings
         let participant_settings_cstr = Python::with_gil(|py| {
@@ -599,7 +567,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_subscriptions(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 participant_settings_cstr
                     .as_ref()
@@ -620,11 +588,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn subscription_profiles(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.subscription_profiles.lock().unwrap().clone())
     }
@@ -635,16 +599,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (:ref:`SubscriptionProfileSettings`, :ref:`CallClientError`)
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
-        &mut self,
+        &self,
         profile_settings: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let profile_settings_map: HashMap<String, DictValue> =
             Python::with_gil(|py| profile_settings.extract(py).unwrap());
@@ -657,7 +617,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_subscription_profiles(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 profile_settings_cstr.as_ptr(),
             );
@@ -674,16 +634,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(
-        &mut self,
+        &self,
         permissions: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let permissions_map: HashMap<String, DictValue> =
             Python::with_gil(|py| permissions.extract(py).unwrap());
@@ -696,7 +652,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_permissions(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 permissions_cstr.as_ptr(),
             );
@@ -713,12 +669,15 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
-        &mut self,
+        &self,
         streaming_settings: Option<PyObject>,
         stream_id: Option<&str>,
         force_new: Option<bool>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
         let mut settings_map: HashMap<String, DictValue> = HashMap::new();
 
         if let Some(stream_id) = stream_id {
@@ -748,7 +707,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_start_recording(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
             );
@@ -765,16 +724,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (stream_id = None, completion = None))]
     pub fn stop_recording(
-        &mut self,
+        &self,
         stream_id: Option<&str>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let stream_id_cstr = stream_id
             .map(|id| CString::new(id).expect("invalid stream id string"))
@@ -784,7 +739,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_stop_recording(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 stream_id_cstr
                     .as_ref()
@@ -804,17 +759,13 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_recording(
-        &mut self,
+        &self,
         update_settings: PyObject,
         stream_id: Option<&str>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let stream_id_cstr = stream_id
             .map(|id| CString::new(id).expect("invalid stream id string"))
@@ -830,7 +781,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_update_recording(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 update_settings_cstr.as_ptr(),
                 stream_id_cstr
@@ -849,16 +800,12 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_transcription(
-        &mut self,
+        &self,
         settings: Option<PyObject>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
@@ -873,7 +820,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_start_transcription(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
             );
@@ -888,18 +835,14 @@ impl PyCallClient {
     ///
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
-    pub fn stop_transcription(&mut self, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn stop_transcription(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let request_id = self.maybe_register_completion(completion);
 
         unsafe {
-            daily_core_call_client_stop_transcription(self.call_client.as_mut(), request_id);
+            daily_core_call_client_stop_transcription(call_client.as_mut(), request_id);
         }
 
         Ok(())
@@ -912,17 +855,13 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_dialout(
-        &mut self,
+        &self,
         py: Python<'_>,
         settings: Option<PyObject>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
@@ -936,7 +875,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_start_dialout(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
             );
@@ -950,18 +889,14 @@ impl PyCallClient {
     ///
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
-    pub fn stop_dialout(&mut self, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn stop_dialout(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let request_id = self.maybe_register_completion(completion);
 
         unsafe {
-            daily_core_call_client_stop_dialout(self.call_client.as_mut(), request_id);
+            daily_core_call_client_stop_dialout(call_client.as_mut(), request_id);
         }
 
         Ok(())
@@ -975,18 +910,14 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (message, participant = None , completion = None))]
     pub fn send_app_message(
-        &mut self,
+        &self,
         py: Python<'_>,
         message: PyObject,
         participant: Option<&str>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         if message.is_none(py) {
             return Err(exceptions::PyValueError::new_err(format!(
@@ -1012,7 +943,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_send_app_message(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 message_cstr.as_ptr(),
                 participant_cstr
@@ -1031,17 +962,13 @@ impl PyCallClient {
     /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
     #[pyo3(signature = (message, user_name = None, completion = None))]
     pub fn send_prebuilt_chat_message(
-        &mut self,
+        &self,
         message: &str,
         user_name: Option<&str>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let message_cstr = CString::new(message).expect("invalid message string");
 
@@ -1053,7 +980,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_send_prebuilt_chat_message(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 message_cstr.as_ptr(),
                 user_name_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
@@ -1070,11 +997,7 @@ impl PyCallClient {
     /// :rtype: dict
     pub fn get_network_stats(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        self.check_released()?;
 
         Ok(self.inner.network_stats.lock().unwrap().clone())
     }
@@ -1087,17 +1010,13 @@ impl PyCallClient {
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
     pub fn set_audio_renderer(
-        &mut self,
+        &self,
         participant_id: &str,
         callback: PyObject,
         audio_source: &str,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
         let audio_source_cstr = CString::new(audio_source).expect("invalid audio source string");
@@ -1114,7 +1033,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_set_participant_audio_renderer(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 request_id,
                 participant_cstr.as_ptr(),
@@ -1134,18 +1053,14 @@ impl PyCallClient {
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA"))]
     pub fn set_video_renderer(
-        &mut self,
+        &self,
         participant_id: &str,
         callback: PyObject,
         video_source: &str,
         color_format: &str,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
-        if *self.released.lock().unwrap() {
-            return Err(exceptions::PyRuntimeError::new_err(
-                "this object has already been released",
-            ));
-        }
+        let mut call_client = self.check_released()?;
 
         let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
         let video_source_cstr = CString::new(video_source).expect("invalid video source string");
@@ -1169,7 +1084,7 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_set_participant_video_renderer(
-                self.call_client.as_mut(),
+                call_client.as_mut(),
                 request_id,
                 request_id,
                 participant_cstr.as_ptr(),
@@ -1180,20 +1095,6 @@ impl PyCallClient {
 
         Ok(())
     }
-
-    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
-        let request_id = GLOBAL_CONTEXT.next_request_id();
-
-        if let Some(completion) = completion {
-            self.inner
-                .completions
-                .lock()
-                .unwrap()
-                .insert(request_id, completion);
-        }
-
-        request_id
-    }
 }
 
 impl Drop for PyCallClient {
@@ -1203,7 +1104,7 @@ impl Drop for PyCallClient {
         // dropping a pyclass object.
         let py = unsafe { Python::assume_gil_acquired() };
 
-        self.release(py);
+        let _ = self.release(py);
     }
 }
 
