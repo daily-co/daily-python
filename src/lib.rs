@@ -9,7 +9,7 @@ pub(crate) mod util;
 use call_client::{PyCallClient, PyEventHandler};
 use context::GLOBAL_CONTEXT;
 use media::{
-    PyAudioData, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
+    PyAudioData, PyNativeVad, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
     PyVirtualSpeakerDevice,
 };
 use std::sync::Mutex;
@@ -223,6 +223,25 @@ impl PyDaily {
     pub fn select_speaker_device(device_name: &str) -> PyResult<()> {
         GLOBAL_CONTEXT.select_speaker_device(device_name)
     }
+
+    /// Creates a new VAD analyzer. VADs are used to detect speech from an audio
+    /// stream.
+    ///
+    /// :param int reset_period_ms: The period in milliseconds after the VAD is internally reset
+    /// :param int sample_rate: Sample rate of the incoming audio frames
+    /// :param int channels: Number of channels (2 for stereo, 1 for mono) of the incoming audio frames
+    ///
+    /// :return: A new VAD
+    /// :rtype: :class:`daily.NativeVad`
+    #[staticmethod]
+    #[pyo3(signature = (reset_period_ms = 1000, sample_rate = 16000, channels = 1))]
+    pub fn create_native_vad(
+        reset_period_ms: u32,
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyNativeVad> {
+        GLOBAL_CONTEXT.create_native_vad(reset_period_ms, sample_rate, channels)
+    }
 }
 
 /// A Python module implemented in Rust.
@@ -232,6 +251,7 @@ fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyDaily>()?;
     m.add_class::<PyEventHandler>()?;
+    m.add_class::<PyNativeVad>()?;
     m.add_class::<PyVideoFrame>()?;
     m.add_class::<PyVirtualCameraDevice>()?;
     m.add_class::<PyVirtualMicrophoneDevice>()?;

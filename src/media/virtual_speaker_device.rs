@@ -8,10 +8,8 @@ use crate::GIL_MUTEX_HACK;
 use daily_core::prelude::daily_core_context_virtual_speaker_device_read_frames;
 
 use pyo3::exceptions;
-use pyo3::{
-    prelude::*,
-    types::{PyBytes, PyTuple},
-};
+use pyo3::prelude::*;
+use pyo3::types::{PyBytes, PyTuple};
 
 /// This class represents a virtual speaker device. Virtual speaker devices are
 /// used to receive audio from the meeting.

@@ -44,6 +44,13 @@ class Daily:
         ...
 
     @staticmethod
+    def create_native_vad(
+            reset_period_ms: int = 500,
+            sample_rate: int = 16000,
+            channels: int = 1) -> NativeVad:
+        ...
+
+    @staticmethod
     def select_speaker_device(device_name: str) -> None:
         ...
 
@@ -376,10 +383,7 @@ class VirtualCameraDevice:
     def color_format(self) -> str:
         ...
 
-    def write_frame(self,
-                    frame: bytes,
-                    completion: Optional[Callable[[int],
-                                                  None]] = None) -> None:
+    def write_frame(self, frame: bytes) -> None:
         ...
 
 
@@ -397,7 +401,8 @@ class VirtualMicrophoneDevice:
     def channels(self) -> int:
         ...
 
-    def write_frames(self, frame: bytes) -> None:
+    def write_frames(self, frame: bytes,
+                     completion: Optional[Callable[[int], None]] = None) -> int:
         ...
 
 
@@ -419,4 +424,22 @@ class VirtualSpeakerDevice:
                     num_frame: int,
                     completion: Optional[Callable[[bytes],
                                                   None]] = None) -> bytes:
+        ...
+
+
+class NativeVad:
+
+    @property
+    def rest_period_ms(self) -> int:
+        ...
+
+    @property
+    def sample_rate(self) -> int:
+        ...
+
+    @property
+    def channels(self) -> int:
+        ...
+
+    def analyze_frames(self, frame: bytes) -> float:
         ...

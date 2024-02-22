@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- for new functionality -->
 
+- Added initial support for low-level Voice Activity Detection (VAD).
+
+```python
+vad = Daily.create_native_vad(1000, 16000, 1)
+confidence = vad.analyze_frames(audio_frames)
+```
+
 - Added `includeRawResponse` field to `TranscriptionSettings`. If true, all
   incoming `TranscriptionMessage` will include a new `rawResponse` field with
   Deepgram's raw data.

@@ -2,12 +2,13 @@ use std::ffi::CString;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use crate::PyNativeVad;
 use crate::PyVirtualCameraDevice;
 use crate::PyVirtualMicrophoneDevice;
 use crate::PyVirtualSpeakerDevice;
 
 use webrtc_daily::sys::{
-    color_format::ColorFormat, device_manager::NativeDeviceManager,
+    color_format::ColorFormat, device_manager::NativeDeviceManager, vad::NativeWebrtcVad,
     virtual_camera_device::NativeVirtualCameraDevice,
     virtual_microphone_device::NativeVirtualMicrophoneDevice,
     virtual_speaker_device::NativeVirtualSpeakerDevice,
@@ -15,7 +16,7 @@ use webrtc_daily::sys::{
 
 use daily_core::prelude::{
     daily_core_context_create_audio_device_module, daily_core_context_create_device_manager,
-    daily_core_context_create_virtual_camera_device,
+    daily_core_context_create_vad, daily_core_context_create_virtual_camera_device,
     daily_core_context_create_virtual_microphone_device,
     daily_core_context_create_virtual_speaker_device,
     daily_core_context_device_manager_enumerated_devices,
@@ -41,8 +42,7 @@ impl DailyContext {
     pub fn new() -> Self {
         let device_manager_ptr = unsafe { daily_core_context_create_device_manager() };
 
-        let device_manager =
-            unsafe { NativeDeviceManager::from_unretained(device_manager_ptr as *mut _) };
+        let device_manager = NativeDeviceManager::from(device_manager_ptr as *mut _);
 
         Self {
             device_manager,
@@ -129,9 +129,8 @@ impl DailyContext {
                     color_format_cstr.as_ptr(),
                 );
 
-                py_device.attach_camera_device(NativeVirtualCameraDevice::from_unretained(
-                    camera_device as *mut _,
-                ));
+                py_device
+                    .attach_camera_device(NativeVirtualCameraDevice::from(camera_device as *mut _));
             }
 
             Ok(py_device)
@@ -195,6 +194,23 @@ impl DailyContext {
         }
 
         Ok(py_device)
+    }
+
+    pub fn create_native_vad(
+        &self,
+        reset_period_ms: u32,
+        sample_rate: u32,
+        channels: u8,
+    ) -> PyResult<PyNativeVad> {
+        let mut py_vad = PyNativeVad::new(reset_period_ms, sample_rate, channels);
+
+        unsafe {
+            let webrtc_vad = daily_core_context_create_vad(reset_period_ms, sample_rate, channels);
+
+            py_vad.attach_webrtc_vad(NativeWebrtcVad::from(webrtc_vad));
+        }
+
+        Ok(py_vad)
     }
 
     pub fn select_speaker_device(&self, device_name: &str) -> PyResult<()> {

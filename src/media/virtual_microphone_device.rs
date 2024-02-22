@@ -8,10 +8,8 @@ use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 use daily_core::prelude::daily_core_context_virtual_microphone_device_write_frames;
 
 use pyo3::exceptions;
-use pyo3::{
-    prelude::*,
-    types::{PyBytes, PyTuple},
-};
+use pyo3::prelude::*;
+use pyo3::types::{PyBytes, PyTuple};
 
 /// This class represents a virtual microphone device. Virtual microphone
 /// devices are used to send audio to the meeting.

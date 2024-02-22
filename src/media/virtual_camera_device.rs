@@ -10,7 +10,6 @@ use pyo3::types::PyBytes;
 
 /// This class represents a virtual camera device. Virtual camera
 /// devices are used to send video to the meeting.
-#[derive(Clone, Debug)]
 #[pyclass(name = "VirtualCameraDevice", module = "daily")]
 pub struct PyVirtualCameraDevice {
     device_name: String,
