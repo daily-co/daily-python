@@ -1,7 +1,6 @@
 #
 # This demo will join a Daily meeting and send raw audio received through the
-# standard input. The audio format is required to have a sample rate of 16000,
-# 16-bit per sample and mono audio channel.
+# standard input. The audio format is required to have 16-bit per sample.
 #
 # Usage: python3 raw_audio_send.py -m MEETING_URL
 #
@@ -19,12 +18,20 @@ import threading
 from daily import *
 
 
+SAMPLE_RATE = 16000
+NUM_CHANNELS = 1
+BYTES_PER_SAMPLE = 2
+
+
 class SendAudioApp:
-    def __init__(self):
+    def __init__(self, sample_rate, num_channels):
+        self.__sample_rate = sample_rate
+        self.__num_channels = num_channels
+
         self.__mic_device = Daily.create_microphone_device(
             "my-mic",
-            sample_rate=16000,
-            channels=1
+            sample_rate=sample_rate,
+            channels=num_channels
         )
 
         self.__client = CallClient()
@@ -77,8 +84,9 @@ class SendAudioApp:
             return
 
         while not self.__app_quit:
-            # 3200 bytes is 100ms (1600 * 2 bytes per sample)
-            buffer = sys.stdin.buffer.read(3200)
+            num_bytes = int(self.__sample_rate / 10) * \
+                self.__num_channels * BYTES_PER_SAMPLE
+            buffer = sys.stdin.buffer.read(num_bytes)
             if buffer:
                 self.__mic_device.write_frames(buffer)
 
@@ -86,11 +94,24 @@ class SendAudioApp:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument(
+        "-c",
+        "--channels",
+        type=int,
+        default=NUM_CHANNELS,
+        help="Number of channels")
+    parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=SAMPLE_RATE,
+        help="Sample rate")
+
     args = parser.parse_args()
 
     Daily.init()
 
-    app = SendAudioApp()
+    app = SendAudioApp(args.rate, args.channels)
 
     try:
         app.run(args.meeting)

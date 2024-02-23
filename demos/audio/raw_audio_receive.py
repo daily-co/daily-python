@@ -1,7 +1,6 @@
 #
 # This demo will join a Daily meeting and record the meeting audio into standard
-# output. The recorded audio will have a sample rate of 16000, 16-bit per sample
-# and mono audio channel.
+# output. The recorded audio format has 16-bit per sample.
 #
 # Usage: python3 raw_audio_receive.py -m MEETING_URL > FILE.raw
 #
@@ -19,13 +18,18 @@ import threading
 
 from daily import *
 
+SAMPLE_RATE = 16000
+NUM_CHANNELS = 1
+
 
 class ReceiveAudioApp:
-    def __init__(self):
+    def __init__(self, sample_rate, num_channels):
+        self.__sample_rate = sample_rate
+
         self.__speaker_device = Daily.create_speaker_device(
             "my-speaker",
-            sample_rate=16000,
-            channels=1
+            sample_rate=sample_rate,
+            channels=num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -69,7 +73,8 @@ class ReceiveAudioApp:
 
         while not self.__app_quit:
             # Read 100ms worth of audio frames.
-            buffer = self.__speaker_device.read_frames(1600)
+            buffer = self.__speaker_device.read_frames(
+                int(self.__sample_rate / 10))
             if len(buffer) > 0:
                 sys.stdout.buffer.write(buffer)
 
@@ -77,11 +82,24 @@ class ReceiveAudioApp:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
+    parser.add_argument(
+        "-c",
+        "--channels",
+        type=int,
+        default=NUM_CHANNELS,
+        help="Number of channels")
+    parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=SAMPLE_RATE,
+        help="Sample rate")
+
     args = parser.parse_args()
 
     Daily.init()
 
-    app = ReceiveAudioApp()
+    app = ReceiveAudioApp(args.rate, args.channels)
 
     try:
         app.run(args.meeting)
