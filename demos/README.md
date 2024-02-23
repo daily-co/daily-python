@@ -10,6 +10,7 @@ Here you can find a few demos that use Daily's Python SDK:
 - **openai**: A demo that takes spoken audio, converts it to text prompt, and uses [DALL-E](https://openai.com/dall-e) to generate an image.
 - **pyaudio**: A demo that shows how to use [PyAudio](https://www.qt.io/qt-for-python) to record and play audio with real microphones and speakers.
 - **qt**: A native [Qt](https://www.qt.io/qt-for-python) application that shows how to receive and render video frames for a participant.
+- **vad**: Voice Activity Detection (VAD) examples.
 - **video**: Examples on how to send and receive video or images.
 - **yolo**: A demo that detects objects in a participant's video feed using [YOLOv5](https://pypi.org/project/yolov5/).
 
