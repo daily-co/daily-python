@@ -123,7 +123,7 @@ class DailyGtkApp(Gtk.Application):
         if not error:
             self.__joined = True
 
-    def on_left(self, data, error):
+    def on_left(self, error):
         self.__frame = None
         self.__drawing_area.queue_draw()
         self.__joined = False

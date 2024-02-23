@@ -115,7 +115,7 @@ class DailyQtWidget(QtWidgets.QWidget):
         if not error:
             self.__joined = True
 
-    def on_left(self, data, error):
+    def on_left(self, error):
         self.__image_label.setPixmap(self.__black_frame)
         self.__joined = False
         if self.__save_audio:
