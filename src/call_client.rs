@@ -66,7 +66,7 @@ impl PyCallClient {
         }
     }
 
-    fn maybe_register_completion(&self, completion: Option<PyObject>) -> u64 {
+    fn maybe_register_completion(&self, completion: Option<PyCallClientCompletion>) -> u64 {
         let request_id = GLOBAL_CONTEXT.next_request_id();
 
         if let Some(completion) = completion {
@@ -259,7 +259,9 @@ impl PyCallClient {
         });
 
         unsafe {
-            let request_id = self.maybe_register_completion(completion);
+            let request_id =
+                self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
+
             daily_core_call_client_join(
                 call_client.as_mut(),
                 request_id,
@@ -278,13 +280,15 @@ impl PyCallClient {
 
     /// Leave a previously joined meeting.
     ///
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn leave(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
         unsafe {
             daily_core_call_client_leave(call_client.as_mut(), request_id);
         }
@@ -361,7 +365,7 @@ impl PyCallClient {
     /// Updates remote participants.
     ///
     /// :param dict remote_participants: See :ref:`RemoteParticipantUpdates`
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
         &self,
@@ -379,7 +383,8 @@ impl PyCallClient {
         let remote_participants_cstr =
             CString::new(remote_participants_string).expect("invalid remote participants string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_remote_participants(
@@ -395,7 +400,7 @@ impl PyCallClient {
     /// Ejects remote participants.
     ///
     /// :param list ids: A list of ids of remote participants to eject
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (ids, completion = None))]
     pub fn eject_remote_participants(
         &self,
@@ -411,7 +416,8 @@ impl PyCallClient {
 
         let ids_cstr = CString::new(ids_string).expect("invalid ids string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_eject_remote_participants(
@@ -458,7 +464,8 @@ impl PyCallClient {
         let input_settings_cstr =
             CString::new(input_settings_string).expect("invalid input settings string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_update_inputs(
@@ -506,7 +513,8 @@ impl PyCallClient {
         let publishing_settings_cstr =
             CString::new(publishing_settings_string).expect("invalid publishing settings string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_update_publishing(
@@ -571,7 +579,8 @@ impl PyCallClient {
                 .or(None)
         });
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_update_subscriptions(
@@ -621,7 +630,8 @@ impl PyCallClient {
         let profile_settings_cstr =
             CString::new(profile_settings_string).expect("invalid profile settings string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_update_subscription_profiles(
@@ -639,7 +649,7 @@ impl PyCallClient {
     /// meeting.
     ///
     /// :param dict permissions: See :ref:`ParticipantPermissions`
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(
         &self,
@@ -656,7 +666,8 @@ impl PyCallClient {
         let permissions_cstr =
             CString::new(permissions_string).expect("invalid permissions string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_permissions(
@@ -674,7 +685,7 @@ impl PyCallClient {
     /// :param dict streaming_settings: See :ref:`StreamingSettings`
     /// :param str stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
     /// :param str force_new: Whether to force a new recording
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
         &self,
@@ -711,7 +722,8 @@ impl PyCallClient {
             Some(CString::new(settings_string).expect("invalid recording settings string"))
         };
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_start_recording(
@@ -729,7 +741,7 @@ impl PyCallClient {
     /// stream ID.
     ///
     /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (stream_id = None, completion = None))]
     pub fn stop_recording(
         &self,
@@ -743,7 +755,8 @@ impl PyCallClient {
             .map(|id| CString::new(id).expect("invalid stream id string"))
             .or(None);
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_stop_recording(
@@ -764,7 +777,7 @@ impl PyCallClient {
     ///
     /// :param dict update_settings: See :ref:`StreamingUpdateSettings`
     /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_recording(
         &self,
@@ -785,7 +798,8 @@ impl PyCallClient {
         let update_settings_cstr =
             CString::new(update_settings_string).expect("invalid recording settings string");
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_recording(
@@ -805,7 +819,7 @@ impl PyCallClient {
     /// transcription admins when transcription is enabled in the Daily domain.
     ///
     /// :param dict settings: See :ref:`TranscriptionSettings`
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_transcription(
         &self,
@@ -824,7 +838,8 @@ impl PyCallClient {
             })
             .or(None);
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_start_transcription(
@@ -841,13 +856,14 @@ impl PyCallClient {
     /// meeting owners or transcription admins when transcription is enabled in
     /// the Daily domain.
     ///
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn stop_transcription(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_stop_transcription(call_client.as_mut(), request_id);
@@ -860,7 +876,7 @@ impl PyCallClient {
     /// dialout is enabled in the Daily domain.
     ///
     /// :param dict settings: See :ref:`DialoutSettings`
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_dialout(
         &self,
@@ -879,7 +895,8 @@ impl PyCallClient {
             })
             .or(None);
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_start_dialout(
@@ -895,13 +912,14 @@ impl PyCallClient {
     /// Stops a currently running dial-out service. This can be done by meeting
     /// owners when transcription is enabled in the Daily domain.
     ///
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn stop_dialout(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_stop_dialout(call_client.as_mut(), request_id);
@@ -915,7 +933,7 @@ impl PyCallClient {
     ///
     /// :param any message: The message to send (should be serializable to JSON)
     /// :param str participant: The participant to send the message to. Or `None` to broadcast the message
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (message, participant = None , completion = None))]
     pub fn send_app_message(
         &self,
@@ -947,7 +965,8 @@ impl PyCallClient {
             .map(|p| CString::new(p).expect("invalid participant string"))
             .or(None);
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_send_app_message(
@@ -967,7 +986,7 @@ impl PyCallClient {
     ///
     /// :param str message: The chat message to send
     /// :param str user_name: The user name that will appear as a sender of the message
-    /// :param func completion: An optional completion callback with two parameters: (None, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (message, user_name = None, completion = None))]
     pub fn send_prebuilt_chat_message(
         &self,
@@ -984,7 +1003,8 @@ impl PyCallClient {
             .map(|p| CString::new(p).expect("invalid user name string"))
             .or(None);
 
-        let request_id = self.maybe_register_completion(completion);
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_send_prebuilt_chat_message(

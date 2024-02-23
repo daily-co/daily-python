@@ -68,7 +68,7 @@ class CallClient:
         ...
 
     def leave(self, completion: Optional[Callable[[
-              None, Optional[str]], None]] = None) -> None:
+              Optional[str]], None]] = None) -> None:
         ...
 
     def set_user_name(self, user_name: str) -> None:
@@ -86,15 +86,13 @@ class CallClient:
     def update_remote_participants(self,
                                    remote_participants: Mapping[str,
                                                                 Any],
-                                   completion: Optional[Callable[[None,
-                                                                  Optional[str]],
+                                   completion: Optional[Callable[[Optional[str]],
                                                                  None]] = None) -> None:
         ...
 
     def eject_remote_participants(self,
                                   ids: Sequence[str],
-                                  completion: Optional[Callable[[None,
-                                                                 Optional[str]],
+                                  completion: Optional[Callable[[Optional[str]],
                                                                 None]] = None) -> None:
         ...
 
@@ -136,8 +134,7 @@ class CallClient:
     def update_permissions(self,
                            permissions: Mapping[str,
                                                 Any],
-                           completion: Optional[Callable[[None,
-                                                          Optional[str]],
+                           completion: Optional[Callable[[Optional[str]],
                                                          None]] = None) -> None:
         ...
 
@@ -146,15 +143,13 @@ class CallClient:
                                                              Any]] = None,
                         stream_id: Optional[str] = None,
                         force_new: Optional[bool] = None,
-                        completion: Optional[Callable[[None,
-                                                       Optional[str]],
+                        completion: Optional[Callable[[Optional[str]],
                                                       None]] = None) -> None:
         ...
 
     def stop_recording(self,
                        stream_id: Optional[str] = None,
-                       completion: Optional[Callable[[None,
-                                                      Optional[str]],
+                       completion: Optional[Callable[[Optional[str]],
                                                      None]] = None) -> None:
         ...
 
@@ -162,41 +157,44 @@ class CallClient:
                          update_settings: Optional[Mapping[str,
                                                            Any]] = None,
                          stream_id: Optional[str] = None,
-                         completion: Optional[Callable[[None,
-                                                        Optional[str]],
+                         completion: Optional[Callable[[Optional[str]],
                                                        None]] = None) -> None:
         ...
 
     def start_transcription(self,
                             settings: Optional[Mapping[str,
                                                        Any]] = None,
-                            completion: Optional[Callable[[None,
-                                                           Optional[str]],
+                            completion: Optional[Callable[[Optional[str]],
                                                           None]] = None) -> None:
         ...
 
-    def stop_transcription(self, completion: Optional[Callable[[
-                           None, Optional[str]], None]] = None) -> None:
+    def stop_transcription(
+            self, completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
         ...
 
     def start_dialout(self,
                       settings: Optional[Mapping[str,
                                                  Any]] = None,
-                      completion: Optional[Callable[[None,
-                                                     Optional[str]],
+                      completion: Optional[Callable[[Optional[str]],
                                                     None]] = None) -> None:
         ...
 
     def stop_dialout(self, completion: Optional[Callable[[
-                     None, Optional[str]], None]] = None) -> None:
+                     Optional[str]], None]] = None) -> None:
         ...
 
     def send_app_message(self,
                          message: Any,
                          participant: Optional[str] = None,
-                         completion: Optional[Callable[[None,
-                                                        Optional[str]],
+                         completion: Optional[Callable[[Optional[str]],
                                                        None]] = None) -> None:
+        ...
+
+    def send_prebuilt_chat_message(self,
+                                   message: str,
+                                   user_name: Optional[str] = None,
+                                   completion: Optional[Callable[[Optional[str]],
+                                                                 None]] = None) -> None:
         ...
 
     def get_network_stats(self) -> Mapping[str, Any]:

@@ -52,7 +52,23 @@ class MyClient(EventHandler):
 
 <!-- for changed functionality -->
 
-- n/a
+- ⚠️ Breaking change ⚠️: Completion callbacks now receive only the necessary
+  arguments. For example, before `CallClient.leave(completion=...)` completion
+  callback would receive `(None, Error | None)` arguments when it should only
+  receive `(Error | None)`.
+
+  This is the list of functions with completion callbacks that have been
+  affected:
+  `CallClient.leave()`, `CallClient.update_remote_participants()`,
+  `CallClient.eject_remote_participants()`, `CallClient.update_permissions()`,
+  `CallClient.start_recording()`, `CallClient.stop_recording()`,
+  `CallClient.update_recording()`, `CallClient.start_transcription()`,
+  `CallClient.stop_transcription()`, `CallClient.start_dialout()`,
+  `CallClient.stop_dialout()`, `CallClient.send_app_message()`,
+  `CallClient.send_prebuilt_chat_message()`.
+
+  If you use any of the completion callbacks from one of the functions listed
+  above, you simply need to remove the first argument from your callable.
 
 ### Deprecated
 

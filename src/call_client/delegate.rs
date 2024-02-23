@@ -14,11 +14,25 @@ use daily_core::prelude::*;
 use crate::GIL_MUTEX_HACK;
 
 use super::event::{
-    args_from_event, method_name_from_event_action, request_id_from_event, update_inner_values,
-    Event,
+    args_from_event, completion_args_from_event, method_name_from_event_action,
+    request_id_from_event, update_inner_values, Event,
 };
 
 use crate::{PyAudioData, PyVideoFrame};
+
+pub(crate) enum PyCallClientCompletion {
+    UnaryFn(PyObject),
+    BinaryFn(PyObject),
+}
+
+impl From<PyCallClientCompletion> for PyObject {
+    fn from(value: PyCallClientCompletion) -> Self {
+        match value {
+            PyCallClientCompletion::UnaryFn(c) => c,
+            PyCallClientCompletion::BinaryFn(c) => c,
+        }
+    }
+}
 
 type PyCallClientDelegateOnEventFn =
     unsafe fn(py: Python<'_>, delegate_ctx: &DelegateContext, event: &Event);
@@ -49,7 +63,7 @@ pub(crate) struct PyCallClientDelegateFns {
 pub(crate) struct PyCallClientInner {
     pub(crate) event_handler_callback: Mutex<Option<PyObject>>,
     pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
-    pub(crate) completions: Mutex<HashMap<u64, PyObject>>,
+    pub(crate) completions: Mutex<HashMap<u64, PyCallClientCompletion>>,
     pub(crate) video_renderers: Mutex<HashMap<u64, PyObject>>,
     pub(crate) audio_renderers: Mutex<HashMap<u64, PyObject>>,
     // Non-blocking updates
@@ -175,15 +189,17 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
             if let Some(request_id) = request_id_from_event(event) {
                 // Don't lock in the if statement otherwise the lock is held
                 // throughout the callback call.
-                let callback = delegate_ctx
+                let completion = delegate_ctx
                     .inner
                     .completions
                     .lock()
                     .unwrap()
                     .remove(&request_id);
-                if let Some(callback) = callback {
-                    if let Some(args) = args_from_event(event) {
+                if let Some(completion) = completion {
+                    if let Some(args) = completion_args_from_event(&completion, event) {
                         let py_args = PyTuple::new(py, args);
+
+                        let callback: PyObject = completion.into();
 
                         if let Err(error) = callback.call1(py, py_args) {
                             error.write_unraisable(py, None);

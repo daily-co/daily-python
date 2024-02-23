@@ -1,6 +1,6 @@
 use crate::util::dict::DictValue;
 
-use super::delegate::DelegateContext;
+use super::delegate::{DelegateContext, PyCallClientCompletion};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -67,7 +67,7 @@ pub(crate) fn request_id_from_event(event: &Event) -> Option<u64> {
 }
 
 pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
-    let object = event.data.0.as_object().unwrap();
+    let object = event.data.0.as_object().expect("event should be an object");
     match event.action.as_str() {
         "active-speaker-changed" => object
             .get("participant")
@@ -154,20 +154,6 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "recording-stopped" => object
             .get("streamId")
             .map(|stream_id| vec![DictValue(stream_id.clone())]),
-        "request-completed" => {
-            if let Some(request_success) = object.get("requestSuccess") {
-                Some(vec![
-                    DictValue(request_success.clone()),
-                    DictValue(Value::Null),
-                ])
-            } else if let Some(request_error) = object.get("requestError") {
-                request_error
-                    .get("msg")
-                    .map(|msg| vec![DictValue(Value::Null), DictValue(msg.clone())])
-            } else {
-                Some(vec![DictValue(Value::Null), DictValue(Value::Null)])
-            }
-        }
         "subscription-profiles-updated" => object
             .get("profiles")
             .map(|profiles| vec![DictValue(profiles.clone())]),
@@ -194,6 +180,45 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
             }
         }
         a => panic!("args for event {a} not supported"),
+    }
+}
+
+pub(crate) fn completion_args_from_event(
+    completion: &PyCallClientCompletion,
+    event: &Event,
+) -> Option<Vec<DictValue>> {
+    let object = event.data.0.as_object().expect("event should be an object");
+    match event.action.as_str() {
+        "request-completed" => {
+            if let Some(request_success) = object.get("requestSuccess") {
+                let args = match completion {
+                    PyCallClientCompletion::UnaryFn(_) => {
+                        vec![DictValue(Value::Null)]
+                    }
+                    PyCallClientCompletion::BinaryFn(_) => {
+                        vec![DictValue(request_success.clone()), DictValue(Value::Null)]
+                    }
+                };
+                Some(args)
+            } else if let Some(request_error) = object.get("requestError") {
+                let args = request_error.get("msg").map(|msg| match completion {
+                    PyCallClientCompletion::UnaryFn(_) => vec![DictValue(msg.clone())],
+                    PyCallClientCompletion::BinaryFn(_) => {
+                        vec![DictValue(Value::Null), DictValue(msg.clone())]
+                    }
+                });
+                Some(args.unwrap())
+            } else {
+                let args = match completion {
+                    PyCallClientCompletion::UnaryFn(_) => {
+                        vec![DictValue(Value::Null)]
+                    }
+                    _ => panic!("completion binary functions should have an error or success"),
+                };
+                Some(args)
+            }
+        }
+        a => panic!("completion args for event {a} not supported"),
     }
 }
 
