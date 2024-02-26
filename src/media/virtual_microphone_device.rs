@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::{collections::HashMap, sync::Mutex};
 
+use crate::util::memory::AlignedI16Data;
 use crate::GIL_MUTEX_HACK;
 
 use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
@@ -114,20 +115,20 @@ impl PyVirtualMicrophoneDevice {
             ));
         }
 
-        let bytes_length = frames.len()?;
+        let num_bytes = frames.len()?;
         let bytes_per_sample = 2;
 
         // libwebrtc needs 16-bit linear PCM samples
-        if bytes_length % bytes_per_sample != 0 {
+        if num_bytes % bytes_per_sample != 0 {
             return Err(exceptions::PyValueError::new_err(
                 "frames bytestring should contain 16-bit samples",
             ));
         }
 
-        let num_frames = (bytes_length / bytes_per_sample) / self.channels as usize;
+        let num_frames = (num_bytes / bytes_per_sample) / self.channels as usize;
 
-        // TODO(aleix): Should this be i16 aligned?
         let bytes = frames.as_bytes();
+        let aligned = AlignedI16Data::new(bytes);
 
         let request_id = self.maybe_register_completion(completion);
 
@@ -135,7 +136,7 @@ impl PyVirtualMicrophoneDevice {
             let frames_written = py.allow_threads(move || unsafe {
                 daily_core_context_virtual_microphone_device_write_frames(
                     self.audio_device.as_ref().unwrap().as_ptr() as *mut _,
-                    bytes.as_ptr() as *const _,
+                    aligned.as_ptr(),
                     num_frames,
                     request_id,
                     on_write_frames,

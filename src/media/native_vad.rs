@@ -1,3 +1,5 @@
+use crate::util::memory::AlignedI16Data;
+
 use webrtc_daily::sys::vad::NativeWebrtcVad;
 
 use daily_core::prelude::daily_core_context_vad_analyze;
@@ -76,26 +78,26 @@ impl PyNativeVad {
     /// :return: The probability (from 0 to 1.0) that speech was detected
     /// :rtype: float
     fn analyze_frames(&self, frames: &PyBytes) -> PyResult<f32> {
-        // TODO(aleix): Should this be i16 aligned?
-        let bytes = frames.as_bytes();
-
-        let bytes_length = frames.len()?;
+        let num_bytes = frames.len()?;
         let bytes_per_sample = 2;
 
         // libwebrtc needs 16-bit linear PCM samples
-        if bytes_length % bytes_per_sample != 0 {
+        if num_bytes % bytes_per_sample != 0 {
             return Err(exceptions::PyValueError::new_err(
                 "frames bytestring should contain 16-bit samples",
             ));
         }
 
-        let num_frames = (bytes_length / bytes_per_sample) / self.channels as usize;
+        let num_frames = (num_bytes / bytes_per_sample) / self.channels as usize;
+
+        let bytes = frames.as_bytes();
+        let aligned = AlignedI16Data::new(bytes);
 
         let confidence = Python::with_gil(|py| {
             py.allow_threads(move || unsafe {
                 daily_core_context_vad_analyze(
                     self.webrtc_vad.as_ref().unwrap().as_ptr() as *mut _,
-                    bytes.as_ptr() as *const _,
+                    aligned.as_ptr(),
                     num_frames,
                 )
             })
