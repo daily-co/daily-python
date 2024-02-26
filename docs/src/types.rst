@@ -811,6 +811,8 @@ TranscriptionMessage
      - string
    * - "timestamp"
      - string (ISO 8601)
+   * - "rawResponse"
+     - Mapping[str, Any] (includes Deepgram's response if `includeRawResponse` was enabled)
 
 .. _TranscriptionSettings:
 
@@ -838,7 +840,9 @@ TranscriptionSettings
    * - "endpointing"
      - bool | number (see Deepgram's `Endpointing <https://developers.deepgram.com/docs/endpointing>`_)
    * - "extra"
-     - dict (any additional Deepgram settings)
+     - Mapping[str, Any] (any additional Deepgram settings)
+   * - "includeRawResponse"
+     - bool (whether Deepgram's raw response should be included in all transcription messages)
 
 .. _TranscriptionStatus:
 

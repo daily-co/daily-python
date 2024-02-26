@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- for new functionality -->
 
+- Added `includeRawResponse` field to `TranscriptionSettings`. If true, all
+  incoming `TranscriptionMessage` will include a new `rawResponse` field with
+  Deepgram's raw data.
+
 - Added new `CallClient.release()` function to allow freeing resources even in
   the event of `EventHandler` circular dependencies. It is common to have the
   following code:
