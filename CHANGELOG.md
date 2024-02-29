@@ -5,11 +5,9 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2024-02-29
 
 ### Added
-
-<!-- for new functionality -->
 
 - Added initial support for low-level Voice Activity Detection (VAD).
 
@@ -61,8 +59,6 @@ class MyClient(EventHandler):
 
 ### Changed
 
-<!-- for changed functionality -->
-
 - ⚠️ Breaking change ⚠️: Completion callbacks now receive only the necessary
   arguments. For example, before `CallClient.leave(completion=...)` completion
   callback would receive `(None, Error | None)` arguments when it should only
@@ -81,41 +77,9 @@ class MyClient(EventHandler):
   If you use any of the completion callbacks from one of the functions listed
   above, you simply need to remove the first argument from your callable.
 
-### Deprecated
-
-<!-- for soon-to-be removed functionality -->
-
-- n/a
-
-### Removed
-
-<!-- for removed functionality -->
-
-- n/a
-
-### Fixed
-
-<!-- for fixed bugs -->
-
-- n/a
-
-### Performance
-
-<!-- for performance-relevant changes -->
-
-- n/a
-
-### Security
-
-<!-- for security-relevant changes -->
-
-- n/a
-
 ### Other
 
-<!-- for everything else -->
-
-- n/a
+- Updated demos to use the new `CallClient.release()` function.
 
 ## [0.6.4] - 2024-02-28
 
