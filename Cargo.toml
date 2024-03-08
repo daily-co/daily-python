@@ -2,7 +2,7 @@
 name = "daily-python"
 version = "0.7.1"
 edition = "2021"
-license = "LicenseRef-Daily-co-Proprietary"
+license = "BSD 2-Clause License"
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
