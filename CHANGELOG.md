@@ -5,6 +5,56 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+<!-- for new functionality -->
+
+- n/a
+
+### Changed
+
+<!-- for changed functionality -->
+
+- n/a
+
+### Deprecated
+
+<!-- for soon-to-be removed functionality -->
+
+- n/a
+
+### Removed
+
+<!-- for removed functionality -->
+
+- n/a
+
+### Fixed
+
+<!-- for fixed bugs -->
+
+- n/a
+
+### Performance
+
+<!-- for performance-relevant changes -->
+
+- n/a
+
+### Security
+
+<!-- for security-relevant changes -->
+
+- n/a
+
+### Other
+
+<!-- for everything else -->
+
+- n/a
+
 ## [0.7.1] - 2024-03-08
 
 ### Fixed
