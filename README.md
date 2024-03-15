@@ -2,7 +2,14 @@
 
 The Daily client SDK for Python allows you to build video and audio calling into your native desktop and server applications.
 
-This SDK is well suited to build AI applications on the server side as it can be easily integrated with well-known Python libraries such as [YOLOv5](https://github.com/ultralytics/yolov5), [PyTorch](https://pytorch.org), [OpenCV](https://opencv.org/), or [numpy](https://numpy.org).
+![daily-python](./daily-python.gif)
+
+This SDK is well suited to build AI applications on the server side as it can be
+easily integrated with well-known Python libraries such as
+[OpenAI](https://github.com/openai/openai-python),
+[Deepgram](https://github.com/deepgram/deepgram-python-sdk),
+[YOLOv5](https://github.com/ultralytics/yolov5), [PyTorch](https://pytorch.org),
+[OpenCV](https://opencv.org/) and much more.
 
 The SDK's core features include:
 
