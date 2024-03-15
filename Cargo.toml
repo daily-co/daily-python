@@ -11,18 +11,18 @@ name = "daily"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.20.0", features = ["abi3-py37"] }
+pyo3 = { version = "0.20.3", features = ["abi3-py37"] }
 daily-core = { path = "../daily-core" }
-futures = { version = "0.3.23", default_features = false, features = [
+futures = { version = "0.3.30", default_features = false, features = [
   "std",
   "executor",
 ] }
 lazy_static = "1.4.0"
-libc = "0.2.132"
-serde = { version = "1.0.143", default_features = false, features = ["derive"] }
-serde_json = "1.0.83"
-tracing = "0.1.37"
-uuid = { version = "1.1.2", default_features = false, features = [
+libc = "0.2.153"
+serde = { version = "1.0.197", default_features = false, features = ["derive"] }
+serde_json = "1.0.114"
+tracing = "0.1.40"
+uuid = { version = "1.7.0", default_features = false, features = [
   "serde",
   "v4",
 ] }
