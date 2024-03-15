@@ -3,6 +3,7 @@
 Here you can find a few demos that use Daily's Python SDK:
 
 - **audio**: Examples on how to send and receive RAW audio or WAV files.
+- **deepgram**: An example showing how to use Deepgram [Text-To-Speech](https://developers.deepgram.com/docs/text-to-speech) API.
 - **flask**: A demo that uses [Flask](https://flask.palletsprojects.com/) and [Celery](https://docs.celeryq.dev/) to launch multiple concurrent audio bots.
 - **google**: Audio examples using Google [Speech-To-Text](https://cloud.google.com/speech-to-text) and [Text-To-Speech](https://cloud.google.com/text-to-speech) APIs.
 - **gstreamer**: A media player based on [GStreamer](https://gstreamer.freedesktop.org/) that sends a video file into a meeting.

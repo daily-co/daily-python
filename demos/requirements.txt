@@ -1,4 +1,5 @@
 celery==5.3.6
+deepgram-sdk==3.2.1
 flask==3.0.1
 google-cloud-speech==2.24.0
 google-cloud-texttospeech==2.16.0

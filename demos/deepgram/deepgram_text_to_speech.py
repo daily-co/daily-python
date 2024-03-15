@@ -1,21 +1,24 @@
 #
 # This demo will join a Daily meeting and, given a text file with senteces (one
-# per line), will translate text into audio using Google Text-To-Speech API and
-# will send it into the meeting.
+# per line), will translate text into audio using Deepgram's Text-To-Speech API
+# and will send it into the meeting.
 #
-# The demo requires Google Speech-To-Text credentials.
+# The demo requires a Deepgram API key set in the DG_API_KEY environment variable.
 #
-# See https://cloud.google.com/text-to-speech/docs/before-you-begin
+# See https://developers.deepgram.com/docs/text-to-speech
 #
-# Usage: python3 google_speech_to_text.py -m MEETING_URL -i FILE
+# Usage: python3 deepgram_speech_to_text.py -m MEETING_URL -i FILE
 #
-
-from daily import *
-from google.cloud import texttospeech
 
 import argparse
-import io
+import os
 import time
+
+from daily import *
+from deepgram import (
+    DeepgramClient,
+    SpeakOptions,
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
@@ -57,17 +60,14 @@ time.sleep(3)
 
 sentences_file = open(args.input, "r")
 
-voice = texttospeech.VoiceSelectionParams(
-    language_code="en-US", name="en-US-Studio-M"
-)
+deepgram = DeepgramClient(api_key=os.getenv("DG_API_KEY"))
 
-audio_config = texttospeech.AudioConfig(
-    audio_encoding=texttospeech.AudioEncoding.LINEAR16,
-    speaking_rate=1.0,
-    sample_rate_hertz=16000
+speak_options = SpeakOptions(
+    model="aura-asteria-en",
+    encoding="linear16",
+    sample_rate="16000",
+    container="none"
 )
-
-speech_client = texttospeech.TextToSpeechClient()
 
 print()
 
@@ -75,21 +75,14 @@ for sentence in sentences_file.readlines():
     print(f"Processing: {sentence.strip()}")
     print()
 
-    synthesis_input = texttospeech.SynthesisInput(text=sentence.strip())
+    speak_source = {
+        "text": sentence.strip()
+    }
 
-    response = speech_client.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
-
-    # Create an in-memory buffer with API's response.
-    stream = io.BytesIO(response.audio_content)
-
-    # The API response includes a WAV RIFF header, so we want to skip that since
-    # that's not part of the audio samples.
-    stream.read(44)
+    response = deepgram.speak.v("1").stream(speak_source, speak_options)
 
     # Send all the audio frames to the microphone.
-    microphone.write_frames(stream.read())
+    microphone.write_frames(response.stream.read())
 
 # Let everything finish
 time.sleep(2)
