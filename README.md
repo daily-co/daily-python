@@ -2,7 +2,7 @@
 
 The Daily client SDK for Python allows you to build video and audio calling into your native desktop and server applications.
 
-![daily-python](./daily-python.gif)
+![daily-python](https://github.com/daily-co/daily-python/blob/main/daily-python.gif?raw=true)
 
 This SDK is well suited to build AI applications on the server side as it can be
 easily integrated with well-known Python libraries such as
