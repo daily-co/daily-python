@@ -389,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "daily-core"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "async-trait",
  "console_log",
@@ -467,7 +467,7 @@ dependencies = [
 
 [[package]]
 name = "daily-python"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "daily-core",
  "futures",
@@ -2264,7 +2264,7 @@ dependencies = [
 [[package]]
 name = "tracing-oslog"
 version = "0.1.2"
-source = "git+https://github.com/daily-co/tracing-oslog#031efac6ae17adbe186d3391240e8b717f33f532"
+source = "git+https://github.com/daily-co/tracing-oslog?tag=daily-0.0.2#741353361176898043964f530ec3e3ffb644bc07"
 dependencies = [
  "bindgen 0.64.0",
  "cc",
