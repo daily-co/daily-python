@@ -446,7 +446,7 @@ impl PyCallClient {
     /// client video and audio inputs.
     ///
     /// :param dict input_settings: See :ref:`InputSettings`
-    /// :param func completion: An optional completion callback with two parameters: (:ref:`InputSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (input_settings, completion = None))]
     pub fn update_inputs(
         &self,
@@ -465,7 +465,7 @@ impl PyCallClient {
             CString::new(input_settings_string).expect("invalid input settings string");
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_inputs(
@@ -495,7 +495,7 @@ impl PyCallClient {
     /// client video and audio publishing settings.
     ///
     /// :param dict publishing_settings: See :ref:`PublishingSettings`
-    /// :param func completion: An optional completion callback with two parameters: (:ref:`PublishingSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
         &self,
@@ -514,7 +514,7 @@ impl PyCallClient {
             CString::new(publishing_settings_string).expect("invalid publishing settings string");
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_publishing(
@@ -546,7 +546,7 @@ impl PyCallClient {
     ///
     /// :param dict participant_settings: See :ref:`ParticipantSubscriptions`
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: An optional completion callback with two parameters: (:ref:`ParticipantSubscriptions`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &self,
@@ -580,7 +580,7 @@ impl PyCallClient {
         });
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_subscriptions(
@@ -613,7 +613,7 @@ impl PyCallClient {
     /// Updates subscription profiles.
     ///
     /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: An optional completion callback with two parameters: (:ref:`SubscriptionProfileSettings`, :ref:`CallClientError`)
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
         &self,
@@ -631,7 +631,7 @@ impl PyCallClient {
             CString::new(profile_settings_string).expect("invalid profile settings string");
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
             daily_core_call_client_update_subscription_profiles(

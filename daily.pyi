@@ -107,14 +107,14 @@ class CallClient:
         ...
 
     def update_inputs(self, input_settings: Mapping[str, Any], completion: Optional[Callable[[
-                      Optional[Mapping[str, Any]], Optional[str]], None]] = None) -> None:
+                      Optional[str]], None]] = None) -> None:
         ...
 
     def publishing(self) -> Mapping[str, Any]:
         ...
 
     def update_publishing(self, publishing_settings: Mapping[str, Any], completion: Optional[Callable[[
-                          Optional[Mapping[str, Any]], Optional[str]], None]] = None) -> None:
+                          Optional[str]], None]] = None) -> None:
         ...
 
     def subscriptions(self) -> Mapping[str, Any]:
@@ -125,17 +125,17 @@ class CallClient:
                                                                     Any]] = None,
                              profile_settings: Optional[Mapping[str,
                                                                 Any]] = None,
-                             completion: Optional[Callable[[Optional[Mapping[str,
-                                                                             Any]],
-                                                            Optional[str]],
-                                                           None]] = None) -> None:
+                             completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
         ...
 
     def subscription_profiles(self) -> Mapping[str, Any]:
         ...
 
-    def update_subscription_profiles(self, profile_settings: Mapping[str, Any], completion: Optional[Callable[[
-                                     Optional[Mapping[str, Any]], Optional[str]], None]] = None) -> None:
+    def update_subscription_profiles(self,
+                                     profile_settings: Mapping[str,
+                                                               Any],
+                                     completion: Optional[Callable[[Optional[str]],
+                                                                   None]] = None) -> None:
         ...
 
     def update_permissions(self,
@@ -321,65 +321,65 @@ class EventHandler:
 
 class AudioData:
 
-    @property
+    @ property
     def bits_per_sample(self) -> int:
         ...
 
-    @property
+    @ property
     def sample_rate(self) -> int:
         ...
 
-    @property
+    @ property
     def num_channels(self) -> int:
         ...
 
-    @property
+    @ property
     def num_audio_frames(self) -> int:
         ...
 
-    @property
+    @ property
     def audio_frames(self) -> bytes:
         ...
 
 
 class VideoFrame:
 
-    @property
+    @ property
     def buffer(self) -> bytes:
         ...
 
-    @property
+    @ property
     def width(self) -> int:
         ...
 
-    @property
+    @ property
     def height(self) -> int:
         ...
 
-    @property
+    @ property
     def timestamp_us(self) -> int:
         ...
 
-    @property
+    @ property
     def color_format(self) -> str:
         ...
 
 
 class VirtualCameraDevice:
 
-    @property
+    @ property
     def name(self) -> str:
         ...
 
-    @property
+    @ property
     def width(self) -> int:
         ...
 
-    @property
+    @ property
     def height(self) -> int:
         ...
 
-    @property
+    @ property
     def color_format(self) -> str:
         ...
 
@@ -389,15 +389,15 @@ class VirtualCameraDevice:
 
 class VirtualMicrophoneDevice:
 
-    @property
+    @ property
     def name(self) -> str:
         ...
 
-    @property
+    @ property
     def sample_rate(self) -> int:
         ...
 
-    @property
+    @ property
     def channels(self) -> int:
         ...
 
@@ -408,15 +408,15 @@ class VirtualMicrophoneDevice:
 
 class VirtualSpeakerDevice:
 
-    @property
+    @ property
     def name(self) -> str:
         ...
 
-    @property
+    @ property
     def sample_rate(self) -> int:
         ...
 
-    @property
+    @ property
     def channels(self) -> int:
         ...
 
@@ -429,15 +429,15 @@ class VirtualSpeakerDevice:
 
 class NativeVad:
 
-    @property
+    @ property
     def rest_period_ms(self) -> int:
         ...
 
-    @property
+    @ property
     def sample_rate(self) -> int:
         ...
 
-    @property
+    @ property
     def channels(self) -> int:
         ...
 
