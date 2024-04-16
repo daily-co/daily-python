@@ -104,10 +104,12 @@ class GstApp:
         self.__loop.run()
 
     def leave(self):
-        self.__client.leave()
-        self.__client.release()
-        self.__player.set_state(Gst.State.NULL)
-        self.__loop.quit()
+        if self.__client:
+            self.__client.leave()
+            self.__client.release()
+            self.__player.set_state(Gst.State.NULL)
+            self.__loop.quit()
+            self.__client = None
 
     def on_message(self, bus, message):
         t = message.type
