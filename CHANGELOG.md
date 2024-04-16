@@ -5,35 +5,9 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-<!-- for new functionality -->
-
-- n/a
-
-### Changed
-
-<!-- for changed functionality -->
-
-- n/a
-
-### Deprecated
-
-<!-- for soon-to-be removed functionality -->
-
-- n/a
-
-### Removed
-
-<!-- for removed functionality -->
-
-- n/a
+## [0.7.4] - 2024-04-16
 
 ### Fixed
-
-<!-- for fixed bugs -->
 
 - Fixed a crash caused by the following completion callbacks:
   `CallClient.update_inputs()`, `CallClient.update_publishing()`,
@@ -41,23 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `CallClient.update_subscription_profiles()`. The signature of the functions
   was wrongly documented as only a single `error` argument is passed.
 
-### Performance
-
-<!-- for performance-relevant changes -->
-
-- n/a
-
-### Security
-
-<!-- for security-relevant changes -->
-
-- n/a
-
-### Other
-
-<!-- for everything else -->
-
-- n/a
+- Fixed issue when calling `CallClient.update_publishing()` immediately after
+  `CallClient.update_inputs()`.
 
 ## [0.7.3] - 2024-04-09
 

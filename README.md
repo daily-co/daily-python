@@ -1,3 +1,6 @@
+[![PyPI](https://img.shields.io/pypi/v/daily-python)](https://pypi.org/project/daily-python)
+[![Docs](https://img.shields.io/badge/API-docs-00CC00)](https://reference-python.daily.co/)
+
 # Daily Client SDK for Python
 
 The Daily client SDK for Python allows you to build video and audio calling into your native desktop and server applications.
