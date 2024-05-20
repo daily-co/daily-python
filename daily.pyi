@@ -214,9 +214,7 @@ class EventHandler:
             self, participant: Mapping[str, Any]) -> None:
         ...
 
-    def on_app_message(self,
-                       message: Mapping[str, Any],
-                       sender: Mapping[str, Any]) -> None:
+    def on_app_message(self, message: Any, sender: str) -> None:
         ...
 
     def on_available_devices_updated(
