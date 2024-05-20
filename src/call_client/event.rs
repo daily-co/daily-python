@@ -20,6 +20,10 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "app-message" => "on_app_message",
         "available-devices-updated" => "on_available_devices_updated",
         "call-state-updated" => "on_call_state_updated",
+        "dialout-connected" => "on_dialout_connected",
+        "dialout-error" => "on_dialout_error",
+        "dialout-stopped" => "on_dialout_stopped",
+        "dialout-warning" => "on_dialout_warning",
         "error" => "on_error",
         "inputs-updated" => "on_inputs_updated",
         "live-stream-error" => "on_live_stream_error",
@@ -87,11 +91,13 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "call-state-updated" => object
             .get("state")
             .map(|state| vec![DictValue(state.clone())]),
-
+        "dialout-connected" => Some(vec![DictValue(Value::Object(object.clone()))]),
+        "dialout-error" => Some(vec![DictValue(Value::Object(object.clone()))]),
+        "dialout-stopped" => Some(vec![DictValue(Value::Object(object.clone()))]),
+        "dialout-warning" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "error" => object
             .get("message")
             .map(|message| vec![DictValue(message.clone())]),
-
         "inputs-updated" => object
             .get("inputs")
             .map(|inputs| vec![DictValue(inputs.clone())]),

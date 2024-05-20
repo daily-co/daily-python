@@ -198,6 +198,23 @@ CustomVideoEncoding
    * - "parameters"
      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
 
+.. _DialoutEvent:
+
+DialoutEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "participantId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "message"
+     - string
 
 .. _DialoutSettings:
 
