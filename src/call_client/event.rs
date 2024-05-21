@@ -20,6 +20,7 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "app-message" => "on_app_message",
         "available-devices-updated" => "on_available_devices_updated",
         "call-state-updated" => "on_call_state_updated",
+        "dialin-ready" => "on_dialin_ready",
         "dialout-connected" => "on_dialout_connected",
         "dialout-error" => "on_dialout_error",
         "dialout-stopped" => "on_dialout_stopped",
@@ -91,6 +92,9 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "call-state-updated" => object
             .get("state")
             .map(|state| vec![DictValue(state.clone())]),
+        "dialin-ready" => object
+            .get("sipEndpoint")
+            .map(|sip_endpoint| vec![DictValue(sip_endpoint.clone())]),
         "dialout-connected" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialout-error" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialout-stopped" => Some(vec![DictValue(Value::Object(object.clone()))]),

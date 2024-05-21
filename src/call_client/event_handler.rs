@@ -57,6 +57,15 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted when dial-in is ready. This happens after the room has
+    /// connected to the SIP endpoint and the system is ready to receive dial-in
+    /// calls.
+    ///
+    /// :param string sip_endpoint: The SIP endpoint the room has connected to
+    fn on_dialin_ready(&self, sip_endpoint: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted when the session with the dial-out remote end is
     /// established.
     ///
