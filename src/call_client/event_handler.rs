@@ -69,7 +69,7 @@ impl PyEventHandler {
     /// Event emitted when the session with the dial-out remote end is
     /// established.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DailoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_connected(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
@@ -79,22 +79,22 @@ impl PyEventHandler {
     /// fatal to the media/SIP pipeline and will result in dialout-error being
     /// triggered.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DailoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_error(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the dial-out remote end disconnects the call or the
-    /// call is stopped by calling :ref:`daily.CallClient.stop_dialout`.
+    /// call is stopped by calling :func:`daily.CallClient.stop_dialout`.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DailoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_stopped(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a dial-out warning occurs.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DailoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_warning(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
