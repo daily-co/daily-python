@@ -873,7 +873,7 @@ impl PyCallClient {
     }
 
     /// Starts a dial-out service. This can be done by meeting owners when
-    /// dialout is enabled in the Daily domain.
+    /// dial-out is enabled in the Daily domain.
     ///
     /// :param dict settings: See :ref:`DialoutSettings`
     /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
@@ -910,19 +910,26 @@ impl PyCallClient {
     }
 
     /// Stops a currently running dial-out service. This can be done by meeting
-    /// owners when transcription is enabled in the Daily domain.
+    /// owners when dial-out is enabled in the Daily domain.
     ///
+    /// :param str participant: The participant of the dial-out session to stop
     /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (completion = None))]
-    pub fn stop_dialout(&self, completion: Option<PyObject>) -> PyResult<()> {
+    #[pyo3(signature = (participant, completion = None))]
+    pub fn stop_dialout(&self, participant: &str, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
+
+        let participant_cstr = CString::new(participant).expect("invalid participant string");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
-            daily_core_call_client_stop_dialout(call_client.as_mut(), request_id);
+            daily_core_call_client_stop_dialout(
+                call_client.as_mut(),
+                request_id,
+                participant_cstr.as_ptr(),
+            );
         }
 
         Ok(())

@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Dial-Out events `dialout-connected`, `dialout-stopped`, `dialout-error`
   and `dialout-warning`.
 
+### Changed
+
+- `CallClient.stop_dialout()` now takes the participant ID of the dial-out
+  session we want to stop.
+
 ## [0.7.4] - 2024-04-16
 
 ### Fixed
