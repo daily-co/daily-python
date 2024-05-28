@@ -12,7 +12,6 @@ use media::{
     PyAudioData, PyNativeVad, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
     PyVirtualSpeakerDevice,
 };
-use std::sync::Mutex;
 
 use std::env;
 use std::ffi::CString;
@@ -30,15 +29,6 @@ use pyo3::prelude::*;
 
 const DAILY_PYTHON_NAME: &str = "daily-python";
 const DAILY_PYTHON_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-// NOTE(aleix): This is a global mutex to solve an issue with
-// Python::with_gil. We call Python::with_gil from multiple threads (events,
-// video and audio renderers) and it seems that sometimes it's possible to
-// acquire the GIL more than once which leads to deadlocks. So, to temporary
-// avoid this issue we create a global mutex to protect the GIL.
-lazy_static! {
-    pub(crate) static ref GIL_MUTEX_HACK: Mutex<i32> = Mutex::new(0);
-}
 
 unsafe extern "C" fn set_audio_device(
     _delegate: *mut libc::c_void,

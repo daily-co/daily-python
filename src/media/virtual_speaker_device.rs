@@ -3,8 +3,6 @@ use std::{collections::HashMap, sync::Mutex};
 
 use webrtc_daily::sys::virtual_speaker_device::NativeVirtualSpeakerDevice;
 
-use crate::GIL_MUTEX_HACK;
-
 use daily_core::prelude::daily_core_context_virtual_speaker_device_read_frames;
 
 use pyo3::exceptions;
@@ -168,8 +166,6 @@ pub(crate) unsafe extern "C" fn on_read_frames(
 ) {
     let speaker: &mut PyVirtualSpeakerDevice =
         unsafe { &mut *(device as *mut PyVirtualSpeakerDevice) };
-
-    let _lock = GIL_MUTEX_HACK.lock().unwrap();
 
     Python::with_gil(|py| {
         let completion = speaker.completions.lock().unwrap().remove(&request_id);

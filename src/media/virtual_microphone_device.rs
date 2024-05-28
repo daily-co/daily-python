@@ -2,7 +2,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::{collections::HashMap, sync::Mutex};
 
 use crate::util::memory::AlignedI16Data;
-use crate::GIL_MUTEX_HACK;
 
 use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 
@@ -162,8 +161,6 @@ pub(crate) unsafe extern "C" fn on_write_frames(
 ) {
     let microphone: &mut PyVirtualMicrophoneDevice =
         unsafe { &mut *(device as *mut PyVirtualMicrophoneDevice) };
-
-    let _lock = GIL_MUTEX_HACK.lock().unwrap();
 
     Python::with_gil(|py| {
         let completion = microphone.completions.lock().unwrap().remove(&request_id);

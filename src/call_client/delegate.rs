@@ -11,8 +11,6 @@ use pyo3::{
 
 use daily_core::prelude::*;
 
-use crate::GIL_MUTEX_HACK;
-
 use super::event::{
     args_from_event, completion_args_from_event, method_name_from_event_action,
     request_id_from_event, update_inner_values, Event,
@@ -93,8 +91,6 @@ pub(crate) unsafe extern "C" fn on_event_native(
     event_json: *const libc::c_char,
     _json_len: isize,
 ) {
-    let _lock = GIL_MUTEX_HACK.lock().unwrap();
-
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
@@ -127,8 +123,6 @@ pub(crate) unsafe extern "C" fn on_audio_data_native(
     peer_id: *const libc::c_char,
     audio_data: *const NativeAudioData,
 ) {
-    let _lock = GIL_MUTEX_HACK.lock().unwrap();
-
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
@@ -158,8 +152,6 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
     peer_id: *const libc::c_char,
     frame: *const NativeVideoFrame,
 ) {
-    let _lock = GIL_MUTEX_HACK.lock().unwrap();
-
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
