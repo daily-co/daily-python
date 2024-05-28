@@ -90,7 +90,7 @@ impl PyCallClient {
         // Make sure the event handler has the right type.
         if let Some(event_handler) = event_handler.clone() {
             let is_event_handler =
-                Python::with_gil(|py| event_handler.as_ref(py).is_instance_of::<PyEventHandler>());
+                Python::with_gil(|py| event_handler.bind(py).is_instance_of::<PyEventHandler>());
 
             if !is_event_handler {
                 return Err(exceptions::PyTypeError::new_err(

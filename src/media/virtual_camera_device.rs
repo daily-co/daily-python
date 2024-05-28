@@ -80,7 +80,7 @@ impl PyVirtualCameraDevice {
     /// :ref:`ColorFormat`) specified when creating the camera.
     ///
     /// :param bytestring frame: A bytestring with the video frame contents
-    pub fn write_frame(&self, py: Python<'_>, frame: &PyBytes) -> PyResult<()> {
+    pub fn write_frame(&self, py: Python<'_>, frame: &Bound<'_, PyBytes>) -> PyResult<()> {
         if let Some(camera_device) = self.camera_device.as_ref() {
             let bytes_length = frame.len()?;
 

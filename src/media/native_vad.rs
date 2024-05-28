@@ -77,7 +77,7 @@ impl PyNativeVad {
     ///
     /// :return: The probability (from 0 to 1.0) that speech was detected
     /// :rtype: float
-    fn analyze_frames(&self, frames: &PyBytes) -> PyResult<f32> {
+    fn analyze_frames(&self, frames: &Bound<'_, PyBytes>) -> PyResult<f32> {
         let num_bytes = frames.len()?;
         let bytes_per_sample = 2;
 

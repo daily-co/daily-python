@@ -22,7 +22,7 @@ impl PyEventHandler {
     // just use a *args extra positional arguments trick.
     #[new]
     #[pyo3(signature = (*args))]
-    fn new(args: &PyTuple) -> PyResult<Self> {
+    fn new(args: &Bound<'_, PyTuple>) -> PyResult<Self> {
         Ok(Self {})
     }
 

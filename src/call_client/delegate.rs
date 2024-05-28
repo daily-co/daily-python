@@ -197,12 +197,12 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     .remove(&request_id);
                 if let Some(completion) = completion {
                     if let Some(args) = completion_args_from_event(&completion, event) {
-                        let py_args = PyTuple::new(py, args);
+                        let py_args = PyTuple::new_bound(py, args);
 
                         let callback: PyObject = completion.into();
 
                         if let Err(error) = callback.call1(py, py_args) {
-                            error.write_unraisable(py, None);
+                            error.write_unraisable_bound(py, None);
                         }
                     }
                 }
@@ -219,10 +219,10 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     let callback = delegate_ctx.inner.event_handler_callback.lock().unwrap();
 
                     if let Some(callback) = callback.as_ref() {
-                        let py_args = PyTuple::new(py, args);
+                        let py_args = PyTuple::new_bound(py, args);
 
                         if let Err(error) = callback.call_method1(py, method_name, py_args) {
-                            error.write_unraisable(py, None);
+                            error.write_unraisable_bound(py, None);
                         }
                     }
                 }
@@ -260,13 +260,13 @@ pub(crate) unsafe fn on_audio_data(
             sample_rate: (*data).sample_rate,
             num_channels: (*data).num_channels,
             num_audio_frames: (*data).num_audio_frames,
-            audio_frames: PyBytes::from_ptr(py, (*data).audio_frames, num_bytes).into_py(py),
+            audio_frames: PyBytes::bound_from_ptr(py, (*data).audio_frames, num_bytes).into_py(py),
         };
 
-        let args = PyTuple::new(py, &[peer_id.into_py(py), audio_data.into_py(py)]);
+        let args = PyTuple::new_bound(py, &[peer_id.into_py(py), audio_data.into_py(py)]);
 
         if let Err(error) = callback.call1(py, args) {
-            error.write_unraisable(py, None);
+            error.write_unraisable_bound(py, None);
         }
     }
 }
@@ -296,17 +296,17 @@ pub(crate) unsafe fn on_video_frame(
             .into_owned();
 
         let video_frame = PyVideoFrame {
-            buffer: PyBytes::from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
+            buffer: PyBytes::bound_from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
             width: (*frame).width,
             height: (*frame).height,
             timestamp_us: (*frame).timestamp_us,
             color_format: color_format.into_py(py),
         };
 
-        let args = PyTuple::new(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
+        let args = PyTuple::new_bound(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
 
         if let Err(error) = callback.call1(py, args) {
-            error.write_unraisable(py, None);
+            error.write_unraisable_bound(py, None);
         }
     }
 }

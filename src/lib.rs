@@ -246,7 +246,7 @@ impl PyDaily {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn daily(_py: Python, m: &PyModule) -> PyResult<()> {
+fn daily(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAudioData>()?;
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyDaily>()?;

@@ -145,11 +145,11 @@ impl PyVirtualSpeakerDevice {
 
             if frames_read == num_frames as i32 {
                 let py_bytes =
-                    unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
+                    unsafe { PyBytes::bound_from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
                 Ok(py_bytes.into_py(py))
             } else if frames_read == 0 {
                 let empty_bytes: [u8; 0] = [];
-                let py_bytes = PyBytes::new(py, &empty_bytes);
+                let py_bytes = PyBytes::new_bound(py, &empty_bytes);
                 Ok(py_bytes.into_py(py))
             } else {
                 Err(exceptions::PyIOError::new_err(
@@ -178,12 +178,12 @@ pub(crate) unsafe extern "C" fn on_read_frames(
             let bytes_per_sample = 2;
             let num_bytes = num_frames * speaker.channels() as usize * bytes_per_sample;
 
-            let py_bytes = unsafe { PyBytes::from_ptr(py, frames as *const u8, num_bytes) };
+            let py_bytes = unsafe { PyBytes::bound_from_ptr(py, frames as *const u8, num_bytes) };
 
-            let args = PyTuple::new(py, [py_bytes]);
+            let args = PyTuple::new_bound(py, [py_bytes]);
 
             if let Err(error) = completion.call1(py, args) {
-                error.write_unraisable(py, None);
+                error.write_unraisable_bound(py, None);
             }
         }
     })

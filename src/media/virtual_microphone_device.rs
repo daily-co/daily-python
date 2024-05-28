@@ -106,7 +106,7 @@ impl PyVirtualMicrophoneDevice {
     #[pyo3(signature = (frames, completion = None))]
     pub fn write_frames(
         &mut self,
-        frames: &PyBytes,
+        frames: &Bound<'_, PyBytes>,
         completion: Option<PyObject>,
     ) -> PyResult<PyObject> {
         if self.audio_device.is_none() {
@@ -168,11 +168,11 @@ pub(crate) unsafe extern "C" fn on_write_frames(
     Python::with_gil(|py| {
         let completion = microphone.completions.lock().unwrap().remove(&request_id);
 
-        let args = PyTuple::new(py, &[num_frames.into_py(py)]);
+        let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
 
         if let Some(completion) = completion {
             if let Err(error) = completion.call1(py, args) {
-                error.write_unraisable(py, None);
+                error.write_unraisable_bound(py, None);
             }
         }
     })
