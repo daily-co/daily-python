@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed an issue with audio/video renderers that was preventing renderers to be
+  removed when participants leave.
+
 ### Performance
 
 - CPU and memory performance improvements.
