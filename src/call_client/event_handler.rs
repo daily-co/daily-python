@@ -74,6 +74,14 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted when the session with the dial-out remote end is
+    /// answered.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
+    fn on_dialin_answered(&self, data: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted in the case of dial-out errors which are fatal and the
     /// service cannot proceed. For example, an error in SDP negotiation is
     /// fatal to the media/SIP pipeline and will result in dialout-error being
@@ -92,7 +100,8 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Event emitted when a dial-out warning occurs.
+    /// Event emitted there is a dial-out non-fatal error, such as the selected
+    /// codec not being used and a fallback codec being utilized.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_warning(&self, data: PyObject) -> PyResult<()> {
