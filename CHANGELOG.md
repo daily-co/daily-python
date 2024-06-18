@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added dial-out events `dialout-answered`.
 
+### Other
+
+- Added new example `demos/audio/async_wav_audio_send.py` that shows how to use
+  `asyncio` with completion callbacks.
+
 ## [0.9.1] - 2024-05-29
 
 ### Fixed
