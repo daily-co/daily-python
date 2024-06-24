@@ -173,14 +173,19 @@ pub(crate) unsafe extern "C" fn on_read_frames(
         if let Some(completion) = completion {
             let bytes_per_sample = 2;
             let num_bytes = num_frames * speaker.channels() as usize * bytes_per_sample;
+            let empty_bytes: [u8; 0] = [];
 
-            let py_bytes = unsafe { PyBytes::bound_from_ptr(py, frames as *const u8, num_bytes) };
+            let py_bytes = if num_bytes > 0 {
+                unsafe { PyBytes::bound_from_ptr(py, frames as *const u8, num_bytes) }
+            } else {
+                PyBytes::new_bound(py, &empty_bytes)
+            };
 
             let args = PyTuple::new_bound(py, [py_bytes]);
 
             if let Err(error) = completion.call1(py, args) {
                 error.write_unraisable_bound(py, None);
             }
-        }
+        };
     })
 }
