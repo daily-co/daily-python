@@ -99,6 +99,20 @@ CallParticipants
      - `Participant`_
 
 
+.. _CallState:
+
+CallState
+-----------------------------------
+
+"initialized" | "joining" | "joined" | "leaving" | "left"
+
+A new :class:`daily.CallClient` instance starts in the `initialized` state. As soon as
+:func:`daily.CallClient.join` is invoked, it progresses to the `joining` state,
+and when the client has joined the call, it progresses further to the `joined`
+state. As soon as :func:`daily.CallClient.leave` is invoked, the state changes
+to `leaving`, followed by `left` when this process has completed.
+
+
 .. _CanAdminPermission:
 
 CanAdminPermission
@@ -172,20 +186,6 @@ ColorFormat
 -----------------------------------
 
 "ABGR" | "ARGB" | "BGRA" | "RGBA" | "RGB" | "I420"
-
-
-.. _CallState:
-
-CallState
------------------------------------
-
-"initialized" | "joining" | "joined" | "leaving" | "left"
-
-A new :class:`daily.CallClient` instance starts in the `initialized` state. As soon as
-:func:`daily.CallClient.join` is invoked, it progresses to the `joining` state,
-and when the client has joined the call, it progresses further to the `joined`
-state. As soon as :func:`daily.CallClient.leave` is invoked, the state changes
-to `leaving`, followed by `left` when this process has completed.
 
 
 .. _CustomVideoEncoding:
@@ -542,6 +542,25 @@ ParticipantInfo
      - string
 
 
+.. _ParticipantInputs:
+
+ParticipantInputs
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "camera"
+     - bool
+   * - "microphone"
+     - bool
+   * - "screenShare"
+     - bool
+
+
 .. _ParticipantLeftReason:
 
 ParticipantLeftReason
@@ -588,25 +607,6 @@ ParticipantMediaInfo
      - "receivable" | "playable" | "loading" | "interrupted" | "blocked" | "off"
    * - "subscribed"
      - "subscribed" | "unsubscribed" | "staged"
-
-
-.. _ParticipantInputs:
-
-ParticipantInputs
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "camera"
-     - bool
-   * - "microphone"
-     - bool
-   * - "screenShare"
-     - bool
 
 
 .. _ParticipantPermissions:
@@ -745,6 +745,88 @@ RemoteParticipantUpdates
      - `ParticipantUpdate`_
 
 
+.. _StreamingAudioSettings:
+
+StreamingAudioSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "bitrate"
+     - number
+
+
+.. _StreamingLayout:
+
+StreamingLayout
+-----------------------------------
+
+For more details see the `layout object <https://docs.daily.co/reference/daily-js/instance-methods/start-recording#control-cloud-recording-layouts>`_.
+
+
+.. _StreamingSettings:
+
+StreamingSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "video"
+     - `StreamingVideoSettings`_
+   * - "audio"
+     - `StreamingAudioSettings`_
+   * - "maxDuration"
+     - number
+   * - "layout"
+     - `StreamingLayout`_
+
+
+.. _StreamingUpdateSettings:
+
+StreamingUpdateSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "layout"
+     - `StreamingLayout`_
+
+
+.. _StreamingVideoSettings:
+
+StreamingVideoSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "width"
+     - number
+   * - "height"
+     - number
+   * - "fps"
+     - number
+   * - "backgroundColor"
+     - string (#rrggbb | #aarrggbb)
+   * - "bitrate"
+     - number
+
+
 .. _SubscriptionMediaSettings:
 
 SubscriptionMediaSettings
@@ -797,82 +879,6 @@ SubscriptionVideoSettings
    * - "settings"
      - `ReceiveVideoSettings`_
 
-.. _StreamingLayout:
-
-StreamingLayout
------------------------------------
-
-For more details see the `layout object <https://docs.daily.co/reference/daily-js/instance-methods/start-recording#control-cloud-recording-layouts>`_.
-
-.. _StreamingSettings:
-
-StreamingSettings
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "video"
-     - `StreamingVideoSettings`_
-   * - "audio"
-     - `StreamingAudioSettings`_
-   * - "maxDuration"
-     - number
-   * - "layout"
-     - `StreamingLayout`_
-
-.. _StreamingAudioSettings:
-
-StreamingAudioSettings
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "bitrate"
-     - number
-
-.. _StreamingUpdateSettings:
-
-StreamingUpdateSettings
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "layout"
-     - `StreamingLayout`_
-
-.. _StreamingVideoSettings:
-
-StreamingVideoSettings
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "width"
-     - number
-   * - "height"
-     - number
-   * - "fps"
-     - number
-   * - "backgroundColor"
-     - string (#rrggbb | #aarrggbb)
-   * - "bitrate"
-     - number
 
 .. _TranscriptionMessage:
 
