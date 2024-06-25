@@ -181,6 +181,12 @@ CallState
 
 "initialized" | "joining" | "joined" | "leaving" | "left"
 
+A new :class:`daily.CallClient` instance starts in the `initialized` state. As soon as
+:func:`daily.CallClient.join` is invoked, it progresses to the `joining` state,
+and when the client has joined the call, it progresses further to the `joined`
+state. As soon as :func:`daily.CallClient.leave` is invoked, the state changes
+to `leaving`, followed by `left` when this process has completed.
+
 
 .. _CustomVideoEncoding:
 
@@ -197,6 +203,7 @@ CustomVideoEncoding
      - "low" | "medium" | "high"
    * - "parameters"
      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
+
 
 .. _DialoutEvent:
 
@@ -215,6 +222,7 @@ DialoutEvent
      - string
    * - "message"
      - string
+
 
 .. _DialoutSettings:
 
