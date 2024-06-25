@@ -233,6 +233,61 @@ DialoutSettings
      - string
 
 
+.. _IceConfig:
+
+IceConfig
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "placement"
+     - `IceConfigPlacement`_
+   * - "iceServers"
+     - [ `IceServer`_ ]
+
+
+.. _IceConfigPlacement:
+
+IceConfigPlacement
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Value
+     - Description
+   * - "replace"
+     - Only the provided ICE servers are used
+   * - "back"
+     - The Daily-provided ICE servers are included first
+   * - "front"
+     - The provided ICE servers are included in the array first. This is the default behavior.
+
+
+.. _IceServer:
+
+IceServer
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "credential"
+     - string
+   * - "urls"
+     - [ string ]
+   * - "username"
+     - string
+
+
 .. _InputSettings:
 
 InputSettings

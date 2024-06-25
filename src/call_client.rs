@@ -221,6 +221,83 @@ impl PyCallClient {
         Ok(())
     }
 
+    /// Sets a proxy URL for this client. For users whose firewall policies
+    /// prevent them from directly accessing Daily’s web domains, using a proxy
+    /// URL provide a mechanism to send connections to Daily's HTTPS and
+    /// WebSocket endpoints to a specified proxy server instead.
+    ///
+    /// :param str|None proxy_url: The proxy URL to use or `None` to unset the current proxy.
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (proxy_url = None, completion = None))]
+    pub fn set_proxy_url(
+        &self,
+        proxy_url: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let proxy_url_cstr = proxy_url
+            .map(|url| CString::new(url).expect("invalid proxy URL string"))
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_set_proxy_url(
+                call_client.as_mut(),
+                request_id,
+                proxy_url_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Allows for specifying custom TURN servers rather than only using Daily's
+    /// default TURN servers.
+    ///
+    /// :param Mapping[str, Any]|None ice_config: See :ref:`IceConfig` or `None` to unset the current ICE config
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (ice_config = None, completion = None))]
+    pub fn set_ice_config(
+        &self,
+        ice_config: Option<PyObject>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        // Participant subscription settings
+        let ice_config_cstr = Python::with_gil(|py| {
+            ice_config
+                .map(|config| {
+                    let config_map: HashMap<String, DictValue> = config.extract(py).unwrap();
+                    let config_string = serde_json::to_string(&config_map).unwrap();
+                    CString::new(config_string).expect("invalid ICE config string")
+                })
+                .or(None)
+        });
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_set_ice_config(
+                call_client.as_mut(),
+                request_id,
+                ice_config_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Join a meeting given the `meeting_url` and the optional `meeting_token`
     /// and `client_settings`. The client settings specifie inputs updates or
     /// publising settings.
@@ -301,7 +378,6 @@ impl PyCallClient {
     /// might be able to see as a description of this client.
     ///
     /// :param str user_name: This client's user name
-    #[pyo3(signature = (user_name))]
     pub fn set_user_name(&self, user_name: &str) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;

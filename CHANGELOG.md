@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for specifying custom TURN servers via
+  `CallClient.set_ice_config()`.
+
+- Added support for specifying a proxy URL via `CallClient.set_proxy_url()`.
+
 ### Fixed
 
 - Fixed an issue that caused app messages sent from the REST API to not be
@@ -22,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `daily.pyi` type completions.
 
-## [0.10.1] - 2024-06-24
+## [0.10.1] - 2024-06-25
 
 ### Fixed
 
