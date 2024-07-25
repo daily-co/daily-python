@@ -221,29 +221,25 @@ class EventHandler:
             self, available_devices: Mapping[str, Any]) -> None:
         ...
 
-    def on_call_state_updated(self, state: Mapping[str, Any]) -> None:
+    def on_call_state_updated(self, state: str) -> None:
         ...
 
-    def on_error(self, message: Mapping[str, Any]) -> None:
+    def on_error(self, message: str) -> None:
         ...
 
     def on_inputs_updated(self, input_settings: Mapping[str, Any]) -> None:
         ...
 
-    def on_live_stream_error(self,
-                             stream_id: Mapping[str, Any],
-                             message: Mapping[str, Any]) -> None:
+    def on_live_stream_error(self, stream_id: str, message: str) -> None:
         ...
 
     def on_live_stream_started(self, status: Mapping[str, Any]) -> None:
         ...
 
-    def on_live_stream_stopped(self, stream_id: Mapping[str, Any]) -> None:
+    def on_live_stream_stopped(self, stream_id: str) -> None:
         ...
 
-    def on_live_stream_warning(self,
-                               stream_id: Mapping[str, Any],
-                               message: Mapping[str, Any]) -> None:
+    def on_live_stream_warning(self, stream_id: str, message: str) -> None:
         ...
 
     def on_network_stats_updated(self, stats: Mapping[str, Any]) -> None:
@@ -257,7 +253,7 @@ class EventHandler:
 
     def on_participant_left(self,
                             participant: Mapping[str, Any],
-                            reason: Mapping[str, Any]) -> None:
+                            reason: str) -> None:
         ...
 
     def on_participant_updated(self, participant: Mapping[str, Any]) -> None:
@@ -267,15 +263,13 @@ class EventHandler:
             self, publishing_settings: Mapping[str, Any]) -> None:
         ...
 
-    def on_recording_error(self,
-                           stream_id: Mapping[str, Any],
-                           message: Mapping[str, Any]) -> None:
+    def on_recording_error(self, stream_id: str, message: str) -> None:
         ...
 
     def on_recording_started(self, status: Mapping[str, Any]) -> None:
         ...
 
-    def on_recording_stopped(self, stream_id: Mapping[str, Any]) -> None:
+    def on_recording_stopped(self, stream_id: str) -> None:
         ...
 
     def on_subscription_profiles_updated(
@@ -286,7 +280,7 @@ class EventHandler:
             self, subscriptions: Mapping[str, Any]) -> None:
         ...
 
-    def on_transcription_error(self, message: Mapping[str, Any]) -> None:
+    def on_transcription_error(self, message: str) -> None:
         ...
 
     def on_transcription_message(self, message: Mapping[str, Any]) -> None:
@@ -296,8 +290,8 @@ class EventHandler:
         ...
 
     def on_transcription_stopped(self,
-                                 stopped_by: Mapping[str, Any],
-                                 stopped_by_error: Mapping[str, Any]) -> None:
+                                 stopped_by: str,
+                                 stopped_by_error: bool) -> None:
         ...
 
 
