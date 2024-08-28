@@ -965,7 +965,7 @@ impl PyCallClient {
             })?;
         }
 
-        let message_value: DictValue = message.extract(py).unwrap();
+        let message_value: DictValue = message.extract(py)?;
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
