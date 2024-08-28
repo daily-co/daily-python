@@ -49,23 +49,25 @@ impl<'py> FromPyObject<'py> for DictValue {
         if let Ok(value) = ob.downcast::<PyBool>() {
             Ok(DictValue(value.is_true().into()))
         } else if let Ok(value) = ob.downcast::<PyLong>() {
-            let number: i64 = value.extract().unwrap();
+            let number: i64 = value.extract()?;
             Ok(DictValue(number.into()))
         } else if let Ok(value) = ob.downcast::<PyFloat>() {
-            let number: f64 = value.extract().unwrap();
+            let number: f64 = value.extract()?;
             Ok(DictValue(number.into()))
         } else if let Ok(value) = ob.downcast::<PyString>() {
             Ok(DictValue(value.to_string().into()))
         } else if let Ok(value) = ob.downcast::<PyList>() {
-            let list: Vec<DictValue> = value.extract().unwrap();
+            let list: Vec<DictValue> = value.extract()?;
             let vec = list.iter().map(|v| v.0.clone()).collect();
             Ok(DictValue(Value::Array(vec)))
         } else if let Ok(value) = ob.downcast::<PyDict>() {
-            let dict: HashMap<String, DictValue> = value.extract().unwrap();
+            let dict: HashMap<String, DictValue> = value.extract()?;
             let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
             Ok(DictValue(Value::Object(map)))
         } else {
-            Err(PyErr::new::<PyTypeError, _>("Invalid dictionary"))
+            Err(PyErr::new::<PyTypeError, _>(
+                "Invalid data (not serializable)",
+            ))
         }
     }
 }
