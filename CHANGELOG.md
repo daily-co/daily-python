@@ -5,6 +5,15 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a crash caused by passing non-serializable data to
+  `CallClient.send_app_message`.
+
+- Fixed `daily.pyi` type completions.
+
 ## [0.10.1] - 2024-06-24
 
 ### Fixed
