@@ -86,6 +86,7 @@ impl PyCallClient {
     /// Create a new call client. The new call client can receive meeting events
     /// through an event handler.
     #[new]
+    #[pyo3(signature = (event_handler = None))]
     pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
         // Make sure the event handler has the right type.
         if let Some(event_handler) = event_handler.clone() {

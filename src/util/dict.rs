@@ -44,8 +44,8 @@ impl ToPyObject for DictValue {
     }
 }
 
-impl<'a> FromPyObject<'a> for DictValue {
-    fn extract(ob: &'a PyAny) -> Result<Self, PyErr> {
+impl<'py> FromPyObject<'py> for DictValue {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> Result<Self, PyErr> {
         if let Ok(value) = ob.downcast::<PyBool>() {
             Ok(DictValue(value.is_true().into()))
         } else if let Ok(value) = ob.downcast::<PyLong>() {
