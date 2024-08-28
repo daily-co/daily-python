@@ -3,7 +3,9 @@ import queue
 import time
 import torch
 import threading
+
 from PIL import Image
+from ultralytics import YOLO
 
 from daily import *
 
@@ -12,8 +14,7 @@ class DailyYOLO(EventHandler):
     def __init__(self):
         self.__client = CallClient(event_handler=self)
 
-        self.__model = torch.hub.load(
-            'ultralytics/yolov5', 'yolov5s', pretrained=True)
+        self.__model = YOLO("yolov8n.pt")
         self.__camera = None
 
         self.__time = time.time()
@@ -63,9 +64,9 @@ class DailyYOLO(EventHandler):
             video_frame = self.__queue.get()
             image = Image.frombytes(
                 "RGBA", (video_frame.width, video_frame.height), video_frame.buffer)
-            result = self.__model(image)
+            results = self.__model.track(image)
 
-            pil = Image.fromarray(result.render()[0], mode="RGB").tobytes()
+            pil = Image.fromarray(results[0].plot(), mode="RGB").tobytes()
 
             self.__camera.write_frame(pil)
 

@@ -79,10 +79,10 @@ for sentence in sentences_file.readlines():
         "text": sentence.strip()
     }
 
-    response = deepgram.speak.v("1").stream(speak_source, speak_options)
+    response = deepgram.speak.rest.v("1").stream_raw(speak_source, speak_options)
 
     # Send all the audio frames to the microphone.
-    microphone.write_frames(response.stream.read())
+    microphone.write_frames(response.read())
 
 # Let everything finish
 time.sleep(2)
