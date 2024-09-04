@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `EventHandler.on_dialin_answered` should be
+  `EventHandler.on_dialout_answered`.
+
 - Fixed a crash caused by passing non-serializable data to
   `CallClient.send_app_message`.
 

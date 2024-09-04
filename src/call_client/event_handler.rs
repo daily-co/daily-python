@@ -67,18 +67,18 @@ impl PyEventHandler {
     }
 
     /// Event emitted when the session with the dial-out remote end is
-    /// established.
+    /// answered.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_connected(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_answered(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the session with the dial-out remote end is
-    /// answered.
+    /// established.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialin_answered(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_connected(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
 
