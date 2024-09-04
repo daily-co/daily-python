@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added missing dialin/dialout handlers in `daily.pyi`.
+
 - `EventHandler.on_dialin_answered` should be
   `EventHandler.on_dialout_answered`.
 
