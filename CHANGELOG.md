@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for specifying a proxy URL via `CallClient.set_proxy_url()`.
 
+### Deprecated
+
+- Transcription property `tier` has been deprecated. Use `model` instead.
+  See https://developers.deepgram.com/docs/model
+
 ### Fixed
 
 - Fixed an issue that caused app messages sent from the REST API to not be

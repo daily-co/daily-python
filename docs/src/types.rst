@@ -916,7 +916,7 @@ TranscriptionSettings
    * - "model"
      - string (see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
    * - "tier"
-     - string (see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
+     - string (this field is deprecated, use `model` instead)
    * - "profanity_filter"
      - bool (see Deepgram's `Profanity Filter <https://developers.deepgram.com/docs/profanity-filter>`_)
    * - "redact"
@@ -946,7 +946,7 @@ TranscriptionStatus
    * - "model"
      - string (see Deepgram's `Model <https://developers.deepgram.com/docs/model>`_)
    * - "tier"
-     - string (see Deepgram's `Tier <https://developers.deepgram.com/docs/tier>`_)
+     - string (this field is deprecated, use `model` instead)
    * - "startedBy"
      - string
    * - "transcriptId"
