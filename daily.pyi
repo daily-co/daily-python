@@ -204,6 +204,16 @@ class CallClient:
                            color_format: str = "RGBA") -> None:
         ...
 
+    def set_proxy_url(self,
+                      proxy_url: Optional[str] = None,
+                      completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
+    def set_ice_config(self,
+                       ice_config: Optional[Mapping[str, Any]] = None,
+                       completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
 
 class EventHandler:
 
