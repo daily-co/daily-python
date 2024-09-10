@@ -1,8 +1,12 @@
 pub(crate) mod delegate;
 pub(crate) mod event;
 pub(crate) mod event_handler;
+pub(crate) mod live_stream;
+pub(crate) mod recording;
 
 pub(crate) use event_handler::PyEventHandler;
+pub(crate) use live_stream::{LiveStreamEndpoints, StartLiveStreamProperties};
+pub(crate) use recording::StartRecordingProperties;
 
 use delegate::*;
 
@@ -15,7 +19,6 @@ use std::{
 };
 
 use pyo3::{exceptions, prelude::*};
-use serde_json::Value;
 use uuid::Uuid;
 
 use webrtc_daily::sys::color_format::ColorFormat;
@@ -78,6 +81,49 @@ impl PyCallClient {
         }
 
         request_id
+    }
+
+    fn start_live_stream(
+        &self,
+        endpoints: LiveStreamEndpoints,
+        streaming_settings: Option<PyObject>,
+        stream_id: Option<&str>,
+        force_new: Option<bool>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        let mut call_client = self.check_released()?;
+
+        let stream_id = stream_id.map(|id| id.to_string());
+
+        let streaming_settings = streaming_settings.map(|s| {
+            let dict: HashMap<String, DictValue> = Python::with_gil(|py| s.extract(py).unwrap());
+            dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect()
+        });
+
+        let properties = StartLiveStreamProperties {
+            endpoints,
+            streaming_settings,
+            stream_id,
+            force_new,
+        };
+
+        let properties_string = serde_json::to_string(&properties).unwrap();
+
+        let properties_cstr =
+            Some(CString::new(properties_string).expect("invalid live stream properties string"));
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_start_live_stream(
+                call_client.as_mut(),
+                request_id,
+                properties_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
     }
 }
 
@@ -757,11 +803,242 @@ impl PyCallClient {
         Ok(())
     }
 
+    /// Starts a new live-stream with the given pre-configured endpoints.
+    ///
+    /// :param List[str] endpoints: A list of preconfigured live streaming endpoints
+    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
+    /// :param str stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
+    /// :param str force_new: Whether to force a new live stream, even if there is already one in progress
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (endpoints, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
+    pub fn start_live_stream_with_endpoints(
+        &self,
+        endpoints: PyObject,
+        streaming_settings: Option<PyObject>,
+        stream_id: Option<&str>,
+        force_new: Option<bool>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
+        let array = list.iter().map(|v| v.0.clone()).collect();
+        let endpoints = LiveStreamEndpoints::PreConfigured {
+            pre_configured_endpoints: array,
+        };
+
+        self.start_live_stream(
+            endpoints,
+            streaming_settings,
+            stream_id,
+            force_new,
+            completion,
+        )
+    }
+
+    /// Starts a new live-stream with the given RTMP URLs.
+    ///
+    /// :param List[str] rtmp_urls: A list of live streaming RTMP URLs
+    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
+    /// :param str stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
+    /// :param str force_new: Whether to force a new live stream, even if there is already one in progress
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (rtmp_urls, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
+    pub fn start_live_stream_with_rtmp_urls(
+        &self,
+        rtmp_urls: PyObject,
+        streaming_settings: Option<PyObject>,
+        stream_id: Option<&str>,
+        force_new: Option<bool>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        let list: Vec<DictValue> = Python::with_gil(|py| rtmp_urls.extract(py).unwrap());
+        let array = list.iter().map(|v| v.0.clone()).collect();
+        let endpoints = LiveStreamEndpoints::RtmpUrls { rtmp_urls: array };
+
+        self.start_live_stream(
+            endpoints,
+            streaming_settings,
+            stream_id,
+            force_new,
+            completion,
+        )
+    }
+
+    /// Stops an ongoing live stream. If multiple live stream instances are running,
+    /// each instance must be stopped individually by providing the unique
+    /// stream ID.
+    ///
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (stream_id = None, completion = None))]
+    pub fn stop_live_stream(
+        &self,
+        stream_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_stop_live_stream(
+                call_client.as_mut(),
+                request_id,
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Updates an ongoing live stream. If multiple live stream instances are
+    /// running, each instance must be updated individually by providing the
+    /// unique stream ID.
+    ///
+    /// :param Mapping[str, Any] update_settings: See :ref:`StreamingUpdateSettings`
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
+    pub fn update_live_stream(
+        &self,
+        update_settings: PyObject,
+        stream_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let update_settings_map: HashMap<String, DictValue> =
+            Python::with_gil(|py| update_settings.extract(py).unwrap());
+        let update_settings_string = serde_json::to_string(&update_settings_map).unwrap();
+        let update_settings_cstr =
+            CString::new(update_settings_string).expect("invalid live stream settings string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_update_live_stream(
+                call_client.as_mut(),
+                request_id,
+                update_settings_cstr.as_ptr(),
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Adds additional preconfigured endpoints to an existing live stream.
+    ///
+    /// :param List[str] endpoints: A list of preconfigured live streaming endpoints
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
+    pub fn add_live_streaming_endpoints(
+        &self,
+        endpoints: PyObject,
+        stream_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
+        let array = list.iter().map(|v| v.0.clone()).collect();
+        let endpoints = LiveStreamEndpoints::PreConfigured {
+            pre_configured_endpoints: array,
+        };
+
+        let endpoints_string = serde_json::to_string(&endpoints).unwrap();
+        let endpoints_cstr =
+            CString::new(endpoints_string).expect("invalid live stream endpoints string");
+
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_add_live_streaming_endpoints(
+                call_client.as_mut(),
+                request_id,
+                endpoints_cstr.as_ptr(),
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Removes endpoints from an existing live stream.
+    ///
+    /// :param List[str] endpoints: The list of live streaming endpoints to remove
+    /// :param str stream_id: A unique stream identifier
+    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
+    pub fn remove_live_streaming_endpoints(
+        &self,
+        endpoints: PyObject,
+        stream_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
+        let array = list.iter().map(|v| v.0.clone()).collect();
+        let endpoints = LiveStreamEndpoints::PreConfigured {
+            pre_configured_endpoints: array,
+        };
+
+        let endpoints_string = serde_json::to_string(&endpoints).unwrap();
+        let endpoints_cstr =
+            CString::new(endpoints_string).expect("invalid live stream endpoints string");
+
+        let stream_id_cstr = stream_id
+            .map(|id| CString::new(id).expect("invalid stream id string"))
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_add_live_streaming_endpoints(
+                call_client.as_mut(),
+                request_id,
+                endpoints_cstr.as_ptr(),
+                stream_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Starts a recording, if recording is enabled for the current room.
     ///
-    /// :param dict streaming_settings: See :ref:`StreamingSettings`
+    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
     /// :param str stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
-    /// :param str force_new: Whether to force a new recording
+    /// :param str force_new: Whether to force a new recording, even if there is already one in progress
     /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
@@ -774,30 +1051,22 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let mut settings_map: HashMap<String, DictValue> = HashMap::new();
+        let stream_id = stream_id.map(|id| id.to_string());
 
-        if let Some(stream_id) = stream_id {
-            settings_map.insert("instanceId".to_string(), DictValue(stream_id.into()));
-        }
-        if let Some(streaming_settings) = streaming_settings {
-            let dict: HashMap<String, DictValue> =
-                Python::with_gil(|py| streaming_settings.extract(py).unwrap());
-            let map = dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect();
-            settings_map.insert(
-                "streamingSettings".to_string(),
-                DictValue(Value::Object(map)),
-            );
-        }
-        if let Some(force_new) = force_new {
-            settings_map.insert("forceNew".to_string(), DictValue(force_new.into()));
-        }
+        let streaming_settings = streaming_settings.map(|s| {
+            let dict: HashMap<String, DictValue> = Python::with_gil(|py| s.extract(py).unwrap());
+            dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect()
+        });
 
-        let settings_cstr = if settings_map.is_empty() {
-            None
-        } else {
-            let settings_string = serde_json::to_string(&settings_map).unwrap();
-            Some(CString::new(settings_string).expect("invalid recording settings string"))
+        let properties = StartRecordingProperties {
+            instance_id: stream_id,
+            streaming_settings,
+            force_new,
         };
+
+        let properties_string = serde_json::to_string(&properties).unwrap();
+        let properties_cstr =
+            Some(CString::new(properties_string).expect("invalid recording properties"));
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -806,7 +1075,7 @@ impl PyCallClient {
             daily_core_call_client_start_recording(
                 call_client.as_mut(),
                 request_id,
-                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                properties_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
             );
         }
 
