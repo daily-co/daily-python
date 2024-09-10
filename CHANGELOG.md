@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `CallClient.start_live_stream()`, `CallClient.stop_live_stream()`,
+  `CallClient.update_live_stream()`, `CallClient.add_live_streaming_endpoints()`
+  and `CallClient.remove_live_streaming_endpoints()`.
+
 - Added `EventHandler.on_live_stream_updated()`.
 
 - Added support for specifying custom TURN servers via

@@ -6,7 +6,7 @@
 # See https://docs.python.org/3/library/typing.html
 #
 
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, List, Mapping, Optional, Sequence
 
 
 class Daily:
@@ -139,6 +139,47 @@ class CallClient:
                            completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
         ...
 
+    def start_live_stream_with_endpoints(self,
+                                         endpoints: Optional[List[str]],
+                                         streaming_settings: Optional[Mapping[str, Any]] = None,
+                                         stream_id: Optional[str] = None,
+                                         force_new: Optional[bool] = None,
+                                         completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
+    def start_live_stream_with_rtmp_urls(self,
+                                         rtmp_urls: Optional[List[str]],
+                                         streaming_settings: Optional[Mapping[str, Any]] = None,
+                                         stream_id: Optional[str] = None,
+                                         force_new: Optional[bool] = None,
+                                         completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
+    def stop_live_stream(self,
+                         stream_id: Optional[str] = None,
+                         completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
+    def update_live_stream(self,
+                           update_settings: Mapping[str, Any],
+                           stream_id: Optional[str] = None,
+                           completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
+        ...
+
+    def add_live_streaming_endpoings(self,
+                                     endpoints: List[str],
+                                     stream_id: Optional[str] = None,
+                                     completion: Optional[Callable[[Optional[str]],
+                                                                   None]] = None) -> None:
+        ...
+
+    def remove_live_streaming_endpoings(self,
+                                        endpoints: List[str],
+                                        stream_id: Optional[str] = None,
+                                        completion: Optional[Callable[[Optional[str]],
+                                                                      None]] = None) -> None:
+        ...
+
     def start_recording(self,
                         streaming_settings: Optional[Mapping[str, Any]] = None,
                         stream_id: Optional[str] = None,
@@ -152,7 +193,7 @@ class CallClient:
         ...
 
     def update_recording(self,
-                         update_settings: Optional[Mapping[str, Any]] = None,
+                         update_settings: Mapping[str, Any],
                          stream_id: Optional[str] = None,
                          completion: Optional[Callable[[Optional[str]], None]] = None) -> None:
         ...
@@ -328,65 +369,65 @@ class EventHandler:
 
 class AudioData:
 
-    @ property
+    @property
     def bits_per_sample(self) -> int:
         ...
 
-    @ property
+    @property
     def sample_rate(self) -> int:
         ...
 
-    @ property
+    @property
     def num_channels(self) -> int:
         ...
 
-    @ property
+    @property
     def num_audio_frames(self) -> int:
         ...
 
-    @ property
+    @property
     def audio_frames(self) -> bytes:
         ...
 
 
 class VideoFrame:
 
-    @ property
+    @property
     def buffer(self) -> bytes:
         ...
 
-    @ property
+    @property
     def width(self) -> int:
         ...
 
-    @ property
+    @property
     def height(self) -> int:
         ...
 
-    @ property
+    @property
     def timestamp_us(self) -> int:
         ...
 
-    @ property
+    @property
     def color_format(self) -> str:
         ...
 
 
 class VirtualCameraDevice:
 
-    @ property
+    @property
     def name(self) -> str:
         ...
 
-    @ property
+    @property
     def width(self) -> int:
         ...
 
-    @ property
+    @property
     def height(self) -> int:
         ...
 
-    @ property
+    @property
     def color_format(self) -> str:
         ...
 
@@ -396,15 +437,15 @@ class VirtualCameraDevice:
 
 class VirtualMicrophoneDevice:
 
-    @ property
+    @property
     def name(self) -> str:
         ...
 
-    @ property
+    @property
     def sample_rate(self) -> int:
         ...
 
-    @ property
+    @property
     def channels(self) -> int:
         ...
 
@@ -416,15 +457,15 @@ class VirtualMicrophoneDevice:
 
 class VirtualSpeakerDevice:
 
-    @ property
+    @property
     def name(self) -> str:
         ...
 
-    @ property
+    @property
     def sample_rate(self) -> int:
         ...
 
-    @ property
+    @property
     def channels(self) -> int:
         ...
 
@@ -436,15 +477,15 @@ class VirtualSpeakerDevice:
 
 class NativeVad:
 
-    @ property
+    @property
     def rest_period_ms(self) -> int:
         ...
 
-    @ property
+    @property
     def sample_rate(self) -> int:
         ...
 
-    @ property
+    @property
     def channels(self) -> int:
         ...
 
