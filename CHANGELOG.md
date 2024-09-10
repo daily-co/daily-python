@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `EventHandler.on_live_stream_updated()`.
+
 - Added support for specifying custom TURN servers via
   `CallClient.set_ice_config()`.
 

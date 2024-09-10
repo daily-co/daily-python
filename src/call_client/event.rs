@@ -31,6 +31,7 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "live-stream-error" => "on_live_stream_error",
         "live-stream-started" => "on_live_stream_started",
         "live-stream-stopped" => "on_live_stream_stopped",
+        "live-stream-updated" => "on_live_stream_updated",
         "live-stream-warning" => "on_live_stream_warning",
         "network-stats-updated" => "on_network_stats_updated",
         "participant-counts-updated" => "on_participant_counts_updated",
@@ -122,6 +123,9 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "live-stream-stopped" => object
             .get("streamId")
             .map(|stream_id| vec![DictValue(stream_id.clone())]),
+        "live-stream-updated" => object
+            .get("update")
+            .map(|update| vec![DictValue(update.clone())]),
         "live-stream-warning" => {
             if let Some(stream_id) = object.get("streamId") {
                 object

@@ -267,6 +267,9 @@ class EventHandler:
     def on_live_stream_stopped(self, stream_id: str) -> None:
         ...
 
+    def on_live_stream_updated(self, state: str) -> None:
+        ...
+
     def on_live_stream_warning(self, stream_id: str, message: str) -> None:
         ...
 

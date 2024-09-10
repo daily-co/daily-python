@@ -149,6 +149,13 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted for all participants when a live stream is updated.
+    ///
+    /// :param Mapping[str, Any] update: See :ref:`LiveStreamUpdate`
+    fn on_live_stream_updated(&self, update: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted for all participants when a live stream encounters a
     /// warning.
     ///

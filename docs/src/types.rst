@@ -313,6 +313,14 @@ InputSettings
      - `MicrophoneInputSettings`_
 
 
+.. _LiveStreamState:
+
+LiveStreamState
+-----------------------------------
+
+"connected" | "interrupted"
+
+
 .. _LiveStreamStatus:
 
 LiveStreamStatus
@@ -328,6 +336,23 @@ LiveStreamStatus
      - `StreamingLayout`_
    * - "startedBy"
      - string
+   * - "streamId"
+     - string
+
+
+.. _LiveStreamUpdate:
+
+LiveStreamUpdate
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "state"
+     - `LiveStreamState`_
    * - "streamId"
      - string
 
