@@ -239,6 +239,8 @@ DialoutSettings
      - string
    * - "phoneNumber"
      - string
+   * - "callerId"
+     - string
 
 
 .. _IceConfig:
