@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed an issue that caused app messages sent from the REST API to not be
+  received correctly.
+
 - Added missing dialin/dialout handlers in `daily.pyi`.
 
 - `EventHandler.on_dialin_answered` should be

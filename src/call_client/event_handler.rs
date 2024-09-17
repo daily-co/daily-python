@@ -33,10 +33,11 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Event emitted when a custom app message is received from another participant.
+    /// Event emitted when a custom app message is received from another
+    /// participant or via the REST API.
     ///
     /// :param string message: Message received from a remote participant
-    /// :param string sender: Participant ID that sent the message
+    /// :param string sender: Sender of the message
     fn on_app_message(&self, message: PyObject, sender: PyObject) -> PyResult<()> {
         Ok(())
     }
