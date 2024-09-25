@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daily Adaptive Bitrate (ABR) is now supported.
   (see https://www.daily.co/blog/introducing-daily-adaptive-bitrate/)
 
+### Fixed
+
+- Fixed a logging-related crash (stack overflow) that could occur when rapidly starting and stopping the SDK.
+
 ## [0.11.0] - 2024-09-16
 
 ### Added
