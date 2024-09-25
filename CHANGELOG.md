@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a logging-related crash (stack overflow) that could occur when rapidly starting and stopping the SDK.
 
+- Fixed an issue where missing fields in the domain/room permission config could cause a connection failure.
+
 ## [0.11.0] - 2024-09-16
 
 ### Added
