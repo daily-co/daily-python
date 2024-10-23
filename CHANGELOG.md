@@ -9,14 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `CallClient.update_transcription()`. This allows choosing which
+  participants should be transcribed.
+
+- Added `EventHandler.on_transcription_updated()`.
+
 - Daily Adaptive Bitrate (ABR) is now supported.
   (see https://www.daily.co/blog/introducing-daily-adaptive-bitrate/)
 
 ### Fixed
 
-- Fixed a logging-related crash (stack overflow) that could occur when rapidly starting and stopping the SDK.
+- Fixed a logging-related crash (stack overflow) that could occur when rapidly
+  starting and stopping the SDK.
 
-- Fixed an issue where missing fields in the domain/room permission config could cause a connection failure.
+- Fixed an issue where missing fields in the domain/room permission config could
+  cause a connection failure.
 
 ## [0.11.0] - 2024-09-16
 

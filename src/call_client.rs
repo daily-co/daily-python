@@ -522,22 +522,23 @@ impl PyCallClient {
 
     /// Ejects remote participants.
     ///
-    /// :param list ids: A list of ids of remote participants to eject
+    /// :param list participants: A list of ids of remote participants to eject
     /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (ids, completion = None))]
+    #[pyo3(signature = (participants, completion = None))]
     pub fn eject_remote_participants(
         &self,
-        ids: PyObject,
+        participants: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let ids: Vec<String> = Python::with_gil(|py| ids.extract(py).unwrap());
+        let participants: Vec<String> = Python::with_gil(|py| participants.extract(py).unwrap());
 
-        let ids_string = serde_json::to_string(&ids).unwrap();
+        let participants_string = serde_json::to_string(&participants).unwrap();
 
-        let ids_cstr = CString::new(ids_string).expect("invalid ids string");
+        let participants_cstr =
+            CString::new(participants_string).expect("invalid participant IDs string");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -546,7 +547,7 @@ impl PyCallClient {
             daily_core_call_client_eject_remote_participants(
                 call_client.as_mut(),
                 request_id,
-                ids_cstr.as_ptr(),
+                participants_cstr.as_ptr(),
             );
         }
 
@@ -1213,6 +1214,59 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_stop_transcription(call_client.as_mut(), request_id);
+        }
+
+        Ok(())
+    }
+
+    /// Updates a transcription service. This allows selecting participants who
+    /// should be transcribed (by default all are). This can be done by meeting
+    /// owners or transcription admins when transcription is enabled in the
+    /// Daily domain.
+    ///
+    /// :param Optional[List[str]] participants: List of participant IDs who should be transcribed or `None` to transcrible all
+    /// :param Optional[str] instance_id: An optional transcription instance ID
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (participants = None, instance_id = None, completion = None))]
+    pub fn update_transcription(
+        &self,
+        participants: Option<PyObject>,
+        instance_id: Option<&str>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let participants: Option<Vec<String>> = if let Some(participants) = participants {
+            Python::with_gil(|py| participants.extract(py).unwrap())
+        } else {
+            None
+        };
+        let participants_string = participants
+            .map(|v| serde_json::to_string(&v).unwrap())
+            .or(None);
+        let participants_cstr = participants_string
+            .map(|v| CString::new(v).expect("invalid participant IDs string"))
+            .or(None);
+
+        let instance_id_cstr = instance_id
+            .map(|p| CString::new(p).expect("invalid instance ID string"))
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_update_transcription(
+                call_client.as_mut(),
+                request_id,
+                participants_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
+                instance_id_cstr
+                    .as_ref()
+                    .map_or(ptr::null(), |s| s.as_ptr()),
+            );
         }
 
         Ok(())

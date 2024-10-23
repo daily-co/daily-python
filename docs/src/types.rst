@@ -976,7 +976,27 @@ TranscriptionStatus
      - string (this field is deprecated, use `model` instead)
    * - "startedBy"
      - string
+   * - "instanceId"
+     - string
    * - "transcriptId"
+     - string
+
+.. _TranscriptionUpdated:
+
+TranscriptionUpdated
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "participants"
+     - [ string ]
+   * - "instanceId"
+     - string
+   * - "updatedBy"
      - string
 
 .. _VideoInputSettings:

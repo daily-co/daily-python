@@ -48,6 +48,7 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "transcription-message" => "on_transcription_message",
         "transcription-started" => "on_transcription_started",
         "transcription-stopped" => "on_transcription_stopped",
+        "transcription-updated" => "on_transcription_updated",
         a => {
             tracing::debug!("unimplemented event handler {a}");
             return None;
@@ -195,6 +196,9 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
                 })
             }
         }
+        "transcription-updated" => object
+            .get("update")
+            .map(|update| vec![DictValue(update.clone())]),
         a => panic!("args for event {a} not supported"),
     }
 }

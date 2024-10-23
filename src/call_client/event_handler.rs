@@ -284,4 +284,11 @@ impl PyEventHandler {
     ) -> PyResult<()> {
         Ok(())
     }
+
+    /// Event emitted when transcription is updated.
+    ///
+    /// :param Mapping[str, Any] update: See :ref:`TranscriptionUpdated`
+    fn on_transcription_updated(&self, update: PyObject) -> PyResult<()> {
+        Ok(())
+    }
 }
