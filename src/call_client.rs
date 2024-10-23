@@ -272,8 +272,8 @@ impl PyCallClient {
     /// URL provide a mechanism to send connections to Daily's HTTPS and
     /// WebSocket endpoints to a specified proxy server instead.
     ///
-    /// :param str|None proxy_url: The proxy URL to use or `None` to unset the current proxy.
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] proxy_url: The proxy URL to use or `None` to unset the current proxy.
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (proxy_url = None, completion = None))]
     pub fn set_proxy_url(
         &self,
@@ -306,8 +306,8 @@ impl PyCallClient {
     /// Allows for specifying custom TURN servers rather than only using Daily's
     /// default TURN servers.
     ///
-    /// :param Mapping[str, Any]|None ice_config: See :ref:`IceConfig` or `None` to unset the current ICE config
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] ice_config: See :ref:`IceConfig` or `None` to unset the current ICE config
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (ice_config = None, completion = None))]
     pub fn set_ice_config(
         &self,
@@ -349,9 +349,9 @@ impl PyCallClient {
     /// publising settings.
     ///
     /// :param str meeting_url: The URL of the Daily meeting to join
-    /// :param str meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
-    /// :param dict client_settings: See :ref:`ClientSettings`
-    /// :param func completion: An optional completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
+    /// :param Optional[str] meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
+    /// :param Optional[Mapping[str, Any]] client_settings: See :ref:`ClientSettings`
+    /// :param Optional[func] completion: An optional completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
         &self,
@@ -404,7 +404,7 @@ impl PyCallClient {
 
     /// Leave a previously joined meeting.
     ///
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn leave(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -445,7 +445,7 @@ impl PyCallClient {
     /// Returns the current active speaker.
     ///
     /// :return: See :ref:`Participant`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn active_speaker(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -456,7 +456,7 @@ impl PyCallClient {
     /// Returns the current participants in the meeting.
     ///
     /// :return: See :ref:`CallParticipants`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn participants(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -477,7 +477,7 @@ impl PyCallClient {
     /// Returns the number of hidden and non-hidden participants in the meeting.
     ///
     /// :return: The number of participants in the meeting. See :ref:`ParticipantCounts`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn participant_counts(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -487,8 +487,8 @@ impl PyCallClient {
 
     /// Updates remote participants.
     ///
-    /// :param dict remote_participants: See :ref:`RemoteParticipantUpdates`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] remote_participants: See :ref:`RemoteParticipantUpdates`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
         &self,
@@ -522,8 +522,8 @@ impl PyCallClient {
 
     /// Ejects remote participants.
     ///
-    /// :param list participants: A list of ids of remote participants to eject
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param List[str] participants: A list of IDs of remote participants to eject
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (participants, completion = None))]
     pub fn eject_remote_participants(
         &self,
@@ -558,7 +558,7 @@ impl PyCallClient {
     /// video and audio sources (i.e. cameras and microphones).
     ///
     /// :return: See :ref:`InputSettings`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn inputs(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -569,8 +569,8 @@ impl PyCallClient {
     /// Updates input settings. This function allows you to update the call
     /// client video and audio inputs.
     ///
-    /// :param dict input_settings: See :ref:`InputSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] input_settings: See :ref:`InputSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (input_settings, completion = None))]
     pub fn update_inputs(
         &self,
@@ -607,7 +607,7 @@ impl PyCallClient {
     /// should be sent (e.g. what resolutions or bitrate).
     ///
     /// :return: See :ref:`PublishingSettings`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn publishing(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -618,8 +618,8 @@ impl PyCallClient {
     /// Updates publishing settings. This function allows you to update the call
     /// client video and audio publishing settings.
     ///
-    /// :param dict publishing_settings: See :ref:`PublishingSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] publishing_settings: See :ref:`PublishingSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
         &self,
@@ -651,11 +651,11 @@ impl PyCallClient {
         Ok(())
     }
 
-    /// Returns the current client subscriptions. The client subscriptions is a
-    /// dictionary containing specific subscriptions per remote participant.
+    /// Returns the current client subscriptions. The client subscriptions is an
+    /// object containing specific subscriptions per remote participant.
     ///
     /// :return: See :ref:`ParticipantSubscriptions`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn subscriptions(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -668,9 +668,9 @@ impl PyCallClient {
     /// subscription profiles to a participant and even change specific settings
     /// for some participants.
     ///
-    /// :param dict participant_settings: See :ref:`ParticipantSubscriptions`
-    /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] participant_settings: See :ref:`ParticipantSubscriptions`
+    /// :param Optional[Mapping[str, Any]] profile_settings: See :ref:`SubscriptionProfileSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &self,
@@ -726,7 +726,7 @@ impl PyCallClient {
     /// gives a set of subscription media settings a name.
     ///
     /// :return: See :ref:`SubscriptionProfileSettings`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn subscription_profiles(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -736,8 +736,8 @@ impl PyCallClient {
 
     /// Updates subscription profiles.
     ///
-    /// :param dict profile_settings: See :ref:`SubscriptionProfileSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] profile_settings: See :ref:`SubscriptionProfileSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
         &self,
@@ -772,8 +772,8 @@ impl PyCallClient {
     /// this client and is only allowed if this client is the owner of the
     /// meeting.
     ///
-    /// :param dict permissions: See :ref:`ParticipantPermissions`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] permissions: See :ref:`ParticipantPermissions`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(
         &self,
@@ -807,10 +807,10 @@ impl PyCallClient {
     /// Starts a new live-stream with the given pre-configured endpoints.
     ///
     /// :param List[str] endpoints: A list of preconfigured live streaming endpoints
-    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
-    /// :param str stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
-    /// :param str force_new: Whether to force a new live stream, even if there is already one in progress
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] streaming_settings: See :ref:`StreamingSettings`
+    /// :param Optional[str] stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
+    /// :param Optional[str] force_new: Whether to force a new live stream, even if there is already one in progress
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (endpoints, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_live_stream_with_endpoints(
         &self,
@@ -838,10 +838,10 @@ impl PyCallClient {
     /// Starts a new live-stream with the given RTMP URLs.
     ///
     /// :param List[str] rtmp_urls: A list of live streaming RTMP URLs
-    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
-    /// :param str stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
-    /// :param str force_new: Whether to force a new live stream, even if there is already one in progress
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] streaming_settings: See :ref:`StreamingSettings`
+    /// :param Optional[str] stream_id: A unique stream identifier. Multiple live streaming sessions can be started by specifying a unique ID
+    /// :param Optional[bool] force_new: Whether to force a new live stream, even if there is already one in progress
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (rtmp_urls, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_live_stream_with_rtmp_urls(
         &self,
@@ -868,8 +868,8 @@ impl PyCallClient {
     /// each instance must be stopped individually by providing the unique
     /// stream ID.
     ///
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (stream_id = None, completion = None))]
     pub fn stop_live_stream(
         &self,
@@ -904,8 +904,8 @@ impl PyCallClient {
     /// unique stream ID.
     ///
     /// :param Mapping[str, Any] update_settings: See :ref:`StreamingUpdateSettings`
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_live_stream(
         &self,
@@ -946,8 +946,8 @@ impl PyCallClient {
     /// Adds additional preconfigured endpoints to an existing live stream.
     ///
     /// :param List[str] endpoints: A list of preconfigured live streaming endpoints
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
     pub fn add_live_streaming_endpoints(
         &self,
@@ -992,8 +992,8 @@ impl PyCallClient {
     /// Removes endpoints from an existing live stream.
     ///
     /// :param List[str] endpoints: The list of live streaming endpoints to remove
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
     pub fn remove_live_streaming_endpoints(
         &self,
@@ -1037,10 +1037,10 @@ impl PyCallClient {
 
     /// Starts a recording, if recording is enabled for the current room.
     ///
-    /// :param Mapping[str, Any] streaming_settings: See :ref:`StreamingSettings`
-    /// :param str stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
-    /// :param str force_new: Whether to force a new recording, even if there is already one in progress
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] streaming_settings: See :ref:`StreamingSettings`
+    /// :param Optional[str] stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
+    /// :param Optional[bool] force_new: Whether to force a new recording, even if there is already one in progress
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
         &self,
@@ -1087,8 +1087,8 @@ impl PyCallClient {
     /// each instance must be stopped individually by providing the unique
     /// stream ID.
     ///
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (stream_id = None, completion = None))]
     pub fn stop_recording(
         &self,
@@ -1122,9 +1122,9 @@ impl PyCallClient {
     /// running, each instance must be updated individually by providing the
     /// unique stream ID.
     ///
-    /// :param dict update_settings: See :ref:`StreamingUpdateSettings`
-    /// :param str stream_id: A unique stream identifier
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Mapping[str, Any] update_settings: See :ref:`StreamingUpdateSettings`
+    /// :param Optional[str] stream_id: A unique stream identifier
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_recording(
         &self,
@@ -1165,8 +1165,8 @@ impl PyCallClient {
     /// Starts a transcription service. This can be done by meeting owners or
     /// transcription admins when transcription is enabled in the Daily domain.
     ///
-    /// :param dict settings: See :ref:`TranscriptionSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] settings: See :ref:`TranscriptionSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_transcription(
         &self,
@@ -1203,7 +1203,7 @@ impl PyCallClient {
     /// meeting owners or transcription admins when transcription is enabled in
     /// the Daily domain.
     ///
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
     pub fn stop_transcription(&self, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -1275,8 +1275,8 @@ impl PyCallClient {
     /// Starts a dial-out service. This can be done by meeting owners when
     /// dial-out is enabled in the Daily domain.
     ///
-    /// :param dict settings: See :ref:`DialoutSettings`
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[Mapping[str, Any]] settings: See :ref:`DialoutSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_dialout(
         &self,
@@ -1312,14 +1312,15 @@ impl PyCallClient {
     /// Stops a currently running dial-out service. This can be done by meeting
     /// owners when dial-out is enabled in the Daily domain.
     ///
-    /// :param str participant: The participant of the dial-out session to stop
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (participant, completion = None))]
-    pub fn stop_dialout(&self, participant: &str, completion: Option<PyObject>) -> PyResult<()> {
+    /// :param str participant_id: The participant ID of the dial-out session to stop
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (participant_id, completion = None))]
+    pub fn stop_dialout(&self, participant_id: &str, completion: Option<PyObject>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let participant_cstr = CString::new(participant).expect("invalid participant string");
+        let participant_id_cstr =
+            CString::new(participant_id).expect("invalid participant ID string");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1328,7 +1329,7 @@ impl PyCallClient {
             daily_core_call_client_stop_dialout(
                 call_client.as_mut(),
                 request_id,
-                participant_cstr.as_ptr(),
+                participant_id_cstr.as_ptr(),
             );
         }
 
@@ -1338,15 +1339,15 @@ impl PyCallClient {
     /// Sends a message to other participants, or another specific participant,
     /// during the call.
     ///
-    /// :param any message: The message to send (should be serializable to JSON)
-    /// :param str participant: The participant to send the message to. Or `None` to broadcast the message
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (message, participant = None , completion = None))]
+    /// :param Any message: The message to send (should be serializable to JSON)
+    /// :param Optional[str] participant_id: The participant ID to send the message to. Or `None` to broadcast the message
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (message, participant_id = None , completion = None))]
     pub fn send_app_message(
         &self,
         py: Python<'_>,
         message: PyObject,
-        participant: Option<&str>,
+        participant_id: Option<&str>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -1358,9 +1359,11 @@ impl PyCallClient {
             )));
         }
 
-        if let Some(participant) = participant {
-            Uuid::from_str(participant).map_err(|_| {
-                exceptions::PyValueError::new_err(format!("invalid participant ID '{participant}'"))
+        if let Some(participant_id) = participant_id {
+            Uuid::from_str(participant_id).map_err(|_| {
+                exceptions::PyValueError::new_err(format!(
+                    "invalid participant ID '{participant_id}'"
+                ))
             })?;
         }
 
@@ -1368,8 +1371,8 @@ impl PyCallClient {
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
-        let participant_cstr = participant
-            .map(|p| CString::new(p).expect("invalid participant string"))
+        let participant_id_cstr = participant_id
+            .map(|p| CString::new(p).expect("invalid participant ID string"))
             .or(None);
 
         let request_id =
@@ -1380,7 +1383,7 @@ impl PyCallClient {
                 call_client.as_mut(),
                 request_id,
                 message_cstr.as_ptr(),
-                participant_cstr
+                participant_id_cstr
                     .as_ref()
                     .map_or(ptr::null(), |s| s.as_ptr()),
             );
@@ -1392,8 +1395,8 @@ impl PyCallClient {
     /// Sends a chat message to Daily's Prebuilt main room.
     ///
     /// :param str message: The chat message to send
-    /// :param str user_name: The user name that will appear as a sender of the message
-    /// :param func completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[str] user_name: The user name that will appear as a sender of the message
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (message, user_name = None, completion = None))]
     pub fn send_prebuilt_chat_message(
         &self,
@@ -1429,7 +1432,7 @@ impl PyCallClient {
     /// Returns the latest network statistics.
     ///
     /// :return: See :ref:`NetworkStats`
-    /// :rtype: dict
+    /// :rtype: Mapping[str, Any]
     pub fn get_network_stats(&self) -> PyResult<PyObject> {
         // If we have already been released throw an exception.
         self.check_released()?;
@@ -1441,7 +1444,7 @@ impl PyCallClient {
     /// participant.
     ///
     /// :param str participant_id: The ID of the participant to receive audio from
-    /// :param function callback: A callback to be called when audio data is available. It receives two arguments: the participant ID and a :class:`AudioData`
+    /// :param func callback: A callback to be called when audio data is available. It receives two arguments: the participant ID and a :class:`AudioData`
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
     pub fn set_audio_renderer(
@@ -1483,7 +1486,7 @@ impl PyCallClient {
     /// participant. The color format of the received frames can be chosen.
     ///
     /// :param str participant_id: The ID of the participant to receive video from
-    /// :param function callback: A callback to be called on every received frame. It receives two arguments: the participant ID and a :class:`VideoFrame`
+    /// :param func callback: A callback to be called on every received frame. It receives two arguments: the participant ID and a :class:`VideoFrame`
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA"))]
