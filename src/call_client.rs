@@ -522,23 +522,22 @@ impl PyCallClient {
 
     /// Ejects remote participants.
     ///
-    /// :param List[str] participants: A list of IDs of remote participants to eject
+    /// :param List[str] ids: A list of IDs of remote participants to eject
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (participants, completion = None))]
+    #[pyo3(signature = (ids, completion = None))]
     pub fn eject_remote_participants(
         &self,
-        participants: PyObject,
+        ids: PyObject,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let participants: Vec<String> = Python::with_gil(|py| participants.extract(py).unwrap());
+        let ids: Vec<String> = Python::with_gil(|py| ids.extract(py).unwrap());
 
-        let participants_string = serde_json::to_string(&participants).unwrap();
+        let ids_string = serde_json::to_string(&ids).unwrap();
 
-        let participants_cstr =
-            CString::new(participants_string).expect("invalid participant IDs string");
+        let ids_cstr = CString::new(ids_string).expect("invalid participant IDs string");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -547,7 +546,7 @@ impl PyCallClient {
             daily_core_call_client_eject_remote_participants(
                 call_client.as_mut(),
                 request_id,
-                participants_cstr.as_ptr(),
+                ids_cstr.as_ptr(),
             );
         }
 
