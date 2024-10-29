@@ -468,7 +468,7 @@ dependencies = [
 
 [[package]]
 name = "daily-python"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "daily-core",
  "futures",
