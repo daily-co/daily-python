@@ -18,19 +18,15 @@ class SendImageApp:
         self.__image = Image.open(image_file)
         self.__framerate = framerate
 
-        self.__camera = Daily.create_camera_device("my-camera",
-                                                   width=self.__image.width,
-                                                   height=self.__image.height,
-                                                   color_format="RGB")
+        self.__camera = Daily.create_camera_device(
+            "my-camera", width=self.__image.width, height=self.__image.height, color_format="RGB"
+        )
 
         self.__client = CallClient()
 
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "unsubscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
@@ -46,17 +42,16 @@ class SendImageApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-camera"
-                    }
-                },
-                "microphone": False
-            }
-        }, completion=self.on_joined)
+        self.__client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": {"isEnabled": True, "settings": {"deviceId": "my-camera"}},
+                    "microphone": False,
+                }
+            },
+            completion=self.on_joined,
+        )
         self.__thread.join()
 
     def leave(self):
@@ -84,12 +79,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument("-i", "--image", required=True, help="Image to send")
-    parser.add_argument(
-        "-f",
-        "--framerate",
-        type=int,
-        required=True,
-        help="Framerate")
+    parser.add_argument("-f", "--framerate", type=int, required=True, help="Framerate")
     args = parser.parse_args()
 
     Daily.init()
@@ -104,5 +94,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

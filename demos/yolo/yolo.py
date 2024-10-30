@@ -1,7 +1,6 @@
 import argparse
 import queue
 import time
-import torch
 import threading
 
 from PIL import Image
@@ -40,30 +39,23 @@ class DailyYOLO(EventHandler):
 
     def on_participant_joined(self, participant):
         print(f"Participant {participant['id']} joined, analyzing frames...")
-        self.__client.set_video_renderer(
-            participant["id"], self.on_video_frame)
+        self.__client.set_video_renderer(participant["id"], self.on_video_frame)
 
     def setup_camera(self, video_frame):
         if not self.__camera:
             self.__camera = Daily.create_camera_device(
-                "camera",
-                width=video_frame.width,
-                height=video_frame.height,
-                color_format="RGB")
-            self.__client.update_inputs({
-                "camera": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "camera"
-                    }
-                }
-            })
+                "camera", width=video_frame.width, height=video_frame.height, color_format="RGB"
+            )
+            self.__client.update_inputs(
+                {"camera": {"isEnabled": True, "settings": {"deviceId": "camera"}}}
+            )
 
     def process_frames(self):
         while not self.__app_quit:
             video_frame = self.__queue.get()
             image = Image.frombytes(
-                "RGBA", (video_frame.width, video_frame.height), video_frame.buffer)
+                "RGBA", (video_frame.width, video_frame.height), video_frame.buffer
+            )
             results = self.__model.track(image)
 
             pil = Image.fromarray(results[0].plot(), mode="RGB").tobytes()
@@ -95,5 +87,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

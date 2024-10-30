@@ -5,19 +5,14 @@ from daily import *
 
 from google.cloud import texttospeech
 
-voice = texttospeech.VoiceSelectionParams(
-    language_code="en-US", name="en-US-Studio-M"
-)
+voice = texttospeech.VoiceSelectionParams(language_code="en-US", name="en-US-Studio-M")
 
 audio_config = texttospeech.AudioConfig(
-    audio_encoding=texttospeech.AudioEncoding.LINEAR16,
-    speaking_rate=1.0,
-    sample_rate_hertz=16000
+    audio_encoding=texttospeech.AudioEncoding.LINEAR16, speaking_rate=1.0, sample_rate_hertz=16000
 )
 
 
 class Bot:
-
     def __init__(self, name, microphone):
         self.__name = name
 
@@ -28,8 +23,7 @@ class Bot:
         self.__bot_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target=self.send_audio,
-                                         args=[microphone])
+        self.__thread = threading.Thread(target=self.send_audio, args=[microphone])
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -39,17 +33,16 @@ class Bot:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__call_client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": False,
-                "microphone": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-mic"
-                    }
+        self.__call_client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": False,
+                    "microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}},
                 }
-            }
-        }, completion=self.on_joined)
+            },
+            completion=self.on_joined,
+        )
         self.__thread.join()
 
     def leave(self):
@@ -88,6 +81,7 @@ class Bot:
 
         microphone.write_frames(stream.read())
 
+
 #
 # This is now a new process (because we created a Process in create_bot() in
 # app.py), so it's safe to initialize Daily.init() as it will be executed just
@@ -106,8 +100,7 @@ class Bot:
 def start_bot(bot_name, meeting_url):
     Daily.init()
 
-    microphone = Daily.create_microphone_device(
-        "my-mic", sample_rate=16000, channels=1)
+    microphone = Daily.create_microphone_device("my-mic", sample_rate=16000, channels=1)
 
     bot = Bot(bot_name, microphone)
     bot.run(meeting_url)

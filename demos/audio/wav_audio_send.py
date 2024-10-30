@@ -18,26 +18,20 @@ NUM_CHANNELS = 1
 class SendWavApp:
     def __init__(self, input_file_name, sample_rate, num_channels):
         self.__mic_device = Daily.create_microphone_device(
-            "my-mic",
-            sample_rate=sample_rate,
-            channels=num_channels
+            "my-mic", sample_rate=sample_rate, channels=num_channels
         )
 
         self.__client = CallClient()
 
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "unsubscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
 
         self.__start_event = threading.Event()
-        self.__thread = threading.Thread(target=self.send_wav_file,
-                                         args=[input_file_name])
+        self.__thread = threading.Thread(target=self.send_wav_file, args=[input_file_name])
         self.__thread.start()
 
     def on_joined(self, data, error):
@@ -47,17 +41,16 @@ class SendWavApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": False,
-                "microphone": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-mic"
-                    }
+        self.__client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": False,
+                    "microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}},
                 }
-            }
-        }, completion=self.on_joined)
+            },
+            completion=self.on_joined,
+        )
         self.__thread.join()
 
     def leave(self):
@@ -91,17 +84,9 @@ def main():
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument("-i", "--input", required=True, help="WAV input file")
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
-    parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
 
     args = parser.parse_args()
 
@@ -117,5 +102,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -29,19 +29,14 @@ class SendAudioApp:
         self.__num_channels = num_channels
 
         self.__mic_device = Daily.create_microphone_device(
-            "my-mic",
-            sample_rate=sample_rate,
-            channels=num_channels
+            "my-mic", sample_rate=sample_rate, channels=num_channels
         )
 
         self.__client = CallClient()
 
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "unsubscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
@@ -57,17 +52,16 @@ class SendAudioApp:
         self.__start_event.set()
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": False,
-                "microphone": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-mic"
-                    }
+        self.__client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": False,
+                    "microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}},
                 }
-            }
-        }, completion=self.on_joined)
+            },
+            completion=self.on_joined,
+        )
         self.__thread.join()
 
     def leave(self):
@@ -84,8 +78,7 @@ class SendAudioApp:
             return
 
         while not self.__app_quit:
-            num_bytes = int(self.__sample_rate / 10) * \
-                self.__num_channels * BYTES_PER_SAMPLE
+            num_bytes = int(self.__sample_rate / 10) * self.__num_channels * BYTES_PER_SAMPLE
             buffer = sys.stdin.buffer.read(num_bytes)
             if buffer:
                 self.__mic_device.write_frames(buffer)
@@ -95,17 +88,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
-    parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
 
     args = parser.parse_args()
 
@@ -121,5 +106,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

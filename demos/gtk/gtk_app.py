@@ -30,13 +30,15 @@ class DailyGtkApp(Gtk.Application):
         super().__init__(application_id="co.daily.DailyGtkApp")
 
         self.__client = CallClient()
-        self.__client.update_subscription_profiles({
-            "base": {
-                "microphone": "subscribed",
-                "camera": "unsubscribed" if screen_share else "subscribed",
-                "screenVideo": "subscribed" if screen_share else "unsubscribed",
+        self.__client.update_subscription_profiles(
+            {
+                "base": {
+                    "microphone": "subscribed",
+                    "camera": "unsubscribed" if screen_share else "subscribed",
+                    "screenVideo": "subscribed" if screen_share else "unsubscribed",
+                }
             }
-        })
+        )
 
         self.__width = 1280
         self.__height = 720
@@ -58,8 +60,7 @@ class DailyGtkApp(Gtk.Application):
             self.__video_source = "screenVideo"
 
     def do_activate(self):
-        window = Gtk.ApplicationWindow(
-            application=self, title="daily-python Gtk demo")
+        window = Gtk.ApplicationWindow(application=self, title="daily-python Gtk demo")
         window.set_default_size(self.__width, self.__height)
 
         main_box = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL)
@@ -110,8 +111,7 @@ class DailyGtkApp(Gtk.Application):
             participant_id = self.__participant_entry.get_text()
 
             if self.__save_audio:
-                self.__wave = wave.open(
-                    f"participant-{participant_id}.wav", "wb")
+                self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
                 self.__wave.setnchannels(1)
                 self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
                 self.__wave.setframerate(48000)
@@ -135,13 +135,14 @@ class DailyGtkApp(Gtk.Application):
             return
 
         if self.__save_audio:
-            self.__client.set_audio_renderer(
-                participant_id, self.on_audio_data)
+            self.__client.set_audio_renderer(participant_id, self.on_audio_data)
 
-        self.__client.set_video_renderer(participant_id,
-                                         self.on_video_frame,
-                                         video_source=self.__video_source,
-                                         color_format="BGRA")
+        self.__client.set_video_renderer(
+            participant_id,
+            self.on_video_frame,
+            video_source=self.__video_source,
+            color_format="BGRA",
+        )
 
         self.__client.join(meeting_url, completion=self.on_joined)
 
@@ -157,10 +158,10 @@ class DailyGtkApp(Gtk.Application):
         width = self.__frame_width
         height = self.__frame_height
 
-        stride = cairo.ImageSurface.format_stride_for_width(
-            cairo.FORMAT_ARGB32, width)
+        stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32, width)
         cairo_surface = cairo.ImageSurface.create_for_data(
-            image, cairo.FORMAT_ARGB32, width, height, stride)
+            image, cairo.FORMAT_ARGB32, width, height, stride
+        )
 
         width_ratio = float(self.__width) / float(width)
         height_ratio = float(self.__height) / float(height)
@@ -184,23 +185,21 @@ class DailyGtkApp(Gtk.Application):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", default="", help="Meeting URL")
-    parser.add_argument(
-        "-p",
-        "--participant",
-        default="",
-        help="Participant ID")
+    parser.add_argument("-p", "--participant", default="", help="Participant ID")
     parser.add_argument(
         "-a",
         "--audio",
         default=False,
         action="store_true",
-        help="Store participant audio in a file (participant-ID.wav)")
+        help="Store participant audio in a file (participant-ID.wav)",
+    )
     parser.add_argument(
         "-s",
         "--screen",
         default=False,
         action="store_true",
-        help="Render screen share (if available) instead of camera")
+        help="Render screen share (if available) instead of camera",
+    )
     args = parser.parse_args()
 
     Daily.init()
@@ -209,5 +208,5 @@ def main():
     sys.exit(app.run())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

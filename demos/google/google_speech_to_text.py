@@ -23,8 +23,7 @@ args = parser.parse_args()
 
 Daily.init()
 
-speaker = Daily.create_speaker_device(
-    "my-speaker", sample_rate=16000, channels=1)
+speaker = Daily.create_speaker_device("my-speaker", sample_rate=16000, channels=1)
 
 Daily.select_speaker_device("my-speaker")
 
@@ -44,8 +43,7 @@ SECONDS_TO_READ = 10
 FRAMES_TO_READ = SAMPLE_RATE * SECONDS_TO_READ
 
 print()
-print(
-    f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
+print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
 
 # We are creating a WAV file in memory so we can later grab the whole buffer and
 # send it to Google Speech-To-Text API.

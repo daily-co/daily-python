@@ -27,12 +27,9 @@ class AsyncSendWavApp:
 
         self.__client = CallClient()
 
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "unsubscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
+        )
 
         self.__app_error = None
 
@@ -56,17 +53,16 @@ class AsyncSendWavApp:
         def join_completion(data, error):
             future.get_loop().call_soon_threadsafe(future.set_result, (data, error))
 
-        self.__client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": False,
-                "microphone": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-mic"
-                    }
+        self.__client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": False,
+                    "microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}},
                 }
-            }
-        }, completion=join_completion)
+            },
+            completion=join_completion,
+        )
 
         return await future
 
@@ -128,17 +124,9 @@ async def main():
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument("-i", "--input", required=True, help="WAV input file")
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
-    parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
 
     args = parser.parse_args()
 
@@ -151,6 +139,7 @@ async def main():
     loop.add_signal_handler(signal.SIGINT, lambda *args: asyncio.create_task(sig_handler(app)))
 
     await app.run(args.meeting)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

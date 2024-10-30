@@ -35,13 +35,10 @@ Daily.init()
 CAMERA_WIDTH = 1024
 CAMERA_HEIGHT = 1024
 
-speaker = Daily.create_speaker_device(
-    "my-speaker", sample_rate=16000, channels=1)
+speaker = Daily.create_speaker_device("my-speaker", sample_rate=16000, channels=1)
 camera = Daily.create_camera_device(
-    "my-camera",
-    width=CAMERA_WIDTH,
-    height=CAMERA_HEIGHT,
-    color_format="RGB")
+    "my-camera", width=CAMERA_WIDTH, height=CAMERA_HEIGHT, color_format="RGB"
+)
 
 Daily.select_speaker_device("my-speaker")
 
@@ -50,17 +47,15 @@ client = CallClient()
 print()
 print(f"Joining {args.meeting} ...")
 
-client.join(args.meeting, client_settings={
-    "inputs": {
-        "camera": {
-            "isEnabled": True,
-            "settings": {
-                "deviceId": "my-camera"
-            }
-        },
-        "microphone": False
-    }
-})
+client.join(
+    args.meeting,
+    client_settings={
+        "inputs": {
+            "camera": {"isEnabled": True, "settings": {"deviceId": "my-camera"}},
+            "microphone": False,
+        }
+    },
+)
 
 # Make sure we are joined. It would be better to use join() completion
 # callback.
@@ -71,8 +66,7 @@ SECONDS_TO_READ = 10
 FRAMES_TO_READ = SAMPLE_RATE * SECONDS_TO_READ
 
 print()
-print(
-    f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
+print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...")
 
 # We are creating a WAV file in memory so we can later grab the whole buffer and
 # send it to Google Speech-To-Text API.
@@ -119,10 +113,7 @@ if len(response.results) > 0 and len(response.results[0].alternatives) > 0:
     print(f"Generating image with OpenAI for '{prompt}' ...")
 
     response = openai_client.images.generate(
-        prompt=prompt,
-        n=1,
-        size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}",
-        response_format="b64_json"
+        prompt=prompt, n=1, size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}", response_format="b64_json"
     )
 
     dalle_png = b64decode(response.data[0].b64_json)

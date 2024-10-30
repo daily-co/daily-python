@@ -31,12 +31,7 @@ class SpeechStatus(Enum):
 
 
 class SpeechDetection:
-    def __init__(
-            self,
-            speech_threshold_ms,
-            silence_threshold_ms,
-            sample_rate,
-            num_channels):
+    def __init__(self, speech_threshold_ms, silence_threshold_ms, sample_rate, num_channels):
         self.__speech_threshold = SPEECH_THRESHOLD
         self.__speech_threshold_ms = speech_threshold_ms
         self.__silence_threshold_ms = silence_threshold_ms
@@ -46,9 +41,7 @@ class SpeechDetection:
         self.__last_speaking_time = 0
 
         self.__vad = Daily.create_native_vad(
-            reset_period_ms=VAD_RESET_PERIOD_MS,
-            sample_rate=sample_rate,
-            channels=num_channels
+            reset_period_ms=VAD_RESET_PERIOD_MS, sample_rate=sample_rate, channels=num_channels
         )
 
     def analyze(self, buffer):
@@ -76,34 +69,25 @@ class SpeechDetection:
 
 
 class NativeVadApp:
-    def __init__(
-            self,
-            speech_threshold_ms,
-            silence_threshold_ms,
-            sample_rate,
-            num_channels):
+    def __init__(self, speech_threshold_ms, silence_threshold_ms, sample_rate, num_channels):
         self.__sample_rate = sample_rate
 
         self.__vad = SpeechDetection(
             speech_threshold_ms=speech_threshold_ms,
             silence_threshold_ms=silence_threshold_ms,
             sample_rate=sample_rate,
-            num_channels=num_channels)
+            num_channels=num_channels,
+        )
 
         self.__speaker_device = Daily.create_speaker_device(
-            "my-speaker",
-            sample_rate=sample_rate,
-            channels=num_channels
+            "my-speaker", sample_rate=sample_rate, channels=num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__client = CallClient()
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "subscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "subscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
@@ -137,8 +121,7 @@ class NativeVadApp:
 
         while not self.__app_quit:
             # Read 10ms worth of audio frames.
-            buffer = self.__speaker_device.read_frames(
-                int(self.__sample_rate / 100))
+            buffer = self.__speaker_device.read_frames(int(self.__sample_rate / 100))
             if len(buffer) > 0:
                 self.__vad.analyze(buffer)
 
@@ -147,29 +130,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
     parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
+        "-p", "--speech", type=int, default=SPEECH_THRESHOLD_MS, help="Speech threshold in ms"
+    )
     parser.add_argument(
-        "-p",
-        "--speech",
-        type=int,
-        default=SPEECH_THRESHOLD_MS,
-        help="Speech threshold in ms")
-    parser.add_argument(
-        "-s",
-        "--silence",
-        type=int,
-        default=SILENCE_THRESHOLD_MS,
-        help="Silence threshold in ms")
+        "-s", "--silence", type=int, default=SILENCE_THRESHOLD_MS, help="Silence threshold in ms"
+    )
 
     args = parser.parse_args()
 
@@ -185,5 +154,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

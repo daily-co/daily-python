@@ -18,6 +18,7 @@ SAMPLE_RATE = 16000
 BYTES_PER_SAMPLE = 2
 NUM_CHANNELS = 1
 
+
 class TimedReceiveWavApp(EventHandler):
     def __init__(self, output_file_name, sample_rate, num_channels, seconds):
         self.__output_file_name = output_file_name
@@ -25,20 +26,14 @@ class TimedReceiveWavApp(EventHandler):
         self.__sample_rate = sample_rate
         self.__num_channels = num_channels
         self.__speaker_device = Daily.create_speaker_device(
-            "my-speaker",
-            sample_rate=sample_rate,
-            channels=num_channels,
-            non_blocking=True
+            "my-speaker", sample_rate=sample_rate, channels=num_channels, non_blocking=True
         )
         Daily.select_speaker_device("my-speaker")
 
         self.__client = CallClient(event_handler=self)
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "subscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "subscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
@@ -82,8 +77,10 @@ class TimedReceiveWavApp(EventHandler):
 
         print(f"buffering for {self.__seconds} seconds", end="")
 
-        self.__speaker_device.read_frames(self.__sample_rate * self.__seconds,
-            completion=lambda buffer: self.write_buffer_to_wav(buffer))
+        self.__speaker_device.read_frames(
+            self.__sample_rate * self.__seconds,
+            completion=lambda buffer: self.write_buffer_to_wav(buffer),
+        )
 
         while not self.__app_quit:
             print(".", end="")
@@ -94,30 +91,19 @@ class TimedReceiveWavApp(EventHandler):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
-    parser.add_argument(
-        "-o",
-        "--output",
-        required=True,
-        help="WAV output file")
+    parser.add_argument("-o", "--output", required=True, help="WAV output file")
     parser.add_argument(
         "-s",
         "--seconds",
         type=int,
         default=10,
         required=False,
-        help="Number of seconds (default: 10)")
+        help="Number of seconds (default: 10)",
+    )
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
-    parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
     args = parser.parse_args()
 
     Daily.init()
@@ -131,5 +117,6 @@ def main():
     finally:
         app.leave()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

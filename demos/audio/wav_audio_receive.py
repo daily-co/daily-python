@@ -20,9 +20,7 @@ class ReceiveWavApp:
     def __init__(self, input_file_name, sample_rate, num_channels):
         self.__sample_rate = sample_rate
         self.__speaker_device = Daily.create_speaker_device(
-            "my-speaker",
-            sample_rate=sample_rate,
-            channels=num_channels
+            "my-speaker", sample_rate=sample_rate, channels=num_channels
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -32,12 +30,9 @@ class ReceiveWavApp:
         self.__wave.setframerate(sample_rate)
 
         self.__client = CallClient()
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "subscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "subscribed"}}
+        )
 
         self.__app_quit = False
         self.__app_error = None
@@ -71,8 +66,7 @@ class ReceiveWavApp:
 
         while not self.__app_quit:
             # Read 100ms worth of audio frames.
-            buffer = self.__speaker_device.read_frames(
-                int(self.__sample_rate / 10))
+            buffer = self.__speaker_device.read_frames(int(self.__sample_rate / 10))
             if len(buffer) > 0:
                 self.__wave.writeframes(buffer)
 
@@ -83,22 +77,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     parser.add_argument(
-        "-c",
-        "--channels",
-        type=int,
-        default=NUM_CHANNELS,
-        help="Number of channels")
-    parser.add_argument(
-        "-r",
-        "--rate",
-        type=int,
-        default=SAMPLE_RATE,
-        help="Sample rate")
-    parser.add_argument(
-        "-o",
-        "--output",
-        required=True,
-        help="WAV output file")
+        "-c", "--channels", type=int, default=NUM_CHANNELS, help="Number of channels"
+    )
+    parser.add_argument("-r", "--rate", type=int, default=SAMPLE_RATE, help="Sample rate")
+    parser.add_argument("-o", "--output", required=True, help="WAV output file")
     args = parser.parse_args()
 
     Daily.init()
@@ -113,5 +95,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

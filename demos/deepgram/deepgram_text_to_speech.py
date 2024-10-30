@@ -22,19 +22,14 @@ from deepgram import (
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
-parser.add_argument(
-    "-i",
-    "--input",
-    required=True,
-    help="File with sentences (one per line)")
+parser.add_argument("-i", "--input", required=True, help="File with sentences (one per line)")
 args = parser.parse_args()
 
 Daily.init()
 
 # We create a virtual microphone device so we can read audio samples from the
 # meeting.
-microphone = Daily.create_microphone_device(
-    "my-mic", sample_rate=16000, channels=1)
+microphone = Daily.create_microphone_device("my-mic", sample_rate=16000, channels=1)
 
 client = CallClient()
 
@@ -43,16 +38,12 @@ print(f"Joining {args.meeting} ...")
 
 # Join and tell our call client that we will be using our new virtual
 # microphone.
-client.join(args.meeting, client_settings={
-    "inputs": {
-        "microphone": {
-            "isEnabled": True,
-            "settings": {
-                "deviceId": "my-mic"
-            }
-        }
-    }
-})
+client.join(
+    args.meeting,
+    client_settings={
+        "inputs": {"microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}}}
+    },
+)
 
 # Make sure we are joined. It would be better to use join() completion
 # callback.
@@ -63,10 +54,7 @@ sentences_file = open(args.input, "r")
 deepgram = DeepgramClient(api_key=os.getenv("DG_API_KEY"))
 
 speak_options = SpeakOptions(
-    model="aura-asteria-en",
-    encoding="linear16",
-    sample_rate="16000",
-    container="none"
+    model="aura-asteria-en", encoding="linear16", sample_rate="16000", container="none"
 )
 
 print()
@@ -75,9 +63,7 @@ for sentence in sentences_file.readlines():
     print(f"Processing: {sentence.strip()}")
     print()
 
-    speak_source = {
-        "text": sentence.strip()
-    }
+    speak_source = {"text": sentence.strip()}
 
     response = deepgram.speak.rest.v("1").stream_raw(speak_source, speak_options)
 

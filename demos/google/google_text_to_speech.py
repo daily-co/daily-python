@@ -19,19 +19,14 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
-parser.add_argument(
-    "-i",
-    "--input",
-    required=True,
-    help="File with sentences (one per line)")
+parser.add_argument("-i", "--input", required=True, help="File with sentences (one per line)")
 args = parser.parse_args()
 
 Daily.init()
 
 # We create a virtual microphone device so we can read audio samples from the
 # meeting.
-microphone = Daily.create_microphone_device(
-    "my-mic", sample_rate=16000, channels=1)
+microphone = Daily.create_microphone_device("my-mic", sample_rate=16000, channels=1)
 
 client = CallClient()
 
@@ -40,16 +35,12 @@ print(f"Joining {args.meeting} ...")
 
 # Join and tell our call client that we will be using our new virtual
 # microphone.
-client.join(args.meeting, client_settings={
-    "inputs": {
-        "microphone": {
-            "isEnabled": True,
-            "settings": {
-                "deviceId": "my-mic"
-            }
-        }
-    }
-})
+client.join(
+    args.meeting,
+    client_settings={
+        "inputs": {"microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}}}
+    },
+)
 
 # Make sure we are joined. It would be better to use join() completion
 # callback.
@@ -57,14 +48,10 @@ time.sleep(3)
 
 sentences_file = open(args.input, "r")
 
-voice = texttospeech.VoiceSelectionParams(
-    language_code="en-US", name="en-US-Studio-M"
-)
+voice = texttospeech.VoiceSelectionParams(language_code="en-US", name="en-US-Studio-M")
 
 audio_config = texttospeech.AudioConfig(
-    audio_encoding=texttospeech.AudioEncoding.LINEAR16,
-    speaking_rate=1.0,
-    sample_rate_hertz=16000
+    audio_encoding=texttospeech.AudioEncoding.LINEAR16, speaking_rate=1.0, sample_rate_hertz=16000
 )
 
 speech_client = texttospeech.TextToSpeechClient()

@@ -12,8 +12,8 @@ from daily import *
 import gi
 
 # autopep8: off
-gi.require_version('Gst', '1.0')
-gi.require_version('GstApp', '1.0')
+gi.require_version("Gst", "1.0")
+gi.require_version("GstApp", "1.0")
 from gi.repository import Gst, GstApp, GLib
 # autopep8: on
 
@@ -24,27 +24,19 @@ AUDIO_CHANNELS = 2
 
 
 class GstApp:
-
     def __init__(self, filename):
-        self.__camera = Daily.create_camera_device("my-camera",
-                                                   width=VIDEO_WIDTH,
-                                                   height=VIDEO_HEIGHT,
-                                                   color_format="I420")
+        self.__camera = Daily.create_camera_device(
+            "my-camera", width=VIDEO_WIDTH, height=VIDEO_HEIGHT, color_format="I420"
+        )
         self.__microphone = Daily.create_microphone_device(
-            "my-mic",
-            sample_rate=AUDIO_SAMPLE_RATE,
-            channels=AUDIO_CHANNELS,
-            non_blocking=True
+            "my-mic", sample_rate=AUDIO_SAMPLE_RATE, channels=AUDIO_CHANNELS, non_blocking=True
         )
 
         self.__client = CallClient()
 
-        self.__client.update_subscription_profiles({
-            "base": {
-                "camera": "unsubscribed",
-                "microphone": "unsubscribed"
-            }
-        })
+        self.__client.update_subscription_profiles(
+            {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
+        )
 
         self.__player = Gst.Pipeline.new("player")
 
@@ -71,36 +63,30 @@ class GstApp:
             self.__player.set_state(Gst.State.PLAYING)
 
     def run(self, meeting_url):
-        self.__client.join(meeting_url, client_settings={
-            "inputs": {
-                "camera": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-camera"
+        self.__client.join(
+            meeting_url,
+            client_settings={
+                "inputs": {
+                    "camera": {"isEnabled": True, "settings": {"deviceId": "my-camera"}},
+                    "microphone": {"isEnabled": True, "settings": {"deviceId": "my-mic"}},
+                },
+                "publishing": {
+                    "camera": {
+                        "isPublishing": True,
+                        "sendSettings": {
+                            "encodings": {
+                                "low": {
+                                    "maxBitrate": 1000000,
+                                    "maxFramerate": 30.0,
+                                    "scaleResolutionDownBy": 1.0,
+                                }
+                            }
+                        },
                     }
                 },
-                "microphone": {
-                    "isEnabled": True,
-                    "settings": {
-                        "deviceId": "my-mic"
-                    }
-                }
             },
-            "publishing": {
-                "camera": {
-                    "isPublishing": True,
-                    "sendSettings": {
-                        "encodings": {
-                            "low": {
-                                "maxBitrate": 1000000,
-                                "maxFramerate": 30.0,
-                                "scaleResolutionDownBy": 1.0
-                            }
-                        }
-                    }
-                }
-            }
-        }, completion=self.on_joined)
+            completion=self.on_joined,
+        )
         self.__loop.run()
 
     def leave(self):
@@ -134,7 +120,8 @@ class GstApp:
         audioresample = Gst.ElementFactory.make("audioresample", None)
         audiocapsfilter = Gst.ElementFactory.make("capsfilter", None)
         audiocaps = Gst.Caps.from_string(
-            f"audio/x-raw,format=S16LE,rate={AUDIO_SAMPLE_RATE},channels={AUDIO_CHANNELS},layout=interleaved")
+            f"audio/x-raw,format=S16LE,rate={AUDIO_SAMPLE_RATE},channels={AUDIO_CHANNELS},layout=interleaved"
+        )
         audiocapsfilter.set_property("caps", audiocaps)
         appsink_audio = Gst.ElementFactory.make("appsink", None)
         appsink_audio.set_property("emit-signals", True)
@@ -165,7 +152,8 @@ class GstApp:
         videoscale = Gst.ElementFactory.make("videoscale", None)
         videocapsfilter = Gst.ElementFactory.make("capsfilter", None)
         videocaps = Gst.Caps.from_string(
-            f"video/x-raw,format=I420,width={VIDEO_WIDTH},height={VIDEO_HEIGHT}")
+            f"video/x-raw,format=I420,width={VIDEO_WIDTH},height={VIDEO_HEIGHT}"
+        )
         videocapsfilter.set_property("caps", videocaps)
 
         appsink_video = Gst.ElementFactory.make("appsink", None)
@@ -226,5 +214,5 @@ def main():
         app.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
