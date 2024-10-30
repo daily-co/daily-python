@@ -22,6 +22,7 @@ class PyAudioApp:
 
     def __init__(self, sample_rate, num_channels):
         self.__app_quit = False
+        self.__sample_rate = sample_rate
         self.__num_channels = num_channels
 
         # We configure the microphone as non-blocking so we don't block PyAudio
@@ -33,14 +34,13 @@ class PyAudioApp:
             non_blocking=True
         )
 
-        # In contrast, we configure the speaker as blocking. In this case,
-        # PyAudio's output stream callback will wait until we get the data from
-        # Daily's speaker.
+        # In contrast, we configure the speaker as blocking. In this case, we
+        # read audio from the speaker and synchronously write to PyAudio's
+        # output stream.
         self.__virtual_speaker = Daily.create_speaker_device(
             "my-speaker",
             sample_rate=sample_rate,
             channels=num_channels,
-            non_blocking=True
         )
         Daily.select_speaker_device("my-speaker")
 
@@ -123,17 +123,14 @@ class PyAudioApp:
 
         return None, pyaudio.paContinue
 
-    def on_speaker_frames(self, buffer):
-        if not self.__app_quit:
-            self.__output_stream.write(buffer)
-            self.__virtual_speaker.read_frames(
-                64, completion=self.on_speaker_frames)
-
     def send_audio_stream(self):
-        self.__virtual_speaker.read_frames(
-            64, completion=self.on_speaker_frames)
+        num_frames = int(self.__sample_rate / 100)
         while not self.__app_quit:
-            time.sleep(0.1)
+            audio = self.__virtual_speaker.read_frames(num_frames)
+            if audio:
+                self.__output_stream.write(audio)
+            else:
+                time.sleep(0.01)
         self.__output_stream.close()
 
 
