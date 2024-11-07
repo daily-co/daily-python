@@ -96,6 +96,7 @@ impl PyDaily {
             version_cstr.as_ptr(),
             os_cstr.as_ptr(),
             ptr::null(),
+            library_cstr.as_ptr(), // TODO replace with app name when implementing Banuba
         );
 
         let context_delegate =
