@@ -58,12 +58,49 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted when the session with the dial-in remote end is
+    /// established (i.e. SIP endpoint or PSTN are connectd to the Daily room).
+    ///
+    /// Note: connected does not mean media (audio or video) has started flowing
+    /// between the room and PSTN, it means the room received the connection
+    /// request and both endpoints are negotiating the media flow.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DialinConnectedEvent`
+    fn on_dialin_connected(&self, data: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Event emitted in the case of dial-in errors which are fatal and the
+    /// service cannot proceed. For example, an error in SDP negotiation is
+    /// fatal to the media/SIP pipeline and will result in dialin-error being
+    /// triggered.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
+    fn on_dialin_error(&self, data: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted when dial-in is ready. This happens after the room has
     /// connected to the SIP endpoint and the system is ready to receive dial-in
     /// calls.
     ///
     /// :param string sip_endpoint: The SIP endpoint the room has connected to
     fn on_dialin_ready(&self, sip_endpoint: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Event emitted when the dial-in remote end disconnects the call.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DialinStoppedEvent`
+    fn on_dialin_stopped(&self, data: PyObject) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Event emitted there is a dial-in non-fatal error, such as the selected
+    /// codec not being used and a fallback codec being utilized.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
+    fn on_dialin_warning(&self, data: PyObject) -> PyResult<()> {
         Ok(())
     }
 

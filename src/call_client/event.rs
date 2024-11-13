@@ -20,7 +20,11 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "app-message" => "on_app_message",
         "available-devices-updated" => "on_available_devices_updated",
         "call-state-updated" => "on_call_state_updated",
+        "dialin-connected" => "on_dialin_connected",
         "dialin-ready" => "on_dialin_ready",
+        "dialin-error" => "on_dialin_error",
+        "dialin-stopped" => "on_dialin_stopped",
+        "dialin-warning" => "on_dialin_warning",
         "dialout-connected" => "on_dialout_connected",
         "dialout-answered" => "on_dialout_answered",
         "dialout-error" => "on_dialout_error",
@@ -95,9 +99,13 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<DictValue>> {
         "call-state-updated" => object
             .get("state")
             .map(|state| vec![DictValue(state.clone())]),
+        "dialin-connected" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialin-ready" => object
             .get("sipEndpoint")
             .map(|sip_endpoint| vec![DictValue(sip_endpoint.clone())]),
+        "dialin-error" => Some(vec![DictValue(Value::Object(object.clone()))]),
+        "dialin-stopped" => Some(vec![DictValue(Value::Object(object.clone()))]),
+        "dialin-warning" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialout-connected" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialout-answered" => Some(vec![DictValue(Value::Object(object.clone()))]),
         "dialout-error" => Some(vec![DictValue(Value::Object(object.clone()))]),

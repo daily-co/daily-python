@@ -205,6 +205,63 @@ CustomVideoEncoding
      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
 
 
+.. _DialinEvent:
+
+DialinEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "participantId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "message"
+     - string
+
+
+.. _DialinConnectedEvent:
+
+DialinConnectedEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "actionTraceId"
+     - string
+   * - "displayName"
+     - string
+   * - "sipFrom"
+     - string
+   * - "sipHeaders"
+     - Mapping[str, Any]
+
+.. _DialinStoppedEvent:
+
+DialinStoppedEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "actionTraceId"
+     - string
+   * - "sipFrom"
+     - string
+   * - "sipHeaders"
+     - Mapping[str, Any]
+
 .. _DialoutEvent:
 
 DialoutEvent
