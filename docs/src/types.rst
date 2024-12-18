@@ -829,6 +829,23 @@ RemoteParticipantUpdates
      - `ParticipantUpdate`_
 
 
+.. _SipCallTransferSettings:
+
+SipCallTransferSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "toEndPoint"
+     - string
+
+
 .. _StreamingAudioSettings:
 
 StreamingAudioSettings

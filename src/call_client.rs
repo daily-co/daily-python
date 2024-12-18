@@ -1335,6 +1335,44 @@ impl PyCallClient {
         Ok(())
     }
 
+    /// Transfer a SIP dial-in call from one Daily room to another Daily
+    /// room. Alternatively, transfer an initiated SIP/PSTN dial-out to another
+    /// SIP URI or PSTN number.
+    ///
+    /// :param Optional[Mapping[str, Any]] settings: See :ref:`SipCallTransferSettings`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (settings = None, completion = None))]
+    pub fn sip_call_transfer(
+        &self,
+        py: Python<'_>,
+        settings: Option<PyObject>,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let settings_cstr = settings
+            .map(|settings| {
+                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
+                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                CString::new(settings_string).expect("invalid SIP call transfer settings string")
+            })
+            .or(None);
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_sip_call_transfer(
+                call_client.as_mut(),
+                request_id,
+                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Sends a message to other participants, or another specific participant,
     /// during the call.
     ///
