@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support for SIP refer with `CallClient.sip_refer()`.
+
 - Added support for SIP call transfers with `CallClient.sip_call_transfer()`.
 
 ## [0.13.0] - 2024-11-15

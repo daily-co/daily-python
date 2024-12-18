@@ -8,7 +8,6 @@
 
 from typing import Any, Callable, List, Mapping, Optional
 
-
 class Daily:
     @staticmethod
     def init(worker_threads: int = 2) -> None: ...
@@ -32,7 +31,6 @@ class Daily:
     ) -> NativeVad: ...
     @staticmethod
     def select_speaker_device(device_name: str) -> None: ...
-
 
 class CallClient:
     def __init__(self, event_handler: Optional[EventHandler] = None) -> None: ...
@@ -173,6 +171,11 @@ class CallClient:
         settings: Optional[Mapping[str, Any]] = None,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
+    def sip_refer(
+        self,
+        settings: Optional[Mapping[str, Any]] = None,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
     def send_app_message(
         self,
         message: Any,
@@ -209,7 +212,6 @@ class CallClient:
         ice_config: Optional[Mapping[str, Any]] = None,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
-
 
 class EventHandler:
     def __init__(self) -> None: ...
@@ -248,7 +250,6 @@ class EventHandler:
     def on_transcription_started(self, status: Mapping[str, Any]) -> None: ...
     def on_transcription_stopped(self, stopped_by: str, stopped_by_error: bool) -> None: ...
 
-
 class AudioData:
     @property
     def bits_per_sample(self) -> int: ...
@@ -260,7 +261,6 @@ class AudioData:
     def num_audio_frames(self) -> int: ...
     @property
     def audio_frames(self) -> bytes: ...
-
 
 class VideoFrame:
     @property
@@ -274,7 +274,6 @@ class VideoFrame:
     @property
     def color_format(self) -> str: ...
 
-
 class VirtualCameraDevice:
     @property
     def name(self) -> str: ...
@@ -285,7 +284,6 @@ class VirtualCameraDevice:
     @property
     def color_format(self) -> str: ...
     def write_frame(self, frame: bytes) -> None: ...
-
 
 class VirtualMicrophoneDevice:
     @property
@@ -298,7 +296,6 @@ class VirtualMicrophoneDevice:
         self, frame: bytes, completion: Optional[Callable[[int], None]] = None
     ) -> int: ...
 
-
 class VirtualSpeakerDevice:
     @property
     def name(self) -> str: ...
@@ -309,7 +306,6 @@ class VirtualSpeakerDevice:
     def read_frames(
         self, num_frame: int, completion: Optional[Callable[[bytes], None]] = None
     ) -> bytes: ...
-
 
 class NativeVad:
     @property
