@@ -216,7 +216,7 @@ DialinEvent
 
    * - Key
      - Value
-   * - "participantId"
+   * - "sessionId"
      - string
    * - "actionTraceId"
      - string
@@ -235,6 +235,8 @@ DialinConnectedEvent
 
    * - Key
      - Value
+   * - "sessionId"
+     - string
    * - "actionTraceId"
      - string
    * - "displayName"
@@ -255,6 +257,8 @@ DialinStoppedEvent
 
    * - Key
      - Value
+   * - "sessionId"
+     - string
    * - "actionTraceId"
      - string
    * - "sipFrom"
@@ -273,7 +277,7 @@ DialoutEvent
 
    * - Key
      - Value
-   * - "participantId"
+   * - "sessionId"
      - string
    * - "actionTraceId"
      - string
