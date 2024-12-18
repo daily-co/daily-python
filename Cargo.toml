@@ -11,7 +11,7 @@ name = "daily"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22.2", features = ["abi3-py37", "py-clone"] }
+pyo3 = { version = "0.22.6", features = ["abi3-py37", "py-clone"] }
 daily-core = { path = "../daily-core" }
 futures = { version = "0.3.30", default-features = false, features = [
   "std",
