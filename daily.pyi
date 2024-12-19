@@ -166,6 +166,11 @@ class CallClient:
         participant_id: Optional[str] = None,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
+    def send_dtmf(
+        self,
+        settings: Optional[Mapping[str, Any]] = None,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
     def sip_call_transfer(
         self,
         settings: Optional[Mapping[str, Any]] = None,

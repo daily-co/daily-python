@@ -304,6 +304,23 @@ DialoutSettings
      - string
 
 
+.. _DialoutSendDtmfSettings:
+
+DialoutSendDtmfSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "tones"
+     - string
+
+
 .. _IceConfig:
 
 IceConfig
