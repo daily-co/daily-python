@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for SIP call transfers with `CallClient.sip_call_transfer()`.
 
+- Added support for receiving ICE configuration from the SFU.
+
+### Changed
+
+- The field `participantId` from `DialoutEvent` and `DialinEvent` has been
+  renamed to `sessionId`.
+
+### Fixed
+
+- Improved meeting move robustness by increasing the number of retries, to
+  account for situations where the backend takes longer to complete the move.
+
 ## [0.13.0] - 2024-11-15
 
 ### Added
