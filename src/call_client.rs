@@ -1450,13 +1450,15 @@ impl PyCallClient {
     ///
     /// :param Any message: The message to send (should be serializable to JSON)
     /// :param Optional[str] participant_id: The participant ID to send the message to. Or `None` to broadcast the message
+    /// :param bool serialize_none: Whether `None` should be serialized to `null` (default: true)
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (message, participant_id = None , completion = None))]
+    #[pyo3(signature = (message, participant_id = None , serialize_none = true, completion = None))]
     pub fn send_app_message(
         &self,
         py: Python<'_>,
         message: PyObject,
         participant_id: Option<&str>,
+        serialize_none: bool,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -1476,7 +1478,10 @@ impl PyCallClient {
             })?;
         }
 
-        let message_value: DictValue = message.extract(py)?;
+        let mut message_value: DictValue = message.extract(py)?;
+        if !serialize_none {
+            message_value.remove_null_fields();
+        }
         let message_string = serde_json::to_string(&message_value.0).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 

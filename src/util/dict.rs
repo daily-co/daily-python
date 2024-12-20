@@ -5,13 +5,32 @@ use serde_json::Value;
 
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
-use pyo3::types::{PyBool, PyDict, PyFloat, PyList, PyLong, PyString};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyList, PyLong, PyNone, PyString};
 
 #[repr(transparent)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct DictValue(pub Value);
 
 impl DictValue {
+    pub fn remove_null_fields(&mut self) {
+        Self::clean_nulls(&mut self.0);
+    }
+
+    fn clean_nulls(value: &mut Value) {
+        match value {
+            Value::Object(obj) => {
+                obj.retain(|_, v| {
+                    Self::clean_nulls(v);
+                    !v.is_null()
+                });
+            }
+            Value::Array(arr) => {
+                arr.iter_mut().for_each(Self::clean_nulls);
+            }
+            _ => {}
+        }
+    }
+
     fn value_to_object(val: &Value, py: Python<'_>) -> PyObject {
         match val {
             Value::Null => py.None(),
@@ -46,7 +65,9 @@ impl ToPyObject for DictValue {
 
 impl<'py> FromPyObject<'py> for DictValue {
     fn extract_bound(ob: &Bound<'py, PyAny>) -> Result<Self, PyErr> {
-        if let Ok(value) = ob.downcast::<PyBool>() {
+        if ob.downcast::<PyNone>().is_ok() {
+            Ok(DictValue(Value::Null))
+        } else if let Ok(value) = ob.downcast::<PyBool>() {
             Ok(DictValue(value.is_true().into()))
         } else if let Ok(value) = ob.downcast::<PyLong>() {
             let number: i64 = value.extract()?;
