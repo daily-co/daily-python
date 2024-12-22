@@ -185,6 +185,7 @@ class CallClient:
         self,
         message: Any,
         participant_id: Optional[str] = None,
+        serialize_none: bool = True,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def send_prebuilt_chat_message(
