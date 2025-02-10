@@ -1131,5 +1131,9 @@ VideoPublishingSettings
      - Value
    * - "maxQuality"
      - "low" | "medium" | "high"
+   * - "preferredCodec"
+     - "VP8" | "H264" | "H265"
    * - "encodings"
      - "adaptiveHEVC" | [ `CustomVideoEncoding`_ ]
+   * - "allowAdaptiveLayers"
+     - bool
