@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed an issue where reconnection would fail if the meeting token was no longer valid.
+
 - Fixed type hints for `CallClient.send_app_message()`.
 
 ## [0.14.1] - 2024-12-22
