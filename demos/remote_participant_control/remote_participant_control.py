@@ -4,6 +4,7 @@ import signal
 
 from daily import *
 
+
 class RemoteParticipantControlApp(EventHandler):
     """An interactive CLI where the user can first:
     - join a Daily call as an owner, or
@@ -22,11 +23,11 @@ class RemoteParticipantControlApp(EventHandler):
         self.__client = CallClient(event_handler=self)
         self.__start_event = asyncio.Event()
         self.__task = asyncio.get_running_loop().create_task(self.__cli())
-    
+
     async def run(self):
         self.__start_event.set()
         await self.__task
-    
+
     async def stop(self):
         future = asyncio.get_running_loop().create_future()
 
@@ -45,7 +46,9 @@ class RemoteParticipantControlApp(EventHandler):
     def on_participant_updated(self, participant):
         info = participant.get("info", {})
         if not info.get("isLocal", True):
-            print(f"\n\nremote participant updated! permissions: \n{participant.get("info", {}).get("permissions", None)}\n")
+            print(
+                f"\n\nremote participant updated! permissions: \n{participant.get('info', {}).get('permissions', None)}\n"
+            )
 
     async def __cli(self):
         await self.__start_event.wait()
@@ -66,7 +69,9 @@ class RemoteParticipantControlApp(EventHandler):
             print("1. Join as owner")
             print("2. Join as regular participant")
             print("3. Quit")
-            join_option = await asyncio.get_event_loop().run_in_executor(None, input, "Enter choice: ")
+            join_option = await asyncio.get_event_loop().run_in_executor(
+                None, input, "Enter choice: "
+            )
 
             if join_option == "1":
                 is_owner = True
@@ -82,7 +87,7 @@ class RemoteParticipantControlApp(EventHandler):
             else:
                 print("Invalid choice")
         return is_owner
-    
+
     async def __run_cli_owner_actions_step(self):
         while True:
             print("\nChoose an action:")
@@ -134,24 +139,33 @@ class RemoteParticipantControlApp(EventHandler):
         return await future
 
     async def __revoke_can_send_permission(self):
-        await self.__update_first_remote_participant({
-            "permissions": { "canSend": [] }
-        })
+        await self.__update_first_remote_participant({"permissions": {"canSend": []}})
 
     async def __restore_can_send_permission(self):
-        await self.__update_first_remote_participant({
-            "permissions": { "canSend": ["camera", "microphone", "screenVideo", "screenAudio", "customVideo", "customAudio"] }
-        })
+        await self.__update_first_remote_participant(
+            {
+                "permissions": {
+                    "canSend": [
+                        "camera",
+                        "microphone",
+                        "screenVideo",
+                        "screenAudio",
+                        "customVideo",
+                        "customAudio",
+                    ]
+                }
+            }
+        )
 
     async def __revoke_can_receive_permission(self):
-        await self.__update_first_remote_participant({
-            "permissions": { "canReceive": { "base": False } }
-        })
+        await self.__update_first_remote_participant(
+            {"permissions": {"canReceive": {"base": False}}}
+        )
 
     async def __restore_can_receive_permission(self):
-        await self.__update_first_remote_participant({
-            "permissions": { "canReceive": { "base": True } }
-        })
+        await self.__update_first_remote_participant(
+            {"permissions": {"canReceive": {"base": True}}}
+        )
 
     async def __update_first_remote_participant(self, updates):
         future = asyncio.get_running_loop().create_future()
@@ -164,9 +178,7 @@ class RemoteParticipantControlApp(EventHandler):
             print("No remote participant found; skipping")
         else:
             self.__client.update_remote_participants(
-                remote_participants={
-                    first_participant_id: updates
-                },
+                remote_participants={first_participant_id: updates},
                 completion=update_completion,
             )
 
@@ -176,9 +188,11 @@ class RemoteParticipantControlApp(EventHandler):
         participants = self.__client.participants()
         return next((key for key in participants.keys() if key != "local"), None)
 
+
 async def sig_handler(app: RemoteParticipantControlApp):
     print("Ctrl-C detected. Exiting!")
     await app.stop()
+
 
 async def main():
     parser = argparse.ArgumentParser()
@@ -194,6 +208,7 @@ async def main():
     loop.add_signal_handler(signal.SIGINT, lambda *args: asyncio.create_task(sig_handler(app)))
 
     await app.run()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
