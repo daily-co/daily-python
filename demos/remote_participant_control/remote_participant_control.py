@@ -26,7 +26,10 @@ class RemoteParticipantControlApp(EventHandler):
 
     async def run(self):
         self.__start_event.set()
-        await self.__task
+        try:
+            await self.__task
+        except asyncio.CancelledError:
+            pass
 
     async def stop(self):
         future = asyncio.get_running_loop().create_future()
@@ -53,14 +56,11 @@ class RemoteParticipantControlApp(EventHandler):
     async def __cli(self):
         await self.__start_event.wait()
 
-        try:
-            is_owner = await self.__run_cli_join_step()
-            if is_owner:
-                await self.__run_cli_owner_actions_step()
-            else:
-                await self.__run_cli_regular_participant_actions_step()
-        except asyncio.CancelledError:
-            pass
+        is_owner = await self.__run_cli_join_step()
+        if is_owner:
+            await self.__run_cli_owner_actions_step()
+        else:
+            await self.__run_cli_regular_participant_actions_step()
 
     async def __run_cli_join_step(self) -> bool:
         is_owner = False
@@ -73,19 +73,20 @@ class RemoteParticipantControlApp(EventHandler):
                 None, input, "Enter choice: "
             )
 
-            if join_option == "1":
-                is_owner = True
-                await self.__join(meeting_token=self.__owner_token)
-                break
-            elif join_option == "2":
-                is_owner = False
-                await self.__join()
-                break
-            elif join_option == "3":
-                await self.stop()
-                break
-            else:
-                print("Invalid choice")
+            match join_option:
+                case "1":
+                    is_owner = True
+                    await self.__join(meeting_token=self.__owner_token)
+                    break
+                case "2":
+                    is_owner = False
+                    await self.__join()
+                    break
+                case "3":
+                    await self.stop()
+                    break
+                case _:
+                    print("Invalid choice")
         return is_owner
 
     async def __run_cli_owner_actions_step(self):
@@ -98,19 +99,20 @@ class RemoteParticipantControlApp(EventHandler):
             print("5. Quit")
             action = await asyncio.get_event_loop().run_in_executor(None, input, "Enter choice: ")
 
-            if action == "1":
-                await self.__revoke_can_send_permission()
-            elif action == "2":
-                await self.__restore_can_send_permission()
-            elif action == "3":
-                await self.__revoke_can_receive_permission()
-            elif action == "4":
-                await self.__restore_can_receive_permission()
-            elif action == "5":
-                await self.stop()
-                break
-            else:
-                print("Invalid choice")
+            match action:
+                case "1":
+                    await self.__revoke_can_send_permission()
+                case "2":
+                    await self.__restore_can_send_permission()
+                case "3":
+                    await self.__revoke_can_receive_permission()
+                case "4":
+                    await self.__restore_can_receive_permission()
+                case "5":
+                    await self.stop()
+                    break
+                case _:
+                    print("Invalid choice")
 
     async def __run_cli_regular_participant_actions_step(self):
         while True:
@@ -118,11 +120,12 @@ class RemoteParticipantControlApp(EventHandler):
             print("1. Quit")
             action = await asyncio.get_event_loop().run_in_executor(None, input, "Enter choice: ")
 
-            if action == "1":
-                await self.stop()
-                break
-            else:
-                print("Invalid choice")
+            match action:
+                case "1":
+                    await self.stop()
+                    break
+                case _:
+                    print("Invalid choice")
 
     async def __join(self, meeting_token=None):
         future = asyncio.get_running_loop().create_future()
