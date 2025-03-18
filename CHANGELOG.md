@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for updating remote participants' `canReceive` permission via
   the `update_remote_participants()` method.
 
+### Fixed
+
+- Fixed issue where the ice servers configured by the user were not being applied when creating the PeerConnection.
+
+
 ## [0.15.0] - 2025-02-26
 
 ### Added
