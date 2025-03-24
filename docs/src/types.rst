@@ -129,6 +129,14 @@ CanSendPermission
 "camera" | "microphone" | "screenVideo" | "screenAudio" | "customVideo" | "customAudio"
 
 
+.. _CanReceivePermission:
+
+CanReceivePermission
+-----------------------------------
+
+"camera" | "microphone" | "screenVideo" | "screenAudio" | "customVideo" | "customAudio"
+
+
 .. _CameraInputSettings:
 
 CameraInputSettings
@@ -731,6 +739,8 @@ ParticipantPermissions
      - bool | [ `CanAdminPermission`_ ]
    * - "canSend"
      - bool | [ `CanSendPermission`_ ]
+   * - "canReceive"
+     - bool | [ `CanReceivePermission`_ ]
 
 
 .. _ParticipantSubscriptions:
