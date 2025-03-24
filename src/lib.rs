@@ -115,6 +115,7 @@ impl PyDaily {
                 None,
                 get_audio_device,
                 set_audio_device,
+                None
             ),
         );
 
