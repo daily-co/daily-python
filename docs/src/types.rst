@@ -129,12 +129,48 @@ CanSendPermission
 "camera" | "microphone" | "screenVideo" | "screenAudio" | "customVideo" | "customAudio"
 
 
+.. _CanReceiveMediaPermission:
+
+CanReceiveMediaPermission
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "video"
+     - bool
+   * - "audio"
+     - bool
+   * - "screenVideo"
+     - bool
+   * - "screenAudio"
+     - bool
+   * - "customVideo"
+     - Mapping[str, bool]
+   * - "customAudio"
+     - Mapping[str, bool]
+
+
 .. _CanReceivePermission:
 
 CanReceivePermission
 -----------------------------------
 
-"camera" | "microphone" | "screenVideo" | "screenAudio" | "customVideo" | "customAudio"
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "base"
+     - bool | `CanReceiveMediaPermission`_
+   * - "byUserId"
+     - Mapping[str, bool | `CanReceiveMediaPermission`_]
+   * - "byParticipantId"
+     - Mapping[str, bool | `CanReceiveMediaPermission`_]
 
 
 .. _CameraInputSettings:
@@ -736,11 +772,11 @@ ParticipantPermissions
    * - "hasPresence"
      - bool
    * - "canAdmin"
-     - bool | [ `CanAdminPermission`_ ]
+     - [ `CanAdminPermission`_ ]
    * - "canSend"
-     - bool | [ `CanSendPermission`_ ]
+     - [ `CanSendPermission`_ ]
    * - "canReceive"
-     - bool | [ `CanReceivePermission`_ ]
+     - `CanReceivePermission`_
 
 
 .. _ParticipantSubscriptions:
