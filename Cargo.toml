@@ -41,3 +41,7 @@ wasm-bindgen = { git = "https://github.com/daily-co/wasm-bindgen", branch = "dai
 wasm-bindgen-futures = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
 js-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
 web-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+
+[lints.clippy]
+# Fix clippy issue bcause of older pyo3 < 0.23.x.
+useless_conversion = "allow"
