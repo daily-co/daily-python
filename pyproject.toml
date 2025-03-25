@@ -6,6 +6,7 @@ build-backend = "maturin"
 name = "daily-python"
 description = "Daily Client SDK for Python"
 license = { text = "BSD 2-Clause License" }
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["webrtc", "audio", "video", "ai"]

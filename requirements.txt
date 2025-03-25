@@ -1,5 +1,5 @@
-maturin==1.7.1
-setuptools==73.0.1
-sphinx==7.4.7
-sphinx-rtd-theme==2.0.0
+maturin==1.8.3
+setuptools==78.0.2
+sphinx==8.2.3
+sphinx-rtd-theme==3.0.2
 toml==0.10.2
