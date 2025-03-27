@@ -13,16 +13,16 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.22.6", features = ["abi3-py37", "py-clone"] }
 daily-core = { path = "../daily-core" }
-futures = { version = "0.3.30", default-features = false, features = [
+futures = { version = "0.3.31", default-features = false, features = [
   "std",
   "executor",
 ] }
 lazy_static = "1.5.0"
-libc = "0.2.158"
-serde = { version = "1.0.209", default-features = false, features = ["derive"] }
-serde_json = "1.0.127"
-tracing = "0.1.40"
-uuid = { version = "1.10.0", default-features = false, features = [
+libc = "0.2.171"
+serde = { version = "1.0.219", default-features = false, features = ["derive"] }
+serde_json = "1.0.140"
+tracing = "0.1.41"
+uuid = { version = "1.16.0", default-features = false, features = [
   "serde",
   "v4",
 ] }
