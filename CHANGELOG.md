@@ -5,6 +5,14 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-03-27
+
+### Fixed
+
+- `daily-python` 0.16.x was compiled with glibc 2.35, which prevented installing
+  it on systems with an older glibc version. This release goes back to glibc
+  2.28.
+
 ## [0.16.1] - 2025-03-26
 
 ### Fixed
