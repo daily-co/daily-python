@@ -751,7 +751,7 @@ ParticipantMediaInfo
    * - Key
      - Value
    * - "offReasons"
-     - [ "user" | "bandwidth" | "sendPermission" | "remoteMute" ]
+     - [ "user" | "bandwidth" | "sendPermission" | "receivePermission" | "remoteMute" ]
    * - "state"
      - "receivable" | "playable" | "loading" | "interrupted" | "blocked" | "off"
    * - "subscribed"
