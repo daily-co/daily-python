@@ -5,6 +5,16 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Support the new `canReceive` permission, which involves:
+  - Showing the proper track state (i.e. `"off"`, with `"receivePermission"` among the 
+    `"offReasons"`) when `canReceive` permission is lacking for a remote track.
+  - Resuming receiving remote tracks when previously-revoked `canReceive` permissions have been
+    restored.
+
 ## [0.17.0] - 2025-03-27
 
 ### Fixed
