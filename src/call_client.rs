@@ -21,7 +21,6 @@ use std::{
 use pyo3::{exceptions, prelude::*};
 use uuid::Uuid;
 
-use webrtc_daily::peer_connection::PeerConnectionFactory;
 use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
@@ -624,18 +623,16 @@ impl PyCallClient {
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
-        let peer_connection_factory_ptr = daily_core_context_peer_connection_factory();
-
-        let mut peer_connection_factory = PeerConnectionFactory::from(peer_connection_factory_ptr);
-
-        let track = peer_connection_factory.create_audio_track(audio_source.audio_source.clone());
-
         unsafe {
+            let track = daily_core_context_create_custom_audio_track(
+                audio_source.audio_source.clone().as_mut_ptr() as *mut _,
+            );
+
             daily_core_call_client_add_custom_audio_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),
-                track.as_ptr() as *const _,
+                track,
             );
         }
 
