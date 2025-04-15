@@ -21,11 +21,12 @@ use std::{
 use pyo3::{exceptions, prelude::*};
 use uuid::Uuid;
 
+use webrtc_daily::peer_connection::PeerConnectionFactory;
 use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{util::dict::DictValue, GLOBAL_CONTEXT};
+use crate::{util::dict::DictValue, PyCustomAudioSource, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -595,6 +596,46 @@ impl PyCallClient {
                 call_client.as_mut(),
                 request_id,
                 input_settings_cstr.as_ptr(),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Adds a new custom audio track with the given name and audio
+    /// source. Audio frames need to be written using the audio source.
+    ///
+    /// :param str track_name: The audio track name
+    /// :param audio_source: The custom audio source
+    /// :type audio_source: :class:`daily.CustomAudioSource`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, audio_source, completion = None))]
+    pub fn add_custom_audio_track(
+        &self,
+        track_name: &str,
+        audio_source: &PyCustomAudioSource,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        let peer_connection_factory_ptr = daily_core_context_peer_connection_factory();
+
+        let mut peer_connection_factory = PeerConnectionFactory::from(peer_connection_factory_ptr);
+
+        let track = peer_connection_factory.create_audio_track(audio_source.audio_source.clone());
+
+        unsafe {
+            daily_core_call_client_add_custom_audio_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+                track.as_ptr() as *const _,
             );
         }
 

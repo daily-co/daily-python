@@ -9,8 +9,8 @@ pub(crate) mod util;
 use call_client::{PyCallClient, PyEventHandler};
 use context::GLOBAL_CONTEXT;
 use media::{
-    PyAudioData, PyNativeVad, PyVideoFrame, PyVirtualCameraDevice, PyVirtualMicrophoneDevice,
-    PyVirtualSpeakerDevice,
+    PyAudioData, PyCustomAudioSource, PyNativeVad, PyVideoFrame, PyVirtualCameraDevice,
+    PyVirtualMicrophoneDevice, PyVirtualSpeakerDevice,
 };
 
 use std::env;
@@ -115,7 +115,7 @@ impl PyDaily {
                 None,
                 get_audio_device,
                 set_audio_device,
-                None
+                None,
             ),
         );
 
@@ -241,6 +241,7 @@ impl PyDaily {
 fn daily(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAudioData>()?;
     m.add_class::<PyCallClient>()?;
+    m.add_class::<PyCustomAudioSource>()?;
     m.add_class::<PyDaily>()?;
     m.add_class::<PyEventHandler>()?;
     m.add_class::<PyNativeVad>()?;

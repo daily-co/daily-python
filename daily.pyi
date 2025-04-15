@@ -85,6 +85,12 @@ class CallClient:
         permissions: Mapping[str, Any],
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
+    def add_custom_audio_track(
+        self,
+        track_name: str,
+        audio_source: CustomAudioSource,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
     def start_live_stream_with_endpoints(
         self,
         endpoints: Optional[List[str]],
@@ -267,6 +273,15 @@ class AudioData:
     def num_audio_frames(self) -> int: ...
     @property
     def audio_frames(self) -> bytes: ...
+
+class CustomAudioSource:
+    @property
+    def sample_rate(self) -> int: ...
+    @property
+    def channels(self) -> int: ...
+    def write_frames(
+        self, frame: bytes, completion: Optional[Callable[[int], None]] = None
+    ) -> int: ...
 
 class VideoFrame:
     @property

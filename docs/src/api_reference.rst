@@ -4,6 +4,9 @@ API Reference
 .. autoclass:: daily.AudioData
     :members:
 
+.. autoclass:: daily.CustomAudioSource
+    :members:
+
 .. autoclass:: daily.CallClient
     :members:
 
