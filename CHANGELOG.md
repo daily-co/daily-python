@@ -11,7 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - It is now possible to create custom audio tracks with
   `CallClient.add_custom_audio_track()`. The custom audio tracks need a custom
-  audio source which can be created with `CustomAudioSource()`.
+  audio source which can be created with `CustomAudioSource()`. You can also
+  update an existing custom track with a new audio source with
+  `CallClient.update_custom_audio_track()` or remove and existing custom track
+  with `CallClient.remove_custom_audio_track()`.
 
 - Support the new `canReceive` permission, which involves:
   - Showing the proper track state (i.e. `"off"`, with `"receivePermission"` among the

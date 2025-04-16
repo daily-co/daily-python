@@ -639,6 +639,73 @@ impl PyCallClient {
         Ok(())
     }
 
+    /// Updates an existing custom audio track with a new custom audio
+    /// source.
+    ///
+    /// :param str track_name: The audio track name
+    /// :param audio_source: The new custom audio source
+    /// :type audio_source: :class:`daily.CustomAudioSource`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, audio_source, completion = None))]
+    pub fn update_custom_audio_track(
+        &self,
+        track_name: &str,
+        audio_source: &PyCustomAudioSource,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            let track = daily_core_context_create_custom_audio_track(
+                audio_source.audio_source.clone().as_mut_ptr() as *mut _,
+            );
+
+            daily_core_call_client_update_custom_audio_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+                track,
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Removes an existing custom audio track.
+    ///
+    /// :param str track_name: The audio track name
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, completion = None))]
+    pub fn remove_custom_audio_track(
+        &self,
+        track_name: &str,
+        completion: Option<PyObject>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_remove_custom_audio_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Returns the current client publishing settings. The publishing settings
     /// specify if media should be published (i.e. sent) and, if so, how it
     /// should be sent (e.g. what resolutions or bitrate).
