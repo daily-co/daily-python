@@ -154,10 +154,10 @@ class DailyQtWidget(QtWidgets.QWidget):
         pixmap = QtGui.QPixmap.fromImage(scaled)
         self.__image_label.setPixmap(pixmap)
 
-    def on_audio_data(self, participant_id, audio_data):
+    def on_audio_data(self, participant_id, audio_data, audio_source):
         self.__wave.writeframes(audio_data.audio_frames)
 
-    def on_video_frame(self, participant_id, video_frame):
+    def on_video_frame(self, participant_id, video_frame, video_source):
         self.frame_signal.emit(video_frame)
 
 

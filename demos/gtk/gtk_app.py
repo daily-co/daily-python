@@ -172,10 +172,10 @@ class DailyGtkApp(Gtk.Application):
         context.set_source_surface(cairo_surface)
         context.paint()
 
-    def on_audio_data(self, participant_id, audio_data):
+    def on_audio_data(self, participant_id, audio_data, audio_source):
         self.__wave.writeframes(audio_data.audio_frames)
 
-    def on_video_frame(self, participant_id, video_frame):
+    def on_video_frame(self, participant_id, video_frame, video_source):
         self.__frame_width = video_frame.width
         self.__frame_height = video_frame.height
         self.__frame = video_frame

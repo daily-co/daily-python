@@ -215,13 +215,13 @@ class CallClient:
     def set_audio_renderer(
         self,
         participant_id: str,
-        callback: Callable[[str, AudioData], None],
+        callback: Callable[[str, AudioData, str], None],
         audio_source: str = "microphone",
     ) -> None: ...
     def set_video_renderer(
         self,
         participant_id: str,
-        callback: Callable[[str, VideoFrame], None],
+        callback: Callable[[str, VideoFrame, str], None],
         video_source: str = "camera",
         color_format: str = "RGBA",
     ) -> None: ...

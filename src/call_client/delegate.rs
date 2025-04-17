@@ -52,6 +52,18 @@ type PyCallClientDelegateOnAudioDataFn = unsafe fn(
 );
 
 #[derive(Clone)]
+pub(crate) struct AudioRendererData {
+    pub(crate) audio_source: String,
+    pub(crate) callback: PyObject,
+}
+
+#[derive(Clone)]
+pub(crate) struct VideoRendererData {
+    pub(crate) video_source: String,
+    pub(crate) callback: PyObject,
+}
+
+#[derive(Clone)]
 pub(crate) struct PyCallClientDelegateFns {
     pub(crate) on_event: Option<PyCallClientDelegateOnEventFn>,
     pub(crate) on_video_frame: Option<PyCallClientDelegateOnVideoFrameFn>,
@@ -62,8 +74,8 @@ pub(crate) struct PyCallClientInner {
     pub(crate) event_handler_callback: Mutex<Option<PyObject>>,
     pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
     pub(crate) completions: Mutex<HashMap<u64, PyCallClientCompletion>>,
-    pub(crate) video_renderers: Mutex<HashMap<u64, PyObject>>,
-    pub(crate) audio_renderers: Mutex<HashMap<u64, PyObject>>,
+    pub(crate) video_renderers: Mutex<HashMap<u64, VideoRendererData>>,
+    pub(crate) audio_renderers: Mutex<HashMap<u64, AudioRendererData>>,
     // Non-blocking updates
     pub(crate) active_speaker: Mutex<PyObject>,
     pub(crate) inputs: Mutex<PyObject>,
@@ -232,7 +244,7 @@ pub(crate) unsafe fn on_audio_data(
 ) {
     // Don't lock in the if statement otherwise the lock is held throughout the
     // callback call.
-    let callback = delegate_ctx
+    let renderer_data = delegate_ctx
         .inner
         .audio_renderers
         .lock()
@@ -240,7 +252,7 @@ pub(crate) unsafe fn on_audio_data(
         .get(&renderer_id)
         .cloned();
 
-    if let Some(callback) = callback {
+    if let Some(renderer_data) = renderer_data {
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
         let num_bytes =
@@ -255,9 +267,16 @@ pub(crate) unsafe fn on_audio_data(
             audio_frames: PyBytes::bound_from_ptr(py, (*data).audio_frames, num_bytes).into_py(py),
         };
 
-        let args = PyTuple::new_bound(py, &[peer_id.into_py(py), audio_data.into_py(py)]);
+        let args = PyTuple::new_bound(
+            py,
+            &[
+                peer_id.into_py(py),
+                audio_data.into_py(py),
+                renderer_data.audio_source.into_py(py),
+            ],
+        );
 
-        if let Err(error) = callback.call1(py, args) {
+        if let Err(error) = renderer_data.callback.call1(py, args) {
             error.write_unraisable_bound(py, None);
         }
     }
@@ -272,7 +291,7 @@ pub(crate) unsafe fn on_video_frame(
 ) {
     // Don't lock in the if statement otherwise the lock is held throughout the
     // callback call.
-    let callback = delegate_ctx
+    let renderer_data = delegate_ctx
         .inner
         .video_renderers
         .lock()
@@ -280,7 +299,7 @@ pub(crate) unsafe fn on_video_frame(
         .get(&renderer_id)
         .cloned();
 
-    if let Some(callback) = callback {
+    if let Some(renderer_data) = renderer_data {
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
         let color_format = CStr::from_ptr((*frame).color_format)
@@ -295,9 +314,16 @@ pub(crate) unsafe fn on_video_frame(
             color_format: color_format.into_py(py),
         };
 
-        let args = PyTuple::new_bound(py, &[peer_id.into_py(py), video_frame.into_py(py)]);
+        let args = PyTuple::new_bound(
+            py,
+            &[
+                peer_id.into_py(py),
+                video_frame.into_py(py),
+                renderer_data.video_source.into_py(py),
+            ],
+        );
 
-        if let Err(error) = callback.call1(py, args) {
+        if let Err(error) = renderer_data.callback.call1(py, args) {
             error.write_unraisable_bound(py, None);
         }
     }

@@ -62,7 +62,7 @@ class DailyYOLO(EventHandler):
 
             self.__camera.write_frame(pil)
 
-    def on_video_frame(self, participant_id, video_frame):
+    def on_video_frame(self, participant_id, video_frame, video_source):
         # Process ~15 frames per second (considering incoming frames at 30fps).
         if time.time() - self.__time > 0.05:
             self.__time = time.time()

@@ -1663,7 +1663,7 @@ impl PyCallClient {
     /// participant.
     ///
     /// :param str participant_id: The ID of the participant to receive audio from
-    /// :param func callback: A callback to be called when audio data is available. It receives two arguments: the participant ID and a :class:`AudioData`
+    /// :param func callback: A callback to be called when audio data is available. It receives three arguments: the participant ID, the :class:`AudioData` and the audio source
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
     pub fn set_audio_renderer(
@@ -1682,11 +1682,15 @@ impl PyCallClient {
 
         // Use the request_id as our renderer_id (it will be unique anyways) and
         // register the video renderer python callback.
+        let renderer_data = AudioRendererData {
+            audio_source: audio_source.to_string(),
+            callback,
+        };
         self.inner
             .audio_renderers
             .lock()
             .unwrap()
-            .insert(request_id, callback);
+            .insert(request_id, renderer_data);
 
         unsafe {
             daily_core_call_client_set_participant_audio_renderer(
@@ -1705,7 +1709,7 @@ impl PyCallClient {
     /// participant. The color format of the received frames can be chosen.
     ///
     /// :param str participant_id: The ID of the participant to receive video from
-    /// :param func callback: A callback to be called on every received frame. It receives two arguments: the participant ID and a :class:`VideoFrame`
+    /// :param func callback: A callback to be called on every received frame. It receives three arguments: the participant ID, a :class:`VideoFrame` and the video source
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
     #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA"))]
@@ -1733,11 +1737,15 @@ impl PyCallClient {
 
         // Use the request_id as our renderer_id (it will be unique anyways) and
         // register the video renderer python callback.
+        let renderer_data = VideoRendererData {
+            video_source: video_source.to_string(),
+            callback,
+        };
         self.inner
             .video_renderers
             .lock()
             .unwrap()
-            .insert(request_id, callback);
+            .insert(request_id, renderer_data);
 
         unsafe {
             daily_core_call_client_set_participant_video_renderer(

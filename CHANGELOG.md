@@ -17,10 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with `CallClient.remove_custom_audio_track()`.
 
 - Support the new `canReceive` permission, which involves:
-  - Showing the proper track state (i.e. `"off"`, with `"receivePermission"` among the
-    `"offReasons"`) when `canReceive` permission is lacking for a remote track.
-  - Resuming receiving remote tracks when previously-revoked `canReceive` permissions have been
-    restored.
+  - Showing the proper track state (i.e. `"off"`, with `"receivePermission"`
+    among the `"offReasons"`) when `canReceive` permission is lacking for a
+    remote track.
+  - Resuming receiving remote tracks when previously-revoked `canReceive`
+    permissions have been restored.
+
+### Changed
+
+- Audio (`CallClient.set_audio_renderer()`) and video
+  (`CallClient.set_video_renderer()`) renderers callbacks now receive the audio
+  and video source as the last argument.
 
 ## [0.17.0] - 2025-03-27
 
