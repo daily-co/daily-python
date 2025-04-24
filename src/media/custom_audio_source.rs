@@ -19,7 +19,7 @@ use pyo3::types::{PyBytes, PyTuple};
 #[pyclass(name = "CustomAudioSource", module = "daily")]
 pub struct PyCustomAudioSource {
     pub sample_rate: u32,
-    pub num_channels: u8,
+    pub channels: u8,
     pub audio_source: NativeDailyAudioSource,
     request_id: AtomicU64,
     completions: Mutex<HashMap<u64, PyObject>>,
@@ -43,14 +43,14 @@ impl PyCustomAudioSource {
 #[pymethods]
 impl PyCustomAudioSource {
     #[new]
-    pub fn new(sample_rate: u32, num_channels: u8) -> Self {
+    pub fn new(sample_rate: u32, channels: u8) -> Self {
         let audio_source_ptr = unsafe { daily_core_context_create_custom_audio_source() };
 
         let audio_source = NativeDailyAudioSource::from(audio_source_ptr);
 
         Self {
             sample_rate,
-            num_channels,
+            channels,
             audio_source,
             request_id: AtomicU64::new(0),
             completions: Mutex::new(HashMap::new()),
@@ -73,7 +73,7 @@ impl PyCustomAudioSource {
     /// :rtype: int
     #[getter]
     fn channels(&self) -> u8 {
-        self.num_channels
+        self.channels
     }
 
     /// Writes audio frames to the audio source. The frames will be sent to the
@@ -98,13 +98,13 @@ impl PyCustomAudioSource {
         let num_bytes = frames.len()?;
         let bytes_per_sample: usize = 2;
 
-        if num_bytes % bytes_per_sample != 0 {
+        if num_bytes % (bytes_per_sample * self.channels as usize) != 0 {
             return Err(exceptions::PyValueError::new_err(
                 "frames bytestring should contain 16-bit samples",
             ));
         }
 
-        let num_frames = (num_bytes / bytes_per_sample) / self.num_channels as usize;
+        let num_frames = (num_bytes / bytes_per_sample) / self.channels as usize;
 
         let bytes = frames.as_bytes();
         let aligned = AlignedI16Data::new(bytes);
@@ -119,7 +119,7 @@ impl PyCustomAudioSource {
                         aligned.as_ptr() as *const _,
                         (bytes_per_sample * 8) as i32,
                         self.sample_rate as i32,
-                        self.num_channels as usize,
+                        self.channels as usize,
                         num_frames,
                     )
                 } else {
@@ -128,7 +128,7 @@ impl PyCustomAudioSource {
                         aligned.as_ptr() as *const _,
                         (bytes_per_sample * 8) as i32,
                         self.sample_rate as i32,
-                        self.num_channels as usize,
+                        self.channels as usize,
                         num_frames,
                         request_id,
                         on_write_frames,

@@ -115,10 +115,10 @@ impl PyVirtualMicrophoneDevice {
         }
 
         let num_bytes = frames.len()?;
-        let bytes_per_sample = 2;
+        let bytes_per_sample: usize = 2;
 
         // libwebrtc needs 16-bit linear PCM samples
-        if num_bytes % bytes_per_sample != 0 {
+        if num_bytes % (bytes_per_sample * self.channels as usize) != 0 {
             return Err(exceptions::PyValueError::new_err(
                 "frames bytestring should contain 16-bit samples",
             ));
