@@ -114,28 +114,6 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bindgen"
-version = "0.64.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4243e6031260db77ede97ad86c27e501d646a27ab57b59a574f725d98ab1fb4"
-dependencies = [
- "bitflags 1.3.2",
- "cexpr",
- "clang-sys",
- "lazy_static",
- "lazycell",
- "log",
- "peeking_take_while",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash",
- "shlex",
- "syn 1.0.109",
- "which",
-]
-
-[[package]]
-name = "bindgen"
 version = "0.69.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
@@ -151,10 +129,49 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "shlex",
  "syn 2.0.100",
  "which",
+]
+
+[[package]]
+name = "bindgen"
+version = "0.71.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f58bf3d7db68cfbac37cfc485a8d711e87e064c3d0fe0435b92f7a407f9d6b3"
+dependencies = [
+ "bitflags 2.9.0",
+ "cexpr",
+ "clang-sys",
+ "itertools",
+ "log",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash 2.1.1",
+ "shlex",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "bindgen"
+version = "0.71.1"
+source = "git+https://github.com/rust-lang/rust-bindgen?rev=97ab9152b5edb1fda1ced9bc1604f5e4dc9cfaa9#97ab9152b5edb1fda1ced9bc1604f5e4dc9cfaa9"
+dependencies = [
+ "bitflags 2.9.0",
+ "cexpr",
+ "clang-sys",
+ "itertools",
+ "log",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash 2.1.1",
+ "shlex",
+ "syn 2.0.100",
 ]
 
 [[package]]
@@ -1590,12 +1607,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
-
-[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1914,6 +1925,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
 
 [[package]]
 name = "rustix"
@@ -2493,9 +2510,9 @@ dependencies = [
 [[package]]
 name = "tracing-oslog"
 version = "0.1.2"
-source = "git+https://github.com/daily-co/tracing-oslog?tag=daily-0.0.2#741353361176898043964f530ec3e3ffb644bc07"
+source = "git+https://github.com/daily-co/tracing-oslog?tag=daily-0.0.3#84d22bff1fc889acb2e06f5462b020e069c91f0d"
 dependencies = [
- "bindgen 0.64.0",
+ "bindgen 0.71.1 (git+https://github.com/rust-lang/rust-bindgen?rev=97ab9152b5edb1fda1ced9bc1604f5e4dc9cfaa9)",
  "cc",
  "cfg-if",
  "fnv",
@@ -2853,7 +2870,7 @@ name = "webrtc-sys"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bindgen 0.69.5",
+ "bindgen 0.71.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "build-utils",
  "cargo-emit",
  "cc",
