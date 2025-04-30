@@ -3,6 +3,10 @@
 
 # Daily Client SDK for Python
 
+> **Looking to develop voice and video agents?**
+> 
+> We recommend using [Pipecat](https://github.com/pipecat-ai/pipecat). Daily Python is too low-level for most consumer-facing apps.
+
 The Daily client SDK for Python allows you to build video and audio calling into your native desktop and server applications.
 
 ![daily-python](https://github.com/daily-co/daily-python/blob/main/daily-python.gif?raw=true)
