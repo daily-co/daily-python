@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Error messages "no subscription for consumer" and "Failed to close consumer"
+  are now logged as debug messages since they can be caused by a remote
+  participant simply disconnecting which is a valid and common case.
+
 - Audio (`CallClient.set_audio_renderer()`) and video
   (`CallClient.set_video_renderer()`) renderers callbacks now receive the audio
   and video source as the last argument.
