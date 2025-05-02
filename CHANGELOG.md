@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Resuming receiving remote tracks when previously-revoked `canReceive`
     permissions have been restored.
 
+- Retrying multiple times to open the signalling channel during the join.
+
+- Alternate websocket URI format to avoid connection issues potentially caused by ISPs.
+
+
 ### Changed
 
 - Error messages "no subscription for consumer" and "Failed to close consumer"
