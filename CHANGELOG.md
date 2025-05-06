@@ -5,12 +5,23 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `CallClient.remove_custom_track()` type hints.
+
 ## [0.18.1] - 2025-05-02
 
 ### Fixed
 
 - Fixed an issue that would cause virtual microphones to not call the completion
   callbacks in some situations.
+
+- Retrying multiple times to open the signalling channel during the join.
+
+- Alternate websocket URI format to avoid connection issues potentially caused
+  by ISPs.
 
 ## [0.18.0] - 2025-04-30
 
@@ -29,11 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     remote track.
   - Resuming receiving remote tracks when previously-revoked `canReceive`
     permissions have been restored.
-
-- Retrying multiple times to open the signalling channel during the join.
-
-- Alternate websocket URI format to avoid connection issues potentially caused by ISPs.
-
 
 ### Changed
 

@@ -100,7 +100,7 @@ class CallClient:
     def remove_custom_audio_track(
         self,
         track_name: str,
-        audio_source: CustomAudioSource,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def start_live_stream_with_endpoints(
         self,
