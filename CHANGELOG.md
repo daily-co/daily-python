@@ -5,6 +5,16 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `CallClient.set_audio_renderer()` can receive two additional arguments:
+  `sample_rate` and `callback_interval_ms`. With `sample_rate` you can now
+  specify the desired sample rate of the incoming audio data. With
+  `callback_interval_ms` you can control how often the provided callback is
+  called (with 10ms intervals).
+
 ## [0.18.2] - 2025-05-07
 
 ### Fixed

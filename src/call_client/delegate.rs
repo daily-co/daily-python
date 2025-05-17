@@ -55,6 +55,9 @@ type PyCallClientDelegateOnAudioDataFn = unsafe fn(
 pub(crate) struct AudioRendererData {
     pub(crate) audio_source: String,
     pub(crate) callback: PyObject,
+    pub(crate) audio_buffer: Vec<u8>,
+    pub(crate) callback_interval_ms: u32,
+    pub(crate) callback_count: u32,
 }
 
 #[derive(Clone)]
@@ -242,6 +245,43 @@ pub(crate) unsafe fn on_audio_data(
     peer_id: *const libc::c_char,
     data: *const NativeAudioData,
 ) {
+    // In this block we get a mutable reference to the renderer. We use that to
+    // check if we should call the callback depending on the number of 10ms
+    // intervals requested by the user, and also to extend our buffer if we
+    // shouldn't call the callback.
+    let mut call_callback = false;
+    if let Some(renderer_data) = delegate_ctx
+        .inner
+        .audio_renderers
+        .lock()
+        .unwrap()
+        .get_mut(&renderer_id)
+    {
+        // Clear our internal buffer.
+        if renderer_data.callback_count == 0 {
+            renderer_data.audio_buffer.clear();
+        }
+
+        // Increment to indicate this is a new call.
+        renderer_data.callback_count += 1;
+
+        // This callback is called every 10ms.
+        let current_interval_ms = renderer_data.callback_count * 10;
+
+        // Extend our internal buffer
+        let num_bytes =
+            ((*data).bits_per_sample as usize * (*data).num_channels * (*data).num_audio_frames)
+                / 8;
+        let slice = std::slice::from_raw_parts((*data).audio_frames, num_bytes);
+        renderer_data.audio_buffer.extend_from_slice(slice);
+
+        // Check if we should call the python callback or not.
+        call_callback = current_interval_ms == renderer_data.callback_interval_ms;
+        if call_callback {
+            renderer_data.callback_count = 0;
+        }
+    };
+
     // Don't lock in the if statement otherwise the lock is held throughout the
     // callback call.
     let renderer_data = delegate_ctx
@@ -255,29 +295,37 @@ pub(crate) unsafe fn on_audio_data(
     if let Some(renderer_data) = renderer_data {
         let peer_id = CStr::from_ptr(peer_id).to_string_lossy().into_owned();
 
-        let num_bytes =
-            ((*data).bits_per_sample as usize * (*data).num_channels * (*data).num_audio_frames)
-                / 8;
+        if call_callback {
+            let num_bytes = renderer_data.audio_buffer.len();
+            let bytes_per_sample = (*data).bits_per_sample as usize / 8;
+            let frame_size = bytes_per_sample * (*data).num_channels;
+            let num_audio_frames = renderer_data.audio_buffer.len() / frame_size;
 
-        let audio_data = PyAudioData {
-            bits_per_sample: (*data).bits_per_sample,
-            sample_rate: (*data).sample_rate,
-            num_channels: (*data).num_channels,
-            num_audio_frames: (*data).num_audio_frames,
-            audio_frames: PyBytes::bound_from_ptr(py, (*data).audio_frames, num_bytes).into_py(py),
-        };
+            let audio_data = PyAudioData {
+                bits_per_sample: (*data).bits_per_sample,
+                sample_rate: (*data).sample_rate,
+                num_channels: (*data).num_channels,
+                num_audio_frames,
+                audio_frames: PyBytes::bound_from_ptr(
+                    py,
+                    renderer_data.audio_buffer.as_ptr(),
+                    num_bytes,
+                )
+                .into_py(py),
+            };
 
-        let args = PyTuple::new_bound(
-            py,
-            &[
-                peer_id.into_py(py),
-                audio_data.into_py(py),
-                renderer_data.audio_source.into_py(py),
-            ],
-        );
+            let args = PyTuple::new_bound(
+                py,
+                &[
+                    peer_id.into_py(py),
+                    audio_data.into_py(py),
+                    renderer_data.audio_source.into_py(py),
+                ],
+            );
 
-        if let Err(error) = renderer_data.callback.call1(py, args) {
-            error.write_unraisable_bound(py, None);
+            if let Err(error) = renderer_data.callback.call1(py, args) {
+                error.write_unraisable_bound(py, None);
+            }
         }
     }
 }

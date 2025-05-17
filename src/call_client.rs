@@ -1665,12 +1665,16 @@ impl PyCallClient {
     /// :param str participant_id: The ID of the participant to receive audio from
     /// :param func callback: A callback to be called when audio data is available. It receives three arguments: the participant ID, the :class:`AudioData` and the audio source
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
-    #[pyo3(signature = (participant_id, callback, audio_source = "microphone"))]
+    /// :param str sample_rate: The sample rate the audio should be resampled to if necessary
+    /// :param str callback_interval_ms: How often the callback should be called (multiple of 10ms)
+    #[pyo3(signature = (participant_id, callback, audio_source = "microphone", sample_rate = 16000, callback_interval_ms = 20))]
     pub fn set_audio_renderer(
         &self,
         participant_id: &str,
         callback: PyObject,
         audio_source: &str,
+        sample_rate: u32,
+        callback_interval_ms: u32,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1685,6 +1689,9 @@ impl PyCallClient {
         let renderer_data = AudioRendererData {
             audio_source: audio_source.to_string(),
             callback,
+            audio_buffer: Vec::new(),
+            callback_interval_ms,
+            callback_count: 0,
         };
         self.inner
             .audio_renderers
@@ -1699,6 +1706,7 @@ impl PyCallClient {
                 request_id,
                 participant_cstr.as_ptr(),
                 audio_source_cstr.as_ptr(),
+                sample_rate,
             );
         }
 
