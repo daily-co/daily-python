@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support for `CallClient.start_dialout()` new fields: `displayName`,
+  `userId`, `video`, `codecs`, and `permissions`.
+
 - `CallClient.set_audio_renderer()` can receive two additional arguments:
   `sample_rate` and `callback_interval_ms`. With `sample_rate` you can now
   specify the desired sample rate of the incoming audio data. With

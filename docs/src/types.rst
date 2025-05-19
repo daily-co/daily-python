@@ -310,6 +310,23 @@ DialinStoppedEvent
    * - "sipHeaders"
      - Mapping[str, Any]
 
+.. _DialoutCodecs:
+
+DialoutCodecs
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "audio"
+     - [ "PCMU" | "OPUS" | "G722" | "PCMA" ]
+   * - "video"
+     - [ "H264" | "VP8" ]
+
+
 .. _DialoutEvent:
 
 DialoutEvent
@@ -329,6 +346,21 @@ DialoutEvent
      - string
 
 
+.. _DialoutPermissions:
+
+DialoutPermissions
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "canReceive"
+     - `CanReceivePermission`_
+
+
 .. _DialoutSettings:
 
 DialoutSettings
@@ -344,8 +376,18 @@ DialoutSettings
      - string
    * - "phoneNumber"
      - string
+   * - "displayName"
+     - string
+   * - "userId"
+     - string
    * - "callerId"
      - string
+   * - "video"
+     - bool
+   * - "codecs"
+     - `DialoutCodecs`_
+   * - "permissions"
+     - `DialoutPermissions`_
 
 
 .. _DialoutSendDtmfSettings:
