@@ -165,9 +165,9 @@ pub(crate) unsafe extern "C" fn on_write_frames(
     Python::with_gil(|py| {
         let completion = microphone.completions.lock().unwrap().remove(&request_id);
 
-        let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
-
         if let Some(completion) = completion {
+            let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
+
             if let Err(error) = completion.call1(py, args) {
                 error.write_unraisable_bound(py, None);
             }
