@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `callback_interval_ms` you can control how often the provided callback is
   called (with 10ms intervals).
 
+### Changed
+
+- System certificates are now loaded on macOS, Linux and Windows platforms
+  instead of the embedded Mozilla's root certificates.
+
 ### Fixed
 
 - Fixed an issue that would cause a blocking virtual microphone to not send any
