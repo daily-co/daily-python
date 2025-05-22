@@ -25,7 +25,7 @@ use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{util::dict::DictValue, PyCustomAudioSource, GLOBAL_CONTEXT};
+use crate::{util::dict::DictValue, PyCustomAudioTrack, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -601,18 +601,18 @@ impl PyCallClient {
         Ok(())
     }
 
-    /// Adds a new custom audio track with the given name and audio
-    /// source. Audio frames need to be written using the audio source.
+    /// Adds a new custom audio track with the given name. Audio frames need to
+    /// be written using the audio source.
     ///
     /// :param str track_name: The audio track name
-    /// :param audio_source: The custom audio source
-    /// :type audio_source: :class:`daily.CustomAudioSource`
+    /// :param audio_track: The custom audio track being added
+    /// :type audio_track: :class:`daily.CustomAudioTrack`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (track_name, audio_source, completion = None))]
+    #[pyo3(signature = (track_name, audio_track, completion = None))]
     pub fn add_custom_audio_track(
         &self,
         track_name: &str,
-        audio_source: &PyCustomAudioSource,
+        audio_track: &PyCustomAudioTrack,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -624,15 +624,11 @@ impl PyCallClient {
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
-            let track = daily_core_context_create_custom_audio_track(
-                audio_source.audio_source.clone().as_mut_ptr() as *mut _,
-            );
-
             daily_core_call_client_add_custom_audio_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),
-                track,
+                audio_track.audio_track.as_ptr() as *const _,
             );
         }
 
@@ -643,14 +639,14 @@ impl PyCallClient {
     /// source.
     ///
     /// :param str track_name: The audio track name
-    /// :param audio_source: The new custom audio source
-    /// :type audio_source: :class:`daily.CustomAudioSource`
+    /// :param audio_track: The new custom audio track
+    /// :type audio_track: :class:`daily.CustomAudioTrack`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (track_name, audio_source, completion = None))]
+    #[pyo3(signature = (track_name, audio_track, completion = None))]
     pub fn update_custom_audio_track(
         &self,
         track_name: &str,
-        audio_source: &PyCustomAudioSource,
+        audio_track: &PyCustomAudioTrack,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -662,15 +658,11 @@ impl PyCallClient {
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
         unsafe {
-            let track = daily_core_context_create_custom_audio_track(
-                audio_source.audio_source.clone().as_mut_ptr() as *mut _,
-            );
-
             daily_core_call_client_update_custom_audio_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),
-                track,
+                audio_track.audio_track.as_ptr() as *const _,
             );
         }
 

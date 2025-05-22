@@ -88,13 +88,13 @@ class CallClient:
     def add_custom_audio_track(
         self,
         track_name: str,
-        audio_source: CustomAudioSource,
+        audio_track: CustomAudioTrack,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def update_custom_audio_track(
         self,
         track_name: str,
-        audio_source: CustomAudioSource,
+        audio_track: CustomAudioTrack,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def remove_custom_audio_track(
@@ -296,6 +296,11 @@ class CustomAudioSource:
     def write_frames(
         self, frame: bytes, completion: Optional[Callable[[int], None]] = None
     ) -> int: ...
+
+class CustomAudioTrack:
+    def __init__(self, audio_source: CustomAudioSource) -> None: ...
+    @property
+    def id(self) -> str: ...
 
 class VideoFrame:
     @property

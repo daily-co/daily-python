@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a new `CustomAudioTrack`. This new track can be used as an additional
+  custom audio track (i.e. with custom names) or as the main microphone track.
+
+```python
+audio_source = CustomAudioSource(...)
+
+audio_track = CustomAudioTrack(audio_source)
+
+client.join("YOUR_DAILY_ROOM", client_settings={
+    "inputs": {
+        "microphone": {
+            "isEnabled": True,
+            "settings": {
+               "customTrack": {
+                   "id": audio_track.id
+               }
+            }
+        }
+    }
+})
+```
+
 - Added support for `CallClient.start_dialout()` new fields: `displayName`,
   `userId`, `video`, `codecs`, and `permissions`.
 
@@ -19,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   called (with 10ms intervals).
 
 ### Changed
+
+- `CallClient.add_custom_audio_track()` and
+  `CallClient.update_custom_audio_track()` now receive a `CustomAudioTrack`
+  instead of a `CustomAudioSource`.
 
 - System certificates are now loaded on macOS, Linux and Windows platforms
   instead of the embedded Mozilla's root certificates.

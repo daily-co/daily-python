@@ -9,8 +9,8 @@ pub(crate) mod util;
 use call_client::{PyCallClient, PyEventHandler};
 use context::GLOBAL_CONTEXT;
 use media::{
-    PyAudioData, PyCustomAudioSource, PyNativeVad, PyVideoFrame, PyVirtualCameraDevice,
-    PyVirtualMicrophoneDevice, PyVirtualSpeakerDevice,
+    PyAudioData, PyCustomAudioSource, PyCustomAudioTrack, PyNativeVad, PyVideoFrame,
+    PyVirtualCameraDevice, PyVirtualMicrophoneDevice, PyVirtualSpeakerDevice,
 };
 
 use std::env;
@@ -160,8 +160,9 @@ impl PyDaily {
     /// Creates a new virtual speaker device. Speaker devices are used to
     /// receive audio (i.e. read audio frames) from the meeting.
     ///
-    /// There can only be one speaker device per application and it needs to be
-    /// set with :func:`select_speaker_device`.
+    /// Virtual speaker devices emulate a hardware device and have the
+    /// constraint that only one speaker can be active per process. You can
+    /// select the active speaker with :func:`select_speaker_device`.
     ///
     /// :param str device_name: The virtual speaker device name
     /// :param int sample_rate: Sample rate
@@ -185,6 +186,11 @@ impl PyDaily {
     /// send audio (i.e. write audio frames) to the meeting.
     ///
     /// Microphone devices are selected with :func:`CallClient.update_inputs`.
+    ///
+    /// Virtual microphone devices emulate a hardware device and have the
+    /// constraint that only one microphone can be active per process However,
+    /// it is possible to use a custom microphone audio track when specifying
+    /// the call client input settings.
     ///
     /// :param str device_name: The virtual microphone device name. This can be used as a `deviceId` when configuring the call client inputs
     /// :param int sample_rate: Sample rate
@@ -242,6 +248,7 @@ fn daily(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAudioData>()?;
     m.add_class::<PyCallClient>()?;
     m.add_class::<PyCustomAudioSource>()?;
+    m.add_class::<PyCustomAudioTrack>()?;
     m.add_class::<PyDaily>()?;
     m.add_class::<PyEventHandler>()?;
     m.add_class::<PyNativeVad>()?;
