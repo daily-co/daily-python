@@ -217,7 +217,7 @@ class CallClient:
         participant_id: str,
         callback: Callable[[str, AudioData, str], None],
         audio_source: str = "microphone",
-        sample_rate: int = 16000,
+        sample_rate: int = 0,
         callback_interval_ms: int = 20,
     ) -> None: ...
     def set_video_renderer(
