@@ -10,13 +10,15 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
 
 /// This class represents a virtual speaker device. Virtual speaker devices are
-/// used to receive audio from the meeting.
+/// used to receive audio from the meeting. They can be created as blocking or
+/// non-blocking (see :func:`Daily.create_speakler_device`). Blocking means that
+/// calling :func:`VirtualSpeakerDevice.read_frames` behaves synchronously until
+/// all the given audio frames have been read. In contrast, non-blocking will
+/// behave asynchronously (i.e. it won't wait).
 ///
-/// Virtual speaker devices can be created as blocking or non-blocking (see
-/// :func:`Daily.create_speakler_device`). Blocking means that calling
-/// :func:`VirtualSpeakerDevice.read_frames` behaves synchronously until all the
-/// given audio frames have been read. In contrast, non-blocking will behave
-/// asynchronously (i.e. it won't wait).
+/// NOTE: Virtual speaker devices emulate a hardware device and have the
+/// constraint that only one speaker can be active per process. You can select
+/// the active speaker with :func:`Daily.select_speaker_device`.
 ///
 /// The audio format used by virtual speaker devices is 16-bit linear PCM.
 #[pyclass(name = "VirtualSpeakerDevice", module = "daily")]

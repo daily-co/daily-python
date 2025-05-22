@@ -49,7 +49,7 @@ unsafe impl Send for CallClientPtr {}
 /// the meeting as well as send audio and video. Multiple instances of call
 /// clients can be created in the same application.
 ///
-/// :param class event_handler: A subclass of :class:`daily.EventHandler`
+/// :param class event_handler: A subclass of :class:`EventHandler`
 #[pyclass(name = "CallClient", module = "daily")]
 pub struct PyCallClient {
     call_client: Mutex<Option<CallClientPtr>>,
@@ -606,7 +606,7 @@ impl PyCallClient {
     ///
     /// :param str track_name: The audio track name
     /// :param audio_track: The custom audio track being added
-    /// :type audio_track: :class:`daily.CustomAudioTrack`
+    /// :type audio_track: :class:`CustomAudioTrack`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (track_name, audio_track, completion = None))]
     pub fn add_custom_audio_track(
@@ -640,7 +640,7 @@ impl PyCallClient {
     ///
     /// :param str track_name: The audio track name
     /// :param audio_track: The new custom audio track
-    /// :type audio_track: :class:`daily.CustomAudioTrack`
+    /// :type audio_track: :class:`CustomAudioTrack`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (track_name, audio_track, completion = None))]
     pub fn update_custom_audio_track(

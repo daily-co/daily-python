@@ -7,6 +7,9 @@ API Reference
 .. autoclass:: daily.CustomAudioSource
     :members:
 
+.. autoclass:: daily.CustomAudioTrack
+    :members:
+
 .. autoclass:: daily.CallClient
     :members:
 

@@ -145,7 +145,7 @@ impl PyDaily {
     /// :param str color_format: The color format of the frames that will be written to the camera device. See :ref:`ColorFormat`
     ///
     /// :return: A new virtual camera device
-    /// :rtype: :class:`daily.VirtualCameraDevice`
+    /// :rtype: :class:`VirtualCameraDevice`
     #[staticmethod]
     #[pyo3(signature = (device_name, width, height, color_format = "RGBA"))]
     pub fn create_camera_device(
@@ -170,7 +170,7 @@ impl PyDaily {
     /// :param bool non_blocking: Whether the speaker will be blocking or non-blocking
     ///
     /// :return: A new virtual speaker device
-    /// :rtype: :class:`daily.VirtualSpeakerDevice`
+    /// :rtype: :class:`VirtualSpeakerDevice`
     #[staticmethod]
     #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1, non_blocking = false))]
     pub fn create_speaker_device(
@@ -198,7 +198,7 @@ impl PyDaily {
     /// :param bool non_blocking: Whether the microphone will be blocking or non-blocking
     ///
     /// :return: A new virtual microphone device
-    /// :rtype: :class:`daily.VirtualMicrophoneDevice`
+    /// :rtype: :class:`VirtualMicrophoneDevice`
     #[staticmethod]
     #[pyo3(signature = (device_name, sample_rate = 16000, channels = 1, non_blocking = false))]
     pub fn create_microphone_device(
@@ -230,7 +230,7 @@ impl PyDaily {
     /// :param int channels: Number of channels (2 for stereo, 1 for mono) of the incoming audio frames
     ///
     /// :return: A new VAD
-    /// :rtype: :class:`daily.NativeVad`
+    /// :rtype: :class:`NativeVad`
     #[staticmethod]
     #[pyo3(signature = (reset_period_ms = 1000, sample_rate = 16000, channels = 1))]
     pub fn create_native_vad(

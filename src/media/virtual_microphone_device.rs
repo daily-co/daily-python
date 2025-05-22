@@ -12,12 +12,18 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
 
 /// This class represents a virtual microphone device. Virtual microphone
-/// devices are used to send audio to the meeting.
+/// devices are used to send audio to the meeting. Then can be created as
+/// blocking or non-blocking (see :func:`Daily.create_microphone_device`). A
+/// blocking device will wait until :func:`VirtualMicrophoneDevice.write_frames`
+/// finishes writing the given audio frames. In contrast, a non-blocking
+/// microphone will not wait.
 ///
-/// Virtual microphone devices can be created as blocking or non-blocking (see
-/// :func:`Daily.create_microphone_device`). A blocking device will wait until
-/// :func:`VirtualMicrophoneDevice.write_frames` finishes writing the given
-/// audio frames. In contrast, a non-blocking microphone will not wait.
+/// NOTE: Virtual microphone devices emulate a hardware device and have the
+/// constraint that only one microphone can be active per process. You can
+/// select the active microphone through the input settings in
+/// :func:`CallClient.join` or :func:`CallClient.update_inputs`. However, it is
+/// possible to use a custom microphone audio track when also specifying the
+/// input settings.
 ///
 /// The audio format used by virtual microphone devices is 16-bit linear PCM.
 #[pyclass(name = "VirtualMicrophoneDevice", module = "daily")]

@@ -7,7 +7,7 @@ use pyo3::types::PyTuple;
 /// events from the meeting, for example when a participant joins or leaves the
 /// meeting or when the active speaker changes.
 ///
-/// Event handlers are registered when creating a :class:`daily.CallClient` and
+/// Event handlers are registered when creating a :class:`CallClient` and
 /// should be created as a subclass of this class. Since event handlers are
 /// created as a subclass, there is no need implement all the handler methods.
 #[derive(Clone, Debug)]

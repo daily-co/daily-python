@@ -17,6 +17,16 @@ AudioInputSettings
    * - "customConstraints"
      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
 
+or
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "customTrack"
+     - `CustomTrack`_
 
 .. _AudioPublishingSettings:
 
@@ -149,9 +159,9 @@ CanReceiveMediaPermission
    * - "screenAudio"
      - bool
    * - "customVideo"
-     - Mapping[str, bool]
+     - Mapping[string, bool]
    * - "customAudio"
-     - Mapping[str, bool]
+     - Mapping[string, bool]
 
 
 .. _CanReceivePermission:
@@ -168,9 +178,9 @@ CanReceivePermission
    * - "base"
      - bool | `CanReceiveMediaPermission`_
    * - "byUserId"
-     - Mapping[str, bool | `CanReceiveMediaPermission`_]
+     - Mapping[string, bool | `CanReceiveMediaPermission`_]
    * - "byParticipantId"
-     - Mapping[str, bool | `CanReceiveMediaPermission`_]
+     - Mapping[string, bool | `CanReceiveMediaPermission`_]
 
 
 .. _CameraInputSettings:
@@ -232,6 +242,21 @@ ColorFormat
 "ABGR" | "ARGB" | "BGRA" | "RGBA" | "RGB" | "I420"
 
 
+.. _CustomTrack:
+
+CustomTrack
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "id"
+     - string
+
+
 .. _CustomVideoEncoding:
 
 CustomVideoEncoding
@@ -288,7 +313,7 @@ DialinConnectedEvent
    * - "sipFrom"
      - string
    * - "sipHeaders"
-     - Mapping[str, Any]
+     - Mapping[string, Any]
 
 .. _DialinStoppedEvent:
 
@@ -308,7 +333,7 @@ DialinStoppedEvent
    * - "sipFrom"
      - string
    * - "sipHeaders"
-     - Mapping[str, Any]
+     - Mapping[string, Any]
 
 .. _DialoutCodecs:
 
@@ -1108,7 +1133,7 @@ TranscriptionMessage
    * - "timestamp"
      - string (ISO 8601)
    * - "rawResponse"
-     - Mapping[str, Any] (includes Deepgram's response if `includeRawResponse` was enabled)
+     - Mapping[string, Any] (includes Deepgram's response if `includeRawResponse` was enabled)
 
 .. _TranscriptionSettings:
 
@@ -1136,7 +1161,7 @@ TranscriptionSettings
    * - "endpointing"
      - bool | number (see Deepgram's `Endpointing <https://developers.deepgram.com/docs/endpointing>`_)
    * - "extra"
-     - Mapping[str, Any] (any additional Deepgram settings)
+     - Mapping[string, Any] (any additional Deepgram settings)
    * - "includeRawResponse"
      - bool (whether Deepgram's raw response should be included in all transcription messages)
 
@@ -1205,6 +1230,17 @@ VideoInputSettings
      - "user" | "environment" | "left" | "right"
    * - "customConstraints"
      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
+
+or
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "customTrack"
+     - `CustomTrack`_
 
 .. _VideoPublishingSettings:
 
