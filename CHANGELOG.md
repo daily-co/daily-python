@@ -54,6 +54,8 @@ client.join("YOUR_DAILY_ROOM", client_settings={
 - Fixed an issue that would cause a blocking virtual microphone to not send any
   audio in some cases.
 
+- Handle meeting session ID changes which occur once the session has started
+
 ## [0.18.2] - 2025-05-07
 
 ### Fixed
