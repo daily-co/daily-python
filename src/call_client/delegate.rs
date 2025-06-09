@@ -94,13 +94,6 @@ pub(crate) struct DelegateContext {
     pub(crate) inner: Arc<PyCallClientInner>,
 }
 
-#[derive(Clone)]
-pub(crate) struct DelegateContextPtr {
-    pub(crate) ptr: *const DelegateContext,
-}
-
-unsafe impl Send for DelegateContextPtr {}
-
 pub(crate) unsafe extern "C" fn on_event_native(
     delegate: *mut libc::c_void,
     event_json: *const libc::c_char,

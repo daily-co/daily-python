@@ -54,7 +54,8 @@ unsafe impl Send for CallClientPtr {}
 pub struct PyCallClient {
     call_client: Mutex<Option<CallClientPtr>>,
     inner: Arc<PyCallClientInner>,
-    delegate_ctx_ptr: DelegateContextPtr,
+    #[allow(dead_code)]
+    delegate_ctx: Arc<DelegateContext>,
 }
 
 impl PyCallClient {
@@ -181,7 +182,7 @@ impl PyCallClient {
                 inner: inner.clone(),
             });
 
-            let delegate_ctx_ptr = Arc::into_raw(delegate_ctx);
+            let delegate_ctx_ptr = Arc::as_ptr(&delegate_ctx);
 
             let client_delegate = NativeCallClientDelegate::new(
                 NativeCallClientDelegatePtr::new(delegate_ctx_ptr as *mut libc::c_void),
@@ -199,9 +200,7 @@ impl PyCallClient {
             Ok(Self {
                 inner,
                 call_client: Mutex::new(Some(CallClientPtr { ptr: call_client })),
-                delegate_ctx_ptr: DelegateContextPtr {
-                    ptr: delegate_ctx_ptr,
-                },
+                delegate_ctx,
             })
         } else {
             Err(exceptions::PyRuntimeError::new_err(
@@ -254,12 +253,6 @@ impl PyCallClient {
         // Remove any reference to the Python's event handler. This should get
         // rid of any circular dependency.
         self.inner.event_handler_callback.lock().unwrap().take();
-
-        // Cleanup the delegate context. The delegate context still has one
-        // reference count (because of we drop it but increase it again every
-        // time a delegate happens). After the client is destroyed it is safe to
-        // simply get rid of it.
-        let _delegate_ctx = unsafe { Arc::from_raw(self.delegate_ctx_ptr.ptr) };
 
         // Release the call client pointer. We won't need it anymore.
         *call_client = None;
