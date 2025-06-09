@@ -106,7 +106,7 @@ class DailyQtWidget(QtWidgets.QWidget):
                 self.__wave = wave.open(f"participant-{participant_id}.wav", "wb")
                 self.__wave.setnchannels(1)
                 self.__wave.setsampwidth(2)  # 16-bit LINEAR PCM
-                self.__wave.setframerate(48000)
+                self.__wave.setframerate(16000)
 
             self.join(meeting_url, participant_id)
             self.__button.setText("Leave")
