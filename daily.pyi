@@ -89,12 +89,14 @@ class CallClient:
         self,
         track_name: str,
         audio_track: CustomAudioTrack,
+        ignore_audio_level: Optional[bool] = None,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def update_custom_audio_track(
         self,
         track_name: str,
         audio_track: CustomAudioTrack,
+        ignore_audio_level: Optional[bool] = None,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def remove_custom_audio_track(

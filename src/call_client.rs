@@ -600,12 +600,14 @@ impl PyCallClient {
     /// :param str track_name: The audio track name
     /// :param audio_track: The custom audio track being added
     /// :type audio_track: :class:`CustomAudioTrack`
+    /// :param Optional bool: If the audio track should be ignored by the SFU when calculating the audio level
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (track_name, audio_track, completion = None))]
+    #[pyo3(signature = (track_name, audio_track, ignore_audio_level = None, completion = None))]
     pub fn add_custom_audio_track(
         &self,
         track_name: &str,
         audio_track: &PyCustomAudioTrack,
+        ignore_audio_level: Option<bool>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -616,12 +618,19 @@ impl PyCallClient {
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
+        let ignore_audio_level_value = match ignore_audio_level {
+            Some(true) => 1,
+            Some(false) => 0,
+            None => -1,
+        };
+
         unsafe {
             daily_core_call_client_add_custom_audio_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),
                 audio_track.audio_track.as_ptr() as *const _,
+                ignore_audio_level_value,
             );
         }
 
@@ -634,12 +643,14 @@ impl PyCallClient {
     /// :param str track_name: The audio track name
     /// :param audio_track: The new custom audio track
     /// :type audio_track: :class:`CustomAudioTrack`
+    /// :param Optional bool: If the audio track should be ignored by the SFU when calculating the audio level
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (track_name, audio_track, completion = None))]
+    #[pyo3(signature = (track_name, audio_track, ignore_audio_level = None, completion = None))]
     pub fn update_custom_audio_track(
         &self,
         track_name: &str,
         audio_track: &PyCustomAudioTrack,
+        ignore_audio_level: Option<bool>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -650,12 +661,19 @@ impl PyCallClient {
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
 
+        let ignore_audio_level_value = match ignore_audio_level {
+            Some(true) => 1,
+            Some(false) => 0,
+            None => -1,
+        };
+
         unsafe {
             daily_core_call_client_update_custom_audio_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),
                 audio_track.audio_track.as_ptr() as *const _,
+                ignore_audio_level_value,
             );
         }
 

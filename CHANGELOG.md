@@ -5,6 +5,12 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Added option to ignore audio level when creating a custom audio track.
+
 ## [0.19.2] - 2025-06-09
 
 ### Fixed
@@ -724,3 +730,4 @@ buffer = speaker.read_frames(FRAMES_TO_READ)
 
 - Fixed an issue where virtual devices could cause other Python threads to be
   blocked.
+
