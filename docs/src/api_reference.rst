@@ -4,19 +4,22 @@ API Reference
 .. autoclass:: daily.AudioData
     :members:
 
+.. autoclass:: daily.CallClient
+    :members:
+
 .. autoclass:: daily.CustomAudioSource
     :members:
 
 .. autoclass:: daily.CustomAudioTrack
     :members:
 
-.. autoclass:: daily.CallClient
-    :members:
-
 .. autoclass:: daily.Daily
     :members:
 
 .. autoclass:: daily.EventHandler
+    :members:
+
+.. autoclass:: daily.NativeVad
     :members:
 
 .. autoclass:: daily.VideoFrame

@@ -74,17 +74,63 @@ unsafe extern "C" fn create_audio_device_module(
 #[pyclass(name = "Daily", module = "daily")]
 struct PyDaily;
 
+/// Logging levels for controlling application output verbosity.
+#[pyclass(name = "LogLevel", module = "daily")]
+#[derive(Debug, Clone, Copy)]
+pub enum PyLogLevel {
+    /// No logging.
+    Off,
+    /// Critical errors only.
+    Error,
+    /// Warnings and above.
+    Warn,
+    /// General information.
+    Info,
+    /// Debug-level information.
+    Debug,
+    /// All trace output.
+    Trace,
+}
+
+impl From<LogLevel> for PyLogLevel {
+    fn from(level: LogLevel) -> Self {
+        match level {
+            LogLevel::Off => PyLogLevel::Off,
+            LogLevel::Error => PyLogLevel::Error,
+            LogLevel::Warn => PyLogLevel::Warn,
+            LogLevel::Info => PyLogLevel::Info,
+            LogLevel::Debug => PyLogLevel::Debug,
+            LogLevel::Trace => PyLogLevel::Trace,
+        }
+    }
+}
+
+impl From<PyLogLevel> for LogLevel {
+    fn from(py_level: PyLogLevel) -> Self {
+        match py_level {
+            PyLogLevel::Off => LogLevel::Off,
+            PyLogLevel::Error => LogLevel::Error,
+            PyLogLevel::Warn => LogLevel::Warn,
+            PyLogLevel::Info => LogLevel::Info,
+            PyLogLevel::Debug => LogLevel::Debug,
+            PyLogLevel::Trace => LogLevel::Trace,
+        }
+    }
+}
+
 #[pymethods]
 impl PyDaily {
     /// Initializes the SDK. This function needs to be called before anything
     /// else, usually done at the application startup.
     ///
     /// :param int worker_threads: Number of internal worker threads. Increasing this number might be necessary if the application needs to create a large number of concurrent call clients
+    /// :param log_level: Set application log level
+    /// :type log_level: :ref:`LogLevel`
     #[staticmethod]
-    #[pyo3(signature = (worker_threads = 2))]
-    pub fn init(worker_threads: usize) {
+    #[pyo3(signature = (worker_threads = 2, log_level = PyLogLevel::Off))]
+    pub fn init(worker_threads: usize, log_level: PyLogLevel) {
         unsafe {
-            daily_core_set_log_level(LogLevel::Off);
+            daily_core_set_log_level(log_level.into());
         }
 
         let library_cstr = CString::new(DAILY_PYTHON_NAME).expect("invalid library string");
@@ -134,6 +180,18 @@ impl PyDaily {
         // TODO(aleix): We need to make sure all clients leave before doing this
         // otherwise we might crash.
         unsafe { daily_core_context_destroy() };
+    }
+
+    /// Sets the application log level.
+    ///
+    /// :param log_level: Set application log level
+    /// :type log_level: :ref:`LogLevel`
+    #[staticmethod]
+    #[pyo3(signature = (log_level = PyLogLevel::Off))]
+    pub fn set_log_level(log_level: PyLogLevel) {
+        unsafe {
+            daily_core_set_log_level(log_level.into());
+        }
     }
 
     /// Creates a new virtual camera device. Camera devices are used to
@@ -251,6 +309,7 @@ fn daily(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyCustomAudioTrack>()?;
     m.add_class::<PyDaily>()?;
     m.add_class::<PyEventHandler>()?;
+    m.add_class::<PyLogLevel>()?;
     m.add_class::<PyNativeVad>()?;
     m.add_class::<PyVideoFrame>()?;
     m.add_class::<PyVirtualCameraDevice>()?;

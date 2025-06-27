@@ -5,6 +5,15 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added `Daily.set_log_level()` as well as a new `log_level` argument to
+  `Daily.init()`. The available log levels are: `LogLevel.Off`,
+  `LogLevel.Error`, `LogLevel.Warn`, `LogLevel.Info`, `LogLevel.Debug`,
+  `LogLevel.Trace`.
+
 ## [0.19.3] - 2025-06-17
 
 ### Added

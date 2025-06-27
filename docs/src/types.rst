@@ -548,6 +548,15 @@ LiveStreamUpdate
      - string
 
 
+.. _LogLevel:
+
+LogLevel
+-----------------------------------
+
+Off | Error | Warn | Info | Debug | Trace
+
+
+
 .. _MediaDeviceInfo:
 
 MediaDeviceInfo
