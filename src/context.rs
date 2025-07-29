@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -80,6 +80,9 @@ impl DailyContext {
         network_thread: *mut WebrtcThread,
         constraints: *const libc::c_char,
     ) -> *mut libc::c_void {
+        let c_str = unsafe { CStr::from_ptr(constraints) };
+        tracing::info!("Get user media: {}", c_str.to_str().unwrap());
+
         unsafe {
             daily_core_context_device_manager_get_user_media(
                 self.device_manager.as_ptr() as *mut _,
@@ -112,6 +115,10 @@ impl DailyContext {
         height: u32,
         color_format: &str,
     ) -> PyResult<PyVirtualCameraDevice> {
+        tracing::info!(
+            "Creating virtual camera device: {device_name} ({width}x{height} {color_format})"
+        );
+
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual camera device name string");
         let color_format_cstr = CString::new(color_format).expect("invalid color format string");
@@ -148,6 +155,10 @@ impl DailyContext {
         channels: u8,
         non_blocking: bool,
     ) -> PyResult<PyVirtualSpeakerDevice> {
+        tracing::info!(
+            "Creating virtual speaker device: {device_name} ({sample_rate}, {channels} channels, non-blocking: {non_blocking})"
+        );
+
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual speaker device name string");
 
@@ -176,6 +187,10 @@ impl DailyContext {
         channels: u8,
         non_blocking: bool,
     ) -> PyResult<PyVirtualMicrophoneDevice> {
+        tracing::info!(
+            "Creating virtual microphone device: {device_name} ({sample_rate}, {channels} channels, non-blocking: {non_blocking})"
+        );
+
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual microphone device name string");
 
@@ -202,6 +217,10 @@ impl DailyContext {
         sample_rate: u32,
         channels: u8,
     ) -> PyResult<PyNativeVad> {
+        tracing::info!(
+            "Creating native VAD ({sample_rate}, {channels} channels, reset period ms: {reset_period_ms})"
+        );
+
         let mut py_vad = PyNativeVad::new(reset_period_ms, sample_rate, channels);
 
         unsafe {
@@ -214,6 +233,8 @@ impl DailyContext {
     }
 
     pub fn select_speaker_device(&self, device_name: &str) -> PyResult<()> {
+        tracing::info!("Selecting virtual speaker device: {device_name})");
+
         let device_name_cstr =
             CString::new(device_name).expect("invalid virtual speaker device name string");
 

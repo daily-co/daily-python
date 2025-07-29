@@ -111,6 +111,11 @@ impl PyCustomAudioSource {
 
         let request_id = self.maybe_register_completion(completion.clone());
 
+        tracing::trace!(
+            "Writing audio frames to audio source {:?} ({num_frames} frames, request {request_id})",
+            self.audio_source.as_ptr()
+        );
+
         Python::with_gil(|py| {
             let frames_written = py.allow_threads(move || unsafe {
                 if completion.is_none() {
@@ -160,6 +165,11 @@ pub(crate) unsafe extern "C" fn on_write_frames(
         let completion = audio_source.completions.lock().unwrap().remove(&request_id);
 
         let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
+
+        tracing::trace!(
+            "Finished writing audio frames to audio source {:?} ({num_frames} frames, request {request_id})",
+            audio_source.audio_source.as_ptr()
+        );
 
         if let Some(completion) = completion {
             if let Err(error) = completion.call1(py, args) {

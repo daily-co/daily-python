@@ -121,6 +121,7 @@ impl PyVirtualMicrophoneDevice {
         }
 
         let num_bytes = frames.len()?;
+
         let bytes_per_sample: usize = 2;
 
         // libwebrtc needs 16-bit linear PCM samples
@@ -136,6 +137,11 @@ impl PyVirtualMicrophoneDevice {
         let aligned = AlignedI16Data::new(bytes);
 
         let request_id = self.maybe_register_completion(completion);
+
+        tracing::trace!(
+            "Writing audio frames to {} ({num_frames} frames, request {request_id})",
+            self.device_name
+        );
 
         Python::with_gil(|py| {
             let frames_written = py.allow_threads(move || unsafe {
@@ -173,6 +179,11 @@ pub(crate) unsafe extern "C" fn on_write_frames(
 
         if let Some(completion) = completion {
             let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
+
+            tracing::trace!(
+                "Finished writing audio frames to {} ({num_frames} frames, request {request_id})",
+                microphone.device_name
+            );
 
             if let Err(error) = completion.call1(py, args) {
                 error.write_unraisable_bound(py, None);

@@ -16,6 +16,7 @@ use std::{
     ptr,
     str::FromStr,
     sync::{Arc, Mutex},
+    time::{Duration, Instant},
 };
 
 use pyo3::{exceptions, prelude::*};
@@ -1670,7 +1671,8 @@ impl PyCallClient {
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     /// :param str sample_rate: The sample rate the audio should be resampled to
     /// :param str callback_interval_ms: How often the callback should be called (multiple of 10ms)
-    #[pyo3(signature = (participant_id, callback, audio_source = "microphone", sample_rate = 16000, callback_interval_ms = 20))]
+    /// :param str logging_interval_ms: Set logging internal (only with debug logging)
+    #[pyo3(signature = (participant_id, callback, audio_source = "microphone", sample_rate = 16000, callback_interval_ms = 20, logging_interval_ms = 10000))]
     pub fn set_audio_renderer(
         &self,
         participant_id: &str,
@@ -1678,6 +1680,7 @@ impl PyCallClient {
         audio_source: &str,
         sample_rate: u32,
         callback_interval_ms: u32,
+        logging_interval_ms: u32,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1695,6 +1698,8 @@ impl PyCallClient {
             audio_buffer: Vec::new(),
             callback_interval_ms,
             callback_count: 0,
+            logging_interval_ms: Duration::from_millis(logging_interval_ms as u64),
+            logging_last_call: Instant::now(),
         };
         self.inner
             .audio_renderers
@@ -1723,13 +1728,15 @@ impl PyCallClient {
     /// :param func callback: A callback to be called on every received frame. It receives three arguments: the participant ID, a :class:`VideoFrame` and the video source
     /// :param str video_source: The video source of the remote participant to receive (e.g. `camera`, `screenVideo` or a custom track name)
     /// :param str color_format: The color format that frames should be received. See :ref:`ColorFormat`
-    #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA"))]
+    /// :param str logging_interval_ms: Set logging internal (only with debug logging)
+    #[pyo3(signature = (participant_id, callback, video_source = "camera", color_format = "RGBA", logging_interval_ms = 10000))]
     pub fn set_video_renderer(
         &self,
         participant_id: &str,
         callback: PyObject,
         video_source: &str,
         color_format: &str,
+        logging_interval_ms: u32,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1751,6 +1758,8 @@ impl PyCallClient {
         let renderer_data = VideoRendererData {
             video_source: video_source.to_string(),
             callback,
+            logging_interval_ms: Duration::from_millis(logging_interval_ms as u64),
+            logging_last_call: Instant::now(),
         };
         self.inner
             .video_renderers

@@ -27,7 +27,7 @@ use daily_core::prelude::{
 
 use pyo3::prelude::*;
 
-const DAILY_PYTHON_NAME: &str = "daily-python";
+const DAILY_PYTHON_NAME: &str = env!("CARGO_PKG_NAME");
 const DAILY_PYTHON_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 unsafe extern "C" fn set_audio_device(
@@ -129,10 +129,6 @@ impl PyDaily {
     #[staticmethod]
     #[pyo3(signature = (worker_threads = 2, log_level = PyLogLevel::Off))]
     pub fn init(worker_threads: usize, log_level: PyLogLevel) {
-        unsafe {
-            daily_core_set_log_level(log_level.into());
-        }
-
         let library_cstr = CString::new(DAILY_PYTHON_NAME).expect("invalid library string");
         let version_cstr = CString::new(DAILY_PYTHON_VERSION).expect("invalid version string");
         let os_cstr = CString::new(env::consts::OS).expect("invalid OS string");
@@ -171,6 +167,9 @@ impl PyDaily {
             about_client,
             worker_threads,
         );
+
+        tracing::info!("Initialized {DAILY_PYTHON_NAME} {DAILY_PYTHON_VERSION}");
+        Self::set_log_level(log_level);
     }
 
     /// Deallocates SDK resources. This is usually called when shutting down the
@@ -189,6 +188,7 @@ impl PyDaily {
     #[staticmethod]
     #[pyo3(signature = (log_level = PyLogLevel::Off))]
     pub fn set_log_level(log_level: PyLogLevel) {
+        tracing::info!("Setting log level to {log_level:?}");
         unsafe {
             daily_core_set_log_level(log_level.into());
         }

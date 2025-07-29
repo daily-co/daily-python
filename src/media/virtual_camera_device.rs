@@ -84,6 +84,11 @@ impl PyVirtualCameraDevice {
         if let Some(camera_device) = self.camera_device.as_ref() {
             let bytes_length = frame.len()?;
 
+            tracing::trace!(
+                "Writing video frame to {} ({bytes_length} bytes)",
+                self.device_name
+            );
+
             let bytes = frame.as_bytes();
 
             py.allow_threads(move || unsafe {

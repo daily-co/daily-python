@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     ffi::CStr,
     sync::{Arc, Mutex},
+    time::{Duration, Instant},
 };
 
 use pyo3::{
@@ -58,12 +59,16 @@ pub(crate) struct AudioRendererData {
     pub(crate) audio_buffer: Vec<u8>,
     pub(crate) callback_interval_ms: u32,
     pub(crate) callback_count: u32,
+    pub(crate) logging_interval_ms: Duration,
+    pub(crate) logging_last_call: Instant,
 }
 
 #[derive(Clone)]
 pub(crate) struct VideoRendererData {
     pub(crate) video_source: String,
     pub(crate) callback: PyObject,
+    pub(crate) logging_interval_ms: Duration,
+    pub(crate) logging_last_call: Instant,
 }
 
 #[derive(Clone)]
@@ -184,6 +189,8 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
 }
 
 pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, event: &Event) {
+    tracing::info!("Received event: {event:?}");
+
     match event.action.as_str() {
         "request-completed" => {
             if let Some(request_id) = request_id_from_event(event) {
@@ -238,6 +245,9 @@ pub(crate) unsafe fn on_audio_data(
     peer_id: *const libc::c_char,
     data: *const NativeAudioData,
 ) {
+    let now = Instant::now();
+    let mut logged = false;
+
     // In this block we get a mutable reference to the renderer. We use that to
     // check if we should call the callback depending on the number of 10ms
     // intervals requested by the user, and also to extend our buffer if we
@@ -273,7 +283,7 @@ pub(crate) unsafe fn on_audio_data(
         if call_callback {
             renderer_data.callback_count = 0;
         }
-    };
+    }
 
     // Don't lock in the if statement otherwise the lock is held throughout the
     // callback call.
@@ -293,6 +303,9 @@ pub(crate) unsafe fn on_audio_data(
             let bytes_per_sample = (*data).bits_per_sample as usize / 8;
             let frame_size = bytes_per_sample * (*data).num_channels;
             let num_audio_frames = renderer_data.audio_buffer.len() / frame_size;
+
+            let sample_rate = (*data).sample_rate;
+            let num_channels = (*data).num_channels;
 
             let audio_data = PyAudioData {
                 bits_per_sample: (*data).bits_per_sample,
@@ -316,9 +329,29 @@ pub(crate) unsafe fn on_audio_data(
                 ],
             );
 
+            // We print logs at the specified interval. This can be useful to
+            // know if things are working well.
+            let elapsed = now.duration_since(renderer_data.logging_last_call);
+            if elapsed >= renderer_data.logging_interval_ms {
+                tracing::debug!("Received audio data from renderer {renderer_id}, last received ({num_audio_frames} frames, {sample_rate}, {num_channels} channels)");
+                logged = true;
+            }
+
             if let Err(error) = renderer_data.callback.call1(py, args) {
                 error.write_unraisable_bound(py, None);
             }
+        }
+    }
+
+    if let Some(renderer_data) = delegate_ctx
+        .inner
+        .audio_renderers
+        .lock()
+        .unwrap()
+        .get_mut(&renderer_id)
+    {
+        if logged {
+            renderer_data.logging_last_call = now;
         }
     }
 }
@@ -330,6 +363,9 @@ pub(crate) unsafe fn on_video_frame(
     peer_id: *const libc::c_char,
     frame: *const NativeVideoFrame,
 ) {
+    let now = Instant::now();
+    let mut logged = false;
+
     // Don't lock in the if statement otherwise the lock is held throughout the
     // callback call.
     let renderer_data = delegate_ctx
@@ -347,12 +383,15 @@ pub(crate) unsafe fn on_video_frame(
             .to_string_lossy()
             .into_owned();
 
+        let width = (*frame).width;
+        let height = (*frame).height;
+
         let video_frame = PyVideoFrame {
             buffer: PyBytes::bound_from_ptr(py, (*frame).buffer, (*frame).buffer_size).into_py(py),
-            width: (*frame).width,
-            height: (*frame).height,
+            width,
+            height,
             timestamp_us: (*frame).timestamp_us,
-            color_format: color_format.into_py(py),
+            color_format: color_format.clone().into_py(py),
         };
 
         let args = PyTuple::new_bound(
@@ -364,8 +403,30 @@ pub(crate) unsafe fn on_video_frame(
             ],
         );
 
+        // We print logs at the specified interval. This can be useful to
+        // know if things are working well.
+        let elapsed = now.duration_since(renderer_data.logging_last_call);
+        if elapsed >= renderer_data.logging_interval_ms {
+            tracing::debug!(
+                "Received video frame from renderer {renderer_id}, last received ({width}x{height}, {color_format})"
+            );
+            logged = true;
+        }
+
         if let Err(error) = renderer_data.callback.call1(py, args) {
             error.write_unraisable_bound(py, None);
+        }
+    }
+
+    if let Some(renderer_data) = delegate_ctx
+        .inner
+        .video_renderers
+        .lock()
+        .unwrap()
+        .get_mut(&renderer_id)
+    {
+        if logged {
+            renderer_data.logging_last_call = now;
         }
     }
 }

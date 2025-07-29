@@ -123,11 +123,18 @@ impl PyVirtualSpeakerDevice {
             let bytes_per_sample = 2;
             num_frames * self.channels() as usize * bytes_per_sample
         };
+
         let num_words = num_bytes / 2;
 
         let mut buffer: Vec<i16> = Vec::with_capacity(num_words);
 
         let request_id = self.maybe_register_completion(completion);
+
+        let device_name = self.device_name.clone();
+
+        tracing::trace!(
+            "Reading audio frames from {device_name} ({num_bytes} bytes, request {request_id})",
+        );
 
         Python::with_gil(move |py| {
             let buffer_bytes = buffer.as_mut_slice();
@@ -146,6 +153,11 @@ impl PyVirtualSpeakerDevice {
             if frames_read == num_frames as i32 {
                 let py_bytes =
                     unsafe { PyBytes::bound_from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
+
+                tracing::trace!(
+                    "Finished reading audio frames from {device_name} ({num_bytes} bytes, request {request_id})"
+                );
+
                 Ok(py_bytes.into_py(py))
             } else if frames_read == 0 {
                 let empty_bytes: [u8; 0] = [];
@@ -182,6 +194,11 @@ pub(crate) unsafe extern "C" fn on_read_frames(
             } else {
                 PyBytes::new_bound(py, &empty_bytes)
             };
+
+            tracing::trace!(
+                "Finished reading audio frames from {} ({num_bytes} bytes, request {request_id})",
+                speaker.device_name
+            );
 
             let args = PyTuple::new_bound(py, [py_bytes]);
 
