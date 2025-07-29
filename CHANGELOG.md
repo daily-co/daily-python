@@ -5,6 +5,21 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.5] - 2025-07-30
+
+### Added
+
+- It is now possible to set a logging interval when creating an audio or video
+  renderer. This is useful to check if the renderers are being called correctly
+  (specially on startup). By default, the interval is set to 10 seconds but can
+  be changed using the `logging_interval_ms` argument. Note that these logs are
+  only visible when setting the environment variable `RUST_LOG=debug`.
+
+### Fixed
+
+- Fixed an issue where the newly introduce `Daily.set_log_level()` was only
+  setting the log level in debug builds.
+
 ## [0.19.4] - 2025-07-01
 
 ### Added
