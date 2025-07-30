@@ -189,7 +189,7 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
 }
 
 pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, event: &Event) {
-    tracing::info!("Received event: {event:?}");
+    tracing::debug!("Received event: {event:?}");
 
     match event.action.as_str() {
         "request-completed" => {
