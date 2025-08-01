@@ -1,6 +1,6 @@
 [package]
 name = "daily-python"
-version = "0.19.5"
+version = "0.19.6"
 edition = "2021"
 license = "BSD 2-Clause License"
 resolver = "2"
