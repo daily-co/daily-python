@@ -161,6 +161,8 @@ impl PyDaily {
             ),
         );
 
+        Self::set_log_level(log_level);
+
         daily_core_context_create_with_threads(
             context_delegate,
             webrtc_delegate,
@@ -169,7 +171,6 @@ impl PyDaily {
         );
 
         tracing::info!("Initialized {DAILY_PYTHON_NAME} {DAILY_PYTHON_VERSION}");
-        Self::set_log_level(log_level);
     }
 
     /// Deallocates SDK resources. This is usually called when shutting down the
