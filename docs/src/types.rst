@@ -987,6 +987,8 @@ SipCallTransferSettings
      - string
    * - "toEndPoint"
      - string
+   * - "callerId"
+     - string
 
 
 .. _StreamingAudioSettings:
