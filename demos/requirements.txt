@@ -12,6 +12,6 @@ pygobject~=3.48.2
 pyside6~=6.7.2
 redis~=5.0.8
 yolov5~=7.0.13
-aiohttp~=3.10.11
+aiohttp~=3.12.14
 pydantic~=2.8.2
 python-dotenv
