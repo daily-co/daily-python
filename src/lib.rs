@@ -187,7 +187,6 @@ impl PyDaily {
     /// :param log_level: Set application log level
     /// :type log_level: :ref:`LogLevel`
     #[staticmethod]
-    #[pyo3(signature = (log_level = PyLogLevel::Off))]
     pub fn set_log_level(log_level: PyLogLevel) {
         tracing::info!("Setting log level to {log_level:?}");
         unsafe {
