@@ -44,7 +44,12 @@ impl PyCustomAudioSource {
 impl PyCustomAudioSource {
     #[new]
     pub fn new(sample_rate: u32, channels: u8) -> Self {
-        let audio_source_ptr = unsafe { daily_core_context_create_custom_audio_source() };
+        let audio_source_ptr = unsafe {
+            daily_core_context_create_custom_audio_source_with_silence(
+                sample_rate as i32,
+                channels as usize,
+            )
+        };
 
         let audio_source = NativeDailyAudioSource::from(audio_source_ptr);
 
