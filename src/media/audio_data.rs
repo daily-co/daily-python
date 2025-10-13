@@ -13,5 +13,5 @@ pub struct PyAudioData {
     /// The number of audio frames
     pub num_audio_frames: usize,
     /// A bytestring with the audio frames
-    pub audio_frames: PyObject,
+    pub audio_frames: Py<PyAny>,
 }

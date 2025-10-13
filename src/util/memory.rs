@@ -10,7 +10,7 @@ impl<'a> AlignedI16Data<'a> {
         // If `src`'s memory is not 16-bit aligned, create a new 16-bit aligned
         // memory area and copy the contents of `src` to it. Otherwise, simply
         // keep the original slice.
-        if bytes_ptr as usize % 2 == 0 {
+        if (bytes_ptr as usize).is_multiple_of(2) {
             AlignedI16Data::AlreadyAligned(src)
         } else {
             let num_bytes = src.len();

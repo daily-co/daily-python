@@ -90,10 +90,10 @@ impl PyCallClient {
     fn start_live_stream(
         &self,
         endpoints: LiveStreamEndpoints,
-        streaming_settings: Option<PyObject>,
+        streaming_settings: Option<Py<PyAny>>,
         stream_id: Option<&str>,
         force_new: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         let mut call_client = self.check_released()?;
 
@@ -101,7 +101,7 @@ impl PyCallClient {
 
         let streaming_settings = streaming_settings.map(|s| {
             let dict: HashMap<String, Value> =
-                Python::with_gil(|py| depythonize(&s.bind(py)).unwrap());
+                Python::attach(|py| depythonize(s.bind(py)).unwrap());
             dict.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
         });
 
@@ -138,11 +138,11 @@ impl PyCallClient {
     /// through an event handler.
     #[new]
     #[pyo3(signature = (event_handler = None))]
-    pub fn new(event_handler: Option<PyObject>) -> PyResult<Self> {
+    pub fn new(event_handler: Option<Py<PyAny>>) -> PyResult<Self> {
         // Make sure the event handler has the right type.
         if let Some(event_handler) = event_handler.clone() {
             let is_event_handler =
-                Python::with_gil(|py| event_handler.bind(py).is_instance_of::<PyEventHandler>());
+                Python::attach(|py| event_handler.bind(py).is_instance_of::<PyEventHandler>());
 
             if !is_event_handler {
                 return Err(exceptions::PyTypeError::new_err(
@@ -250,7 +250,7 @@ impl PyCallClient {
         // finish. The event delegates will be waiting on the GIL and
         // execute at this point. But since we just cleanup the delegates
         // above, the events will actually be a no-op.
-        py.allow_threads(move || unsafe {
+        py.detach(move || unsafe {
             daily_core_call_client_destroy(call_client_cpy.as_ptr());
         });
 
@@ -275,7 +275,7 @@ impl PyCallClient {
     pub fn set_proxy_url(
         &self,
         proxy_url: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -308,17 +308,17 @@ impl PyCallClient {
     #[pyo3(signature = (ice_config = None, completion = None))]
     pub fn set_ice_config(
         &self,
-        ice_config: Option<PyObject>,
-        completion: Option<PyObject>,
+        ice_config: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         // Participant subscription settings
-        let ice_config_cstr = Python::with_gil(|py| {
+        let ice_config_cstr = Python::attach(|py| {
             ice_config
                 .map(|config| {
-                    let config_obj: Value = depythonize(&config.bind(py)).unwrap();
+                    let config_obj: Value = depythonize(config.bind(py)).unwrap();
                     let config_string = serde_json::to_string(&config_obj).unwrap();
                     CString::new(config_string).expect("invalid ICE config string")
                 })
@@ -354,8 +354,8 @@ impl PyCallClient {
         &self,
         meeting_url: &str,
         meeting_token: Option<&str>,
-        client_settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        client_settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -369,10 +369,10 @@ impl PyCallClient {
             .or(None);
 
         // Client settings
-        let client_settings_cstr = Python::with_gil(|py| {
+        let client_settings_cstr = Python::attach(|py| {
             client_settings
                 .map(|settings| {
-                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_obj: Value = depythonize(settings.bind(py)).unwrap();
                     let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid client settings string")
                 })
@@ -403,7 +403,7 @@ impl PyCallClient {
     ///
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
-    pub fn leave(&self, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn leave(&self, completion: Option<Py<PyAny>>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
@@ -443,7 +443,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`Participant`
     /// :rtype: Mapping[str, Any]
-    pub fn active_speaker(&self) -> PyResult<PyObject> {
+    pub fn active_speaker(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -454,7 +454,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`CallParticipants`
     /// :rtype: Mapping[str, Any]
-    pub fn participants(&self) -> PyResult<PyObject> {
+    pub fn participants(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
@@ -466,7 +466,7 @@ impl PyCallClient {
 
             let participants: Value = serde_json::from_str(participants_string.as_str()).unwrap();
 
-            Python::with_gil(|py| Ok(pythonize(py, &participants).unwrap().unbind()))
+            Python::attach(|py| Ok(pythonize(py, &participants).unwrap().unbind()))
         }
     }
 
@@ -474,7 +474,7 @@ impl PyCallClient {
     ///
     /// :return: The number of participants in the meeting. See :ref:`ParticipantCounts`
     /// :rtype: Mapping[str, Any]
-    pub fn participant_counts(&self) -> PyResult<PyObject> {
+    pub fn participant_counts(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -488,15 +488,14 @@ impl PyCallClient {
     #[pyo3(signature = (remote_participants, completion = None))]
     pub fn update_remote_participants(
         &self,
-        remote_participants: PyObject,
-        completion: Option<PyObject>,
+        remote_participants: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let remote_participants_cstr = Python::with_gil(|py| {
-            let remote_participants_obj: Value =
-                depythonize(&remote_participants.bind(py)).unwrap();
+        let remote_participants_cstr = Python::attach(|py| {
+            let remote_participants_obj: Value = depythonize(remote_participants.bind(py)).unwrap();
             let remote_participants_string =
                 serde_json::to_string(&remote_participants_obj).unwrap();
             CString::new(remote_participants_string).expect("invalid remote participants string")
@@ -523,13 +522,13 @@ impl PyCallClient {
     #[pyo3(signature = (ids, completion = None))]
     pub fn eject_remote_participants(
         &self,
-        ids: PyObject,
-        completion: Option<PyObject>,
+        ids: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let ids: Vec<String> = Python::with_gil(|py| ids.extract(py).unwrap());
+        let ids: Vec<String> = Python::attach(|py| ids.extract(py).unwrap());
 
         let ids_string = serde_json::to_string(&ids).unwrap();
 
@@ -554,7 +553,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`InputSettings`
     /// :rtype: Mapping[str, Any]
-    pub fn inputs(&self) -> PyResult<PyObject> {
+    pub fn inputs(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -569,14 +568,14 @@ impl PyCallClient {
     #[pyo3(signature = (input_settings, completion = None))]
     pub fn update_inputs(
         &self,
-        input_settings: PyObject,
-        completion: Option<PyObject>,
+        input_settings: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let input_settings_cstr = Python::with_gil(|py| {
-            let input_settings_obj: Value = depythonize(&input_settings.bind(py)).unwrap();
+        let input_settings_cstr = Python::attach(|py| {
+            let input_settings_obj: Value = depythonize(input_settings.bind(py)).unwrap();
             let input_settings_string = serde_json::to_string(&input_settings_obj).unwrap();
             CString::new(input_settings_string).expect("invalid input settings string")
         });
@@ -609,7 +608,7 @@ impl PyCallClient {
         track_name: &str,
         audio_track: &PyCustomAudioTrack,
         ignore_audio_level: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -652,7 +651,7 @@ impl PyCallClient {
         track_name: &str,
         audio_track: &PyCustomAudioTrack,
         ignore_audio_level: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -689,7 +688,7 @@ impl PyCallClient {
     pub fn remove_custom_audio_track(
         &self,
         track_name: &str,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -716,7 +715,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`PublishingSettings`
     /// :rtype: Mapping[str, Any]
-    pub fn publishing(&self) -> PyResult<PyObject> {
+    pub fn publishing(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -731,15 +730,14 @@ impl PyCallClient {
     #[pyo3(signature = (publishing_settings, completion = None))]
     pub fn update_publishing(
         &self,
-        publishing_settings: PyObject,
-        completion: Option<PyObject>,
+        publishing_settings: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let publishing_settings_cstr = Python::with_gil(|py| {
-            let publishing_settings_obj: Value =
-                depythonize(&publishing_settings.bind(py)).unwrap();
+        let publishing_settings_cstr = Python::attach(|py| {
+            let publishing_settings_obj: Value = depythonize(publishing_settings.bind(py)).unwrap();
             let publishing_settings_string =
                 serde_json::to_string(&publishing_settings_obj).unwrap();
             CString::new(publishing_settings_string).expect("invalid publishing settings string")
@@ -764,7 +762,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`ParticipantSubscriptions`
     /// :rtype: Mapping[str, Any]
-    pub fn subscriptions(&self) -> PyResult<PyObject> {
+    pub fn subscriptions(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -782,18 +780,18 @@ impl PyCallClient {
     #[pyo3(signature = (participant_settings = None, profile_settings = None, completion = None))]
     pub fn update_subscriptions(
         &self,
-        participant_settings: Option<PyObject>,
-        profile_settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        participant_settings: Option<Py<PyAny>>,
+        profile_settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         // Participant subscription settings
-        let participant_settings_cstr = Python::with_gil(|py| {
+        let participant_settings_cstr = Python::attach(|py| {
             participant_settings
                 .map(|settings| {
-                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_obj: Value = depythonize(settings.bind(py)).unwrap();
                     let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid participant settings string")
                 })
@@ -801,10 +799,10 @@ impl PyCallClient {
         });
 
         // Profile settings
-        let profile_settings_cstr = Python::with_gil(|py| {
+        let profile_settings_cstr = Python::attach(|py| {
             profile_settings
                 .map(|settings| {
-                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_obj: Value = depythonize(settings.bind(py)).unwrap();
                     let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid profile settings string")
                 })
@@ -835,7 +833,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`SubscriptionProfileSettings`
     /// :rtype: Mapping[str, Any]
-    pub fn subscription_profiles(&self) -> PyResult<PyObject> {
+    pub fn subscription_profiles(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -849,14 +847,14 @@ impl PyCallClient {
     #[pyo3(signature = (profile_settings, completion = None))]
     pub fn update_subscription_profiles(
         &self,
-        profile_settings: PyObject,
-        completion: Option<PyObject>,
+        profile_settings: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let profile_settings_cstr = Python::with_gil(|py| {
-            let profile_settings_obj: Value = depythonize(&profile_settings.bind(py)).unwrap();
+        let profile_settings_cstr = Python::attach(|py| {
+            let profile_settings_obj: Value = depythonize(profile_settings.bind(py)).unwrap();
             let profile_settings_string = serde_json::to_string(&profile_settings_obj).unwrap();
             CString::new(profile_settings_string).expect("invalid profile settings string")
         });
@@ -884,14 +882,14 @@ impl PyCallClient {
     #[pyo3(signature = (permissions, completion = None))]
     pub fn update_permissions(
         &self,
-        permissions: PyObject,
-        completion: Option<PyObject>,
+        permissions: Py<PyAny>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let permissions_cstr = Python::with_gil(|py| {
-            let permissions_obj: Value = depythonize(&permissions.bind(py)).unwrap();
+        let permissions_cstr = Python::attach(|py| {
+            let permissions_obj: Value = depythonize(permissions.bind(py)).unwrap();
             let permissions_string = serde_json::to_string(&permissions_obj).unwrap();
             CString::new(permissions_string).expect("invalid permisssions string")
         });
@@ -920,16 +918,15 @@ impl PyCallClient {
     #[pyo3(signature = (endpoints, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_live_stream_with_endpoints(
         &self,
-        endpoints: PyObject,
-        streaming_settings: Option<PyObject>,
+        endpoints: Py<PyAny>,
+        streaming_settings: Option<Py<PyAny>>,
         stream_id: Option<&str>,
         force_new: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
-        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)))?;
-        let array = list.iter().map(|v| v.clone()).collect();
+        let endpoints_vec: Vec<Value> = Python::attach(|py| depythonize(endpoints.bind(py)))?;
         let endpoints = LiveStreamEndpoints::PreConfigured {
-            pre_configured_endpoints: array,
+            pre_configured_endpoints: endpoints_vec,
         };
 
         self.start_live_stream(
@@ -951,15 +948,17 @@ impl PyCallClient {
     #[pyo3(signature = (rtmp_urls, streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_live_stream_with_rtmp_urls(
         &self,
-        rtmp_urls: PyObject,
-        streaming_settings: Option<PyObject>,
+        rtmp_urls: Py<PyAny>,
+        streaming_settings: Option<Py<PyAny>>,
         stream_id: Option<&str>,
         force_new: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
-        let list: Vec<Value> = Python::with_gil(|py| depythonize(&rtmp_urls.bind(py)).unwrap());
-        let array = list.iter().map(|v| v.clone()).collect();
-        let endpoints = LiveStreamEndpoints::RtmpUrls { rtmp_urls: array };
+        let rtmp_urls_vec: Vec<Value> =
+            Python::attach(|py| depythonize(rtmp_urls.bind(py)).unwrap());
+        let endpoints = LiveStreamEndpoints::RtmpUrls {
+            rtmp_urls: rtmp_urls_vec,
+        };
 
         self.start_live_stream(
             endpoints,
@@ -980,7 +979,7 @@ impl PyCallClient {
     pub fn stop_live_stream(
         &self,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1015,9 +1014,9 @@ impl PyCallClient {
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_live_stream(
         &self,
-        update_settings: PyObject,
+        update_settings: Py<PyAny>,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1026,8 +1025,8 @@ impl PyCallClient {
             .map(|id| CString::new(id).expect("invalid stream id string"))
             .or(None);
 
-        let update_settings_cstr = Python::with_gil(|py| {
-            let update_settings_obj: Value = depythonize(&update_settings.bind(py)).unwrap();
+        let update_settings_cstr = Python::attach(|py| {
+            let update_settings_obj: Value = depythonize(update_settings.bind(py)).unwrap();
             let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
             CString::new(update_settings_string).expect("invalid live stream settings string")
         });
@@ -1057,17 +1056,17 @@ impl PyCallClient {
     #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
     pub fn add_live_streaming_endpoints(
         &self,
-        endpoints: PyObject,
+        endpoints: Py<PyAny>,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)).unwrap());
-        let array = list.iter().map(|v| v.clone()).collect();
+        let endpoints_vec: Vec<Value> =
+            Python::attach(|py| depythonize(endpoints.bind(py)).unwrap());
         let endpoints = LiveStreamEndpoints::PreConfigured {
-            pre_configured_endpoints: array,
+            pre_configured_endpoints: endpoints_vec,
         };
 
         let endpoints_string = serde_json::to_string(&endpoints).unwrap();
@@ -1103,17 +1102,17 @@ impl PyCallClient {
     #[pyo3(signature = (endpoints, stream_id = None, completion = None))]
     pub fn remove_live_streaming_endpoints(
         &self,
-        endpoints: PyObject,
+        endpoints: Py<PyAny>,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)).unwrap());
-        let array = list.iter().map(|v| v.clone()).collect();
+        let endpoints_vec: Vec<Value> =
+            Python::attach(|py| depythonize(endpoints.bind(py)).unwrap());
         let endpoints = LiveStreamEndpoints::PreConfigured {
-            pre_configured_endpoints: array,
+            pre_configured_endpoints: endpoints_vec,
         };
 
         let endpoints_string = serde_json::to_string(&endpoints).unwrap();
@@ -1150,10 +1149,10 @@ impl PyCallClient {
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
         &self,
-        streaming_settings: Option<PyObject>,
+        streaming_settings: Option<Py<PyAny>>,
         stream_id: Option<&str>,
         force_new: Option<bool>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1162,7 +1161,7 @@ impl PyCallClient {
 
         let streaming_settings = streaming_settings.map(|s| {
             let dict: HashMap<String, Value> =
-                Python::with_gil(|py| depythonize(&s.bind(py)).unwrap());
+                Python::attach(|py| depythonize(s.bind(py)).unwrap());
             dict.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
         });
 
@@ -1200,7 +1199,7 @@ impl PyCallClient {
     pub fn stop_recording(
         &self,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1235,9 +1234,9 @@ impl PyCallClient {
     #[pyo3(signature = (update_settings, stream_id = None, completion = None))]
     pub fn update_recording(
         &self,
-        update_settings: PyObject,
+        update_settings: Py<PyAny>,
         stream_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1246,8 +1245,8 @@ impl PyCallClient {
             .map(|id| CString::new(id).expect("invalid stream id string"))
             .or(None);
 
-        let update_settings_cstr = Python::with_gil(|py| {
-            let update_settings_obj: Value = depythonize(&update_settings.bind(py)).unwrap();
+        let update_settings_cstr = Python::attach(|py| {
+            let update_settings_obj: Value = depythonize(update_settings.bind(py)).unwrap();
             let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
             CString::new(update_settings_string).expect("invalid recording settings string")
         });
@@ -1277,8 +1276,8 @@ impl PyCallClient {
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_transcription(
         &self,
-        settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1286,7 +1285,7 @@ impl PyCallClient {
         let settings_cstr = settings
             .map(|settings| {
                 let settings_value: Value =
-                    Python::with_gil(|py| depythonize(&settings.bind(py)).unwrap());
+                    Python::attach(|py| depythonize(settings.bind(py)).unwrap());
                 let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid transcription settings string")
             })
@@ -1312,7 +1311,7 @@ impl PyCallClient {
     ///
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (completion = None))]
-    pub fn stop_transcription(&self, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn stop_transcription(&self, completion: Option<Py<PyAny>>) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
@@ -1337,15 +1336,15 @@ impl PyCallClient {
     #[pyo3(signature = (participants = None, instance_id = None, completion = None))]
     pub fn update_transcription(
         &self,
-        participants: Option<PyObject>,
+        participants: Option<Py<PyAny>>,
         instance_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         let participants: Option<Vec<String>> = if let Some(participants) = participants {
-            Python::with_gil(|py| participants.extract(py).unwrap())
+            Python::attach(|py| participants.extract(py).unwrap())
         } else {
             None
         };
@@ -1388,15 +1387,15 @@ impl PyCallClient {
     pub fn start_dialout(
         &self,
         py: Python<'_>,
-        settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_value: Value = depythonize(settings.bind(py)).unwrap();
                 let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid dialout settings string")
             })
@@ -1422,7 +1421,11 @@ impl PyCallClient {
     /// :param str participant_id: The participant ID of the dial-out session to stop
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (participant_id, completion = None))]
-    pub fn stop_dialout(&self, participant_id: &str, completion: Option<PyObject>) -> PyResult<()> {
+    pub fn stop_dialout(
+        &self,
+        participant_id: &str,
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
@@ -1451,15 +1454,15 @@ impl PyCallClient {
     pub fn send_dtmf(
         &self,
         py: Python<'_>,
-        settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_value: Value = depythonize(settings.bind(py)).unwrap();
                 let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid send DTMF settings string")
             })
@@ -1489,15 +1492,15 @@ impl PyCallClient {
     pub fn sip_call_transfer(
         &self,
         py: Python<'_>,
-        settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_value: Value = depythonize(settings.bind(py)).unwrap();
                 let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid SIP call transfer settings string")
             })
@@ -1525,15 +1528,15 @@ impl PyCallClient {
     pub fn sip_refer(
         &self,
         py: Python<'_>,
-        settings: Option<PyObject>,
-        completion: Option<PyObject>,
+        settings: Option<Py<PyAny>>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_value: Value = depythonize(settings.bind(py)).unwrap();
                 let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid SIP refer settings string")
             })
@@ -1563,9 +1566,9 @@ impl PyCallClient {
     pub fn send_app_message(
         &self,
         py: Python<'_>,
-        message: PyObject,
+        message: Py<PyAny>,
         participant_id: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1584,7 +1587,7 @@ impl PyCallClient {
             })?;
         }
 
-        let message_value: Value = depythonize(&message.bind(py))?;
+        let message_value: Value = depythonize(message.bind(py))?;
         let message_string = serde_json::to_string(&message_value).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
@@ -1619,7 +1622,7 @@ impl PyCallClient {
         &self,
         message: &str,
         user_name: Option<&str>,
-        completion: Option<PyObject>,
+        completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
@@ -1650,7 +1653,7 @@ impl PyCallClient {
     ///
     /// :return: See :ref:`NetworkStats`
     /// :rtype: Mapping[str, Any]
-    pub fn get_network_stats(&self) -> PyResult<PyObject> {
+    pub fn get_network_stats(&self) -> PyResult<Py<PyAny>> {
         // If we have already been released throw an exception.
         self.check_released()?;
 
@@ -1670,7 +1673,7 @@ impl PyCallClient {
     pub fn set_audio_renderer(
         &self,
         participant_id: &str,
-        callback: PyObject,
+        callback: Py<PyAny>,
         audio_source: &str,
         sample_rate: u32,
         callback_interval_ms: u32,
@@ -1727,7 +1730,7 @@ impl PyCallClient {
     pub fn set_video_renderer(
         &self,
         participant_id: &str,
-        callback: PyObject,
+        callback: Py<PyAny>,
         video_source: &str,
         color_format: &str,
         logging_interval_ms: u32,
@@ -1781,13 +1784,13 @@ impl Drop for PyCallClient {
     fn drop(&mut self) {
         // We know the GIL is acquired because it is acquired before
         // dropping a pyclass object.
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         let _ = self.release(py);
     }
 }
 
-unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let active_speaker_ptr = daily_core_call_client_active_speaker(call_client);
     let active_speaker_string = CStr::from_ptr(active_speaker_ptr)
         .to_string_lossy()
@@ -1795,19 +1798,19 @@ unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<PyObject>
 
     let active_speaker: Value = serde_json::from_str(active_speaker_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &active_speaker).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &active_speaker).unwrap().unbind()))
 }
 
-unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let inputs_ptr = daily_core_call_client_inputs(call_client);
     let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
 
     let inputs: Value = serde_json::from_str(inputs_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &inputs).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &inputs).unwrap().unbind()))
 }
 
-unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let participant_counts_ptr = daily_core_call_client_participant_counts(call_client);
     let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
         .to_string_lossy()
@@ -1816,10 +1819,10 @@ unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<PyObj
     let participant_counts: Value =
         serde_json::from_str(participant_counts_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &participant_counts).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &participant_counts).unwrap().unbind()))
 }
 
-unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let publishing_ptr = daily_core_call_client_publishing(call_client);
     let publishing_string = CStr::from_ptr(publishing_ptr)
         .to_string_lossy()
@@ -1827,10 +1830,10 @@ unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<PyObject> {
 
     let publishing: Value = serde_json::from_str(publishing_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &publishing).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &publishing).unwrap().unbind()))
 }
 
-unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let subscriptions_ptr = daily_core_call_client_subscriptions(call_client);
     let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
         .to_string_lossy()
@@ -1838,23 +1841,23 @@ unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<PyObject> 
 
     let subscriptions: Value = serde_json::from_str(subscriptions_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &subscriptions).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &subscriptions).unwrap().unbind()))
 }
 
-unsafe fn get_subscription_profiles(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_subscription_profiles(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let profiles_ptr = daily_core_call_client_subscription_profiles(call_client);
     let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
 
     let profiles: Value = serde_json::from_str(profiles_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &profiles).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &profiles).unwrap().unbind()))
 }
 
-unsafe fn get_network_stats(call_client: &mut CallClient) -> PyResult<PyObject> {
+unsafe fn get_network_stats(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
     let stats_ptr = daily_core_call_client_get_network_stats(call_client);
     let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
 
     let stats: Value = serde_json::from_str(stats_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(pythonize(py, &stats).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &stats).unwrap().unbind()))
 }

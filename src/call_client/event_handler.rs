@@ -28,24 +28,24 @@ impl PyEventHandler {
 
     /// Event emitted when the active speaker of the call has changed.
     ///
-    /// :param dict participant: See :ref:`Participant`
-    fn on_active_speaker_changed(&self, participant: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] participant: See :ref:`Participant`
+    fn on_active_speaker_changed(&self, participant: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a custom app message is received from another
     /// participant or via the REST API.
     ///
-    /// :param string message: Message received from a remote participant
+    /// :param Any message: Message received from a remote participant
     /// :param string sender: Sender of the message
-    fn on_app_message(&self, message: PyObject, sender: PyObject) -> PyResult<()> {
+    fn on_app_message(&self, message: Py<PyAny>, sender: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when an audio device is plugged or removed.
     ///
-    /// :param dict available_devices: See :ref:`AvailableDevices`
-    fn on_available_devices_updated(&self, available_devices: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] available_devices: See :ref:`AvailableDevices`
+    fn on_available_devices_updated(&self, available_devices: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl PyEventHandler {
     /// :func:`daily.CallClient.leave`
     ///
     /// :param string state: See :ref:`CallState`
-    fn on_call_state_updated(&self, state: PyObject) -> PyResult<()> {
+    fn on_call_state_updated(&self, state: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -66,7 +66,7 @@ impl PyEventHandler {
     /// request and both endpoints are negotiating the media flow.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialinConnectedEvent`
-    fn on_dialin_connected(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialin_connected(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -76,7 +76,7 @@ impl PyEventHandler {
     /// triggered.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
-    fn on_dialin_error(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialin_error(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -85,14 +85,14 @@ impl PyEventHandler {
     /// calls.
     ///
     /// :param string sip_endpoint: The SIP endpoint the room has connected to
-    fn on_dialin_ready(&self, sip_endpoint: PyObject) -> PyResult<()> {
+    fn on_dialin_ready(&self, sip_endpoint: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the dial-in remote end disconnects the call.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialinStoppedEvent`
-    fn on_dialin_stopped(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialin_stopped(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -100,7 +100,7 @@ impl PyEventHandler {
     /// codec not being used and a fallback codec being utilized.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
-    fn on_dialin_warning(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialin_warning(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -108,7 +108,7 @@ impl PyEventHandler {
     /// answered.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_answered(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_answered(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl PyEventHandler {
     /// established.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_connected(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_connected(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -126,7 +126,7 @@ impl PyEventHandler {
     /// triggered.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_error(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_error(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -134,7 +134,7 @@ impl PyEventHandler {
     /// call is stopped by calling :func:`daily.CallClient.stop_dialout`.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_stopped(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_stopped(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -142,14 +142,14 @@ impl PyEventHandler {
     /// codec not being used and a fallback codec being utilized.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
-    fn on_dialout_warning(&self, data: PyObject) -> PyResult<()> {
+    fn on_dialout_warning(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when an error occurs.
     ///
     /// :param string message: The error message
-    fn on_error(&self, message: PyObject) -> PyResult<()> {
+    fn on_error(&self, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -158,8 +158,8 @@ impl PyEventHandler {
     /// :func:`daily.CallClient.leave` or
     /// :func:`daily.CallClient.update_inputs`.
     ///
-    /// :param dict inputs: See :ref:`InputSettings`
-    fn on_inputs_updated(&self, input_settings: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] inputs: See :ref:`InputSettings`
+    fn on_inputs_updated(&self, input_settings: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -168,28 +168,28 @@ impl PyEventHandler {
     ///
     /// :param string stream_id: The ID of the live stream that generated the error
     /// :param string message: The error message
-    fn on_live_stream_error(&self, stream_id: PyObject, message: PyObject) -> PyResult<()> {
+    fn on_live_stream_error(&self, stream_id: Py<PyAny>, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted for all participants when a live stream starts.
     ///
-    /// :param dict status: See :ref:`LiveStreamStatus`
-    fn on_live_stream_started(&self, status: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] status: See :ref:`LiveStreamStatus`
+    fn on_live_stream_started(&self, status: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted for all participants when a live stream stops.
     ///
     /// :param string stream_id: The ID of the live stream that was stopped
-    fn on_live_stream_stopped(&self, stream_id: PyObject) -> PyResult<()> {
+    fn on_live_stream_stopped(&self, stream_id: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted for all participants when a live stream is updated.
     ///
     /// :param Mapping[str, Any] update: See :ref:`LiveStreamUpdate`
-    fn on_live_stream_updated(&self, update: PyObject) -> PyResult<()> {
+    fn on_live_stream_updated(&self, update: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -198,37 +198,37 @@ impl PyEventHandler {
     ///
     /// :param string stream_id: The ID of the live stream that generated the warning
     /// :param string message: The warning message
-    fn on_live_stream_warning(&self, stream_id: PyObject, message: PyObject) -> PyResult<()> {
+    fn on_live_stream_warning(&self, stream_id: Py<PyAny>, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the logging & telemetry backend updates the network
     /// statistics.
     ///
-    /// :param dict stats: See :ref:`NetworkStats`
-    fn on_network_stats_updated(&self, stats: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] stats: See :ref:`NetworkStats`
+    fn on_network_stats_updated(&self, stats: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the participant count changes.
     ///
-    /// :param dict stats: See :ref:`ParticipantCounts`
-    fn on_participant_counts_updated(&self, counts: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] stats: See :ref:`ParticipantCounts`
+    fn on_participant_counts_updated(&self, counts: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a participant joins the call.
     ///
-    /// :param dict participant: See :ref:`Participant`
-    fn on_participant_joined(&self, participant: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] participant: See :ref:`Participant`
+    fn on_participant_joined(&self, participant: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a participant has left the call.
     ///
-    /// :param dict participant: See :ref:`Participant`
+    /// :param Mapping[str, Any] participant: See :ref:`Participant`
     /// :param string reason: See :ref:`ParticipantLeftReason`
-    fn on_participant_left(&self, participant: PyObject, reason: PyObject) -> PyResult<()> {
+    fn on_participant_left(&self, participant: Py<PyAny>, reason: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -236,8 +236,8 @@ impl PyEventHandler {
     /// participant's metadata was updated, or the tracks belonging to the
     /// participant changed.
     ///
-    /// :param dict participant: See :ref:`Participant`
-    fn on_participant_updated(&self, participant: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] participant: See :ref:`Participant`
+    fn on_participant_updated(&self, participant: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -245,8 +245,8 @@ impl PyEventHandler {
     /// consequence of invocations to :func:`daily.CallClient.join`,
     /// :func:`daily.CallClient.update_publishing`.
     ///
-    /// :param dict publishing_settings: See :ref:`PublishingSettings`
-    fn on_publishing_updated(&self, publishing_settings: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] publishing_settings: See :ref:`PublishingSettings`
+    fn on_publishing_updated(&self, publishing_settings: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -254,21 +254,21 @@ impl PyEventHandler {
     ///
     /// :param string stream_id: The ID of the recording that generated the error
     /// :param string message: The error message
-    fn on_recording_error(&self, stream_id: PyObject, message: PyObject) -> PyResult<()> {
+    fn on_recording_error(&self, stream_id: Py<PyAny>, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted for all participants when a recording starts.
     ///
-    /// :param dict status: See :ref:`RecordingStatus`
-    fn on_recording_started(&self, status: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] status: See :ref:`RecordingStatus`
+    fn on_recording_started(&self, status: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted for all participants when a recording stops.
     ///
     /// :param string stream_id: The ID of the live stream that was stopped
-    fn on_recording_stopped(&self, stream_id: PyObject) -> PyResult<()> {
+    fn on_recording_stopped(&self, stream_id: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -276,48 +276,48 @@ impl PyEventHandler {
     /// consequence of calls to
     /// :func:`daily.CallClient.update_subscription_profiles`.
     ///
-    /// :param dict subscription_profiles: See :ref:`SubscriptionProfileSettings`
-    fn on_subscription_profiles_updated(&self, subscription_profiles: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] subscription_profiles: See :ref:`SubscriptionProfileSettings`
+    fn on_subscription_profiles_updated(&self, subscription_profiles: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when the subscription settings are updated as a
     /// consequence of calls to :func:`daily.CallClient.update_subscriptions`.
     ///
-    /// :param dict subscriptions: See :ref:`ParticipantSubscriptions`
-    fn on_subscriptions_updated(&self, subscriptions: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] subscriptions: See :ref:`ParticipantSubscriptions`
+    fn on_subscriptions_updated(&self, subscriptions: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a transcription error occurs.
     ///
     /// :param string message: The error message
-    fn on_transcription_error(&self, message: PyObject) -> PyResult<()> {
+    fn on_transcription_error(&self, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when a transcription message is received.
     ///
-    /// :param dict message: See :ref:`TranscriptionMessage`
-    fn on_transcription_message(&self, message: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] message: See :ref:`TranscriptionMessage`
+    fn on_transcription_message(&self, message: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when transcription starts.
     ///
-    /// :param dict status: See :ref:`TranscriptionStatus`
-    fn on_transcription_started(&self, status: PyObject) -> PyResult<()> {
+    /// :param Mapping[str, Any] status: See :ref:`TranscriptionStatus`
+    fn on_transcription_started(&self, status: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
     /// Event emitted when transcription stops.
     ///
     /// :param str stopped_by: The ID of the participant that stopped the transcription or None
-    /// :param str stopped_by_error: Whether the transcription was stopped by an error
+    /// :param bool stopped_by_error: Whether the transcription was stopped by an error
     fn on_transcription_stopped(
         &self,
-        stopped_by: PyObject,
-        stopped_by_error: PyObject,
+        stopped_by: Py<PyAny>,
+        stopped_by_error: Py<PyAny>,
     ) -> PyResult<()> {
         Ok(())
     }
@@ -325,7 +325,7 @@ impl PyEventHandler {
     /// Event emitted when transcription is updated.
     ///
     /// :param Mapping[str, Any] update: See :ref:`TranscriptionUpdated`
-    fn on_transcription_updated(&self, update: PyObject) -> PyResult<()> {
+    fn on_transcription_updated(&self, update: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 }

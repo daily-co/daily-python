@@ -33,7 +33,7 @@ pub struct PyVirtualMicrophoneDevice {
     channels: u8,
     audio_device: Option<NativeVirtualMicrophoneDevice>,
     request_id: AtomicU64,
-    completions: Mutex<HashMap<u64, PyObject>>,
+    completions: Mutex<HashMap<u64, Py<PyAny>>>,
 }
 
 impl PyVirtualMicrophoneDevice {
@@ -52,7 +52,7 @@ impl PyVirtualMicrophoneDevice {
         self.audio_device = Some(audio_device);
     }
 
-    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+    fn maybe_register_completion(&mut self, completion: Option<Py<PyAny>>) -> u64 {
         let request_id = self.request_id.fetch_add(1, Ordering::SeqCst);
 
         if let Some(completion) = completion {
@@ -112,8 +112,8 @@ impl PyVirtualMicrophoneDevice {
     pub fn write_frames(
         &mut self,
         frames: &Bound<'_, PyBytes>,
-        completion: Option<PyObject>,
-    ) -> PyResult<PyObject> {
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<Py<PyAny>> {
         if self.audio_device.is_none() {
             return Err(exceptions::PyRuntimeError::new_err(
                 "no microphone device has been attached",
@@ -143,8 +143,8 @@ impl PyVirtualMicrophoneDevice {
             self.device_name
         );
 
-        Python::with_gil(|py| {
-            let frames_written = py.allow_threads(move || unsafe {
+        Python::attach(|py| {
+            let frames_written = py.detach(move || unsafe {
                 daily_core_context_virtual_microphone_device_write_frames(
                     self.audio_device.as_ref().unwrap().as_ptr() as *mut _,
                     aligned.as_ptr(),
@@ -174,7 +174,7 @@ pub(crate) unsafe extern "C" fn on_write_frames(
     let microphone: &mut PyVirtualMicrophoneDevice =
         unsafe { &mut *(device as *mut PyVirtualMicrophoneDevice) };
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let completion = microphone.completions.lock().unwrap().remove(&request_id);
 
         if let Some(completion) = completion {

@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 #[pyclass(name = "VideoFrame", module = "daily", get_all)]
 pub struct PyVideoFrame {
     /// A bytestring with the frame data in the corresponding color format
-    pub buffer: PyObject,
+    pub buffer: Py<PyAny>,
     /// The width of this frame
     pub width: i32,
     /// The height this frame
@@ -13,5 +13,5 @@ pub struct PyVideoFrame {
     /// The time in microseconds that the frame was received
     pub timestamp_us: i64,
     /// The frame's color format
-    pub color_format: PyObject,
+    pub color_format: Py<PyAny>,
 }

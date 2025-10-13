@@ -29,7 +29,7 @@ pub struct PyVirtualSpeakerDevice {
     non_blocking: bool,
     audio_device: Option<NativeVirtualSpeakerDevice>,
     request_id: AtomicU64,
-    completions: Mutex<HashMap<u64, PyObject>>,
+    completions: Mutex<HashMap<u64, Py<PyAny>>>,
 }
 
 impl PyVirtualSpeakerDevice {
@@ -49,7 +49,7 @@ impl PyVirtualSpeakerDevice {
         self.audio_device = Some(audio_device);
     }
 
-    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+    fn maybe_register_completion(&mut self, completion: Option<Py<PyAny>>) -> u64 {
         let request_id = self.request_id.fetch_add(1, Ordering::SeqCst);
 
         if let Some(completion) = completion {
@@ -105,8 +105,8 @@ impl PyVirtualSpeakerDevice {
     pub fn read_frames(
         &mut self,
         num_frames: usize,
-        completion: Option<PyObject>,
-    ) -> PyResult<PyObject> {
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<Py<PyAny>> {
         if self.audio_device.is_none() {
             return Err(exceptions::PyRuntimeError::new_err(
                 "no speaker device has been attached",
@@ -136,10 +136,10 @@ impl PyVirtualSpeakerDevice {
             "Reading audio frames from {device_name} ({num_bytes} bytes, request {request_id})",
         );
 
-        Python::with_gil(move |py| {
+        Python::attach(move |py| {
             let buffer_bytes = buffer.as_mut_slice();
 
-            let frames_read = py.allow_threads(move || unsafe {
+            let frames_read = py.detach(move || unsafe {
                 daily_core_context_virtual_speaker_device_read_frames(
                     self.audio_device.as_ref().unwrap().as_ptr() as *mut _,
                     buffer_bytes.as_mut_ptr(),
@@ -181,7 +181,7 @@ pub(crate) unsafe extern "C" fn on_read_frames(
     let speaker: &mut PyVirtualSpeakerDevice =
         unsafe { &mut *(device as *mut PyVirtualSpeakerDevice) };
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let completion = speaker.completions.lock().unwrap().remove(&request_id);
 
         if let Some(completion) = completion {

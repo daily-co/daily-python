@@ -22,11 +22,11 @@ use super::event::{
 use crate::{PyAudioData, PyVideoFrame};
 
 pub(crate) enum PyCallClientCompletion {
-    UnaryFn(PyObject),
-    BinaryFn(PyObject),
+    UnaryFn(Py<PyAny>),
+    BinaryFn(Py<PyAny>),
 }
 
-impl From<PyCallClientCompletion> for PyObject {
+impl From<PyCallClientCompletion> for Py<PyAny> {
     fn from(value: PyCallClientCompletion) -> Self {
         match value {
             PyCallClientCompletion::UnaryFn(c) => c,
@@ -57,7 +57,7 @@ type PyCallClientDelegateOnAudioDataFn = unsafe fn(
 #[derive(Clone)]
 pub(crate) struct AudioRendererData {
     pub(crate) audio_source: String,
-    pub(crate) callback: PyObject,
+    pub(crate) callback: Py<PyAny>,
     pub(crate) audio_buffer: Vec<u8>,
     pub(crate) callback_interval_ms: u32,
     pub(crate) callback_count: u32,
@@ -68,7 +68,7 @@ pub(crate) struct AudioRendererData {
 #[derive(Clone)]
 pub(crate) struct VideoRendererData {
     pub(crate) video_source: String,
-    pub(crate) callback: PyObject,
+    pub(crate) callback: Py<PyAny>,
     pub(crate) logging_interval_ms: Duration,
     pub(crate) logging_last_call: Instant,
 }
@@ -81,19 +81,19 @@ pub(crate) struct PyCallClientDelegateFns {
 }
 
 pub(crate) struct PyCallClientInner {
-    pub(crate) event_handler_callback: Mutex<Option<PyObject>>,
+    pub(crate) event_handler_callback: Mutex<Option<Py<PyAny>>>,
     pub(crate) delegates: Mutex<PyCallClientDelegateFns>,
     pub(crate) completions: Mutex<HashMap<u64, PyCallClientCompletion>>,
     pub(crate) video_renderers: Mutex<HashMap<u64, VideoRendererData>>,
     pub(crate) audio_renderers: Mutex<HashMap<u64, AudioRendererData>>,
     // Non-blocking updates
-    pub(crate) active_speaker: Mutex<PyObject>,
-    pub(crate) inputs: Mutex<PyObject>,
-    pub(crate) participant_counts: Mutex<PyObject>,
-    pub(crate) publishing: Mutex<PyObject>,
-    pub(crate) subscriptions: Mutex<PyObject>,
-    pub(crate) subscription_profiles: Mutex<PyObject>,
-    pub(crate) network_stats: Mutex<PyObject>,
+    pub(crate) active_speaker: Mutex<Py<PyAny>>,
+    pub(crate) inputs: Mutex<Py<PyAny>>,
+    pub(crate) participant_counts: Mutex<Py<PyAny>>,
+    pub(crate) publishing: Mutex<Py<PyAny>>,
+    pub(crate) subscriptions: Mutex<Py<PyAny>>,
+    pub(crate) subscription_profiles: Mutex<Py<PyAny>>,
+    pub(crate) network_stats: Mutex<Py<PyAny>>,
 }
 
 #[derive(Clone)]
@@ -109,7 +109,7 @@ pub(crate) unsafe extern "C" fn on_event_native(
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let delegate_ctx_ptr = delegate as *const DelegateContext;
 
         // We increment the reference count because otherwise it will get dropped
@@ -141,7 +141,7 @@ pub(crate) unsafe extern "C" fn on_audio_data_native(
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let delegate_ctx_ptr = delegate as *const DelegateContext;
 
         // We increment the reference count because otherwise it will get dropped
@@ -170,7 +170,7 @@ pub(crate) unsafe extern "C" fn on_video_frame_native(
     // Acquire the GIL before checking if there's a delegate available. If
     // PyCallClient is dropping it will cleanup the delegates and will
     // temporarily release the GIL so we can proceed.
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let delegate_ctx_ptr = delegate as *const DelegateContext;
 
         // We increment the reference count because otherwise it will get dropped
@@ -206,14 +206,14 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     .remove(&request_id);
                 if let Some(completion) = completion {
                     if let Some(args) = completion_args_from_event(&completion, event) {
-                        let py_args: Vec<PyObject> = args
+                        let py_args: Vec<Py<PyAny>> = args
                             .iter()
                             .map(|a| pythonize(py, a).unwrap().unbind())
                             .collect();
 
                         let py_args = PyTuple::new(py, py_args).unwrap();
 
-                        let callback: PyObject = completion.into();
+                        let callback: Py<PyAny> = completion.into();
 
                         if let Err(error) = callback.call1(py, py_args) {
                             error.write_unraisable(py, None);
@@ -233,7 +233,7 @@ pub(crate) unsafe fn on_event(py: Python<'_>, delegate_ctx: &DelegateContext, ev
                     let callback = delegate_ctx.inner.event_handler_callback.lock().unwrap();
 
                     if let Some(callback) = callback.as_ref() {
-                        let py_args: Vec<PyObject> = args
+                        let py_args: Vec<Py<PyAny>> = args
                             .iter()
                             .map(|a| pythonize(py, a).unwrap().unbind())
                             .collect();

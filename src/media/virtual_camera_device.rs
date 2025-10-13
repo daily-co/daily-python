@@ -91,7 +91,7 @@ impl PyVirtualCameraDevice {
 
             let bytes = frame.as_bytes();
 
-            py.allow_threads(move || unsafe {
+            py.detach(move || unsafe {
                 daily_core_context_virtual_camera_device_write_frame(
                     camera_device.as_ptr() as *mut _,
                     bytes.as_ptr() as *const _,

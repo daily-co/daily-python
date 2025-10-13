@@ -93,8 +93,8 @@ impl PyNativeVad {
         let bytes = frames.as_bytes();
         let aligned = AlignedI16Data::new(bytes);
 
-        let confidence = Python::with_gil(|py| {
-            py.allow_threads(move || unsafe {
+        let confidence = Python::attach(|py| {
+            py.detach(move || unsafe {
                 daily_core_context_vad_analyze(
                     self.webrtc_vad.as_ref().unwrap().as_ptr() as *mut _,
                     aligned.as_ptr(),

@@ -22,11 +22,11 @@ pub struct PyCustomAudioSource {
     pub channels: u8,
     pub audio_source: NativeDailyAudioSource,
     request_id: AtomicU64,
-    completions: Mutex<HashMap<u64, PyObject>>,
+    completions: Mutex<HashMap<u64, Py<PyAny>>>,
 }
 
 impl PyCustomAudioSource {
-    fn maybe_register_completion(&mut self, completion: Option<PyObject>) -> u64 {
+    fn maybe_register_completion(&mut self, completion: Option<Py<PyAny>>) -> u64 {
         let request_id = self.request_id.fetch_add(1, Ordering::SeqCst);
 
         if let Some(completion) = completion {
@@ -98,8 +98,8 @@ impl PyCustomAudioSource {
     pub fn write_frames(
         &mut self,
         frames: &Bound<'_, PyBytes>,
-        completion: Option<PyObject>,
-    ) -> PyResult<PyObject> {
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<Py<PyAny>> {
         let num_bytes = frames.len()?;
         let bytes_per_sample: usize = 2;
 
@@ -121,8 +121,8 @@ impl PyCustomAudioSource {
             self.audio_source.as_ptr()
         );
 
-        Python::with_gil(|py| {
-            let frames_written = py.allow_threads(move || unsafe {
+        Python::attach(|py| {
+            let frames_written = py.detach(move || unsafe {
                 if completion.is_none() {
                     daily_core_context_custom_audio_source_write_frames_sync(
                         self.audio_source.as_ptr() as *mut _,
@@ -166,7 +166,7 @@ pub(crate) unsafe extern "C" fn on_write_frames(
     let audio_source: &mut PyCustomAudioSource =
         unsafe { &mut *(source as *mut PyCustomAudioSource) };
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let completion = audio_source.completions.lock().unwrap().remove(&request_id);
 
         let args = PyTuple::new(py, &[num_frames.into_py_any(py).unwrap()]).unwrap();
