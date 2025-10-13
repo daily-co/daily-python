@@ -1,4 +1,4 @@
-maturin==1.8.7
+maturin==1.9.6
 setuptools==78.1.1
 sphinx==7.4.7
 sphinx-rtd-theme==2.0.0
