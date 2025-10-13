@@ -152,17 +152,17 @@ impl PyVirtualSpeakerDevice {
 
             if frames_read == num_frames as i32 {
                 let py_bytes =
-                    unsafe { PyBytes::bound_from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
+                    unsafe { PyBytes::from_ptr(py, buffer.as_ptr() as *const u8, num_bytes) };
 
                 tracing::trace!(
                     "Finished reading audio frames from {device_name} ({num_bytes} bytes, request {request_id})"
                 );
 
-                Ok(py_bytes.into_py(py))
+                Ok(py_bytes.into_any().unbind())
             } else if frames_read == 0 {
                 let empty_bytes: [u8; 0] = [];
-                let py_bytes = PyBytes::new_bound(py, &empty_bytes);
-                Ok(py_bytes.into_py(py))
+                let py_bytes = PyBytes::new(py, &empty_bytes);
+                Ok(py_bytes.into_any().unbind())
             } else {
                 Err(exceptions::PyIOError::new_err(
                     "error reading audio frames from the device",
@@ -190,9 +190,9 @@ pub(crate) unsafe extern "C" fn on_read_frames(
             let empty_bytes: [u8; 0] = [];
 
             let py_bytes = if num_bytes > 0 {
-                unsafe { PyBytes::bound_from_ptr(py, frames as *const u8, num_bytes) }
+                unsafe { PyBytes::from_ptr(py, frames as *const u8, num_bytes) }
             } else {
-                PyBytes::new_bound(py, &empty_bytes)
+                PyBytes::new(py, &empty_bytes)
             };
 
             tracing::trace!(
@@ -200,10 +200,10 @@ pub(crate) unsafe extern "C" fn on_read_frames(
                 speaker.device_name
             );
 
-            let args = PyTuple::new_bound(py, [py_bytes]);
+            let args = PyTuple::new(py, [py_bytes]).unwrap();
 
             if let Err(error) = completion.call1(py, args) {
-                error.write_unraisable_bound(py, None);
+                error.write_unraisable(py, None);
             }
         };
     })

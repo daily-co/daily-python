@@ -6,7 +6,9 @@ pub(crate) mod recording;
 
 pub(crate) use event_handler::PyEventHandler;
 pub(crate) use live_stream::{LiveStreamEndpoints, StartLiveStreamProperties};
+use pythonize::{depythonize, pythonize};
 pub(crate) use recording::StartRecordingProperties;
+use serde_json::Value;
 
 use delegate::*;
 
@@ -26,7 +28,7 @@ use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{util::dict::DictValue, PyCustomAudioTrack, GLOBAL_CONTEXT};
+use crate::{PyCustomAudioTrack, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -98,8 +100,9 @@ impl PyCallClient {
         let stream_id = stream_id.map(|id| id.to_string());
 
         let streaming_settings = streaming_settings.map(|s| {
-            let dict: HashMap<String, DictValue> = Python::with_gil(|py| s.extract(py).unwrap());
-            dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect()
+            let dict: HashMap<String, Value> =
+                Python::with_gil(|py| depythonize(&s.bind(py)).unwrap());
+            dict.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
         });
 
         let properties = StartLiveStreamProperties {
@@ -315,8 +318,8 @@ impl PyCallClient {
         let ice_config_cstr = Python::with_gil(|py| {
             ice_config
                 .map(|config| {
-                    let config_map: HashMap<String, DictValue> = config.extract(py).unwrap();
-                    let config_string = serde_json::to_string(&config_map).unwrap();
+                    let config_obj: Value = depythonize(&config.bind(py)).unwrap();
+                    let config_string = serde_json::to_string(&config_obj).unwrap();
                     CString::new(config_string).expect("invalid ICE config string")
                 })
                 .or(None)
@@ -369,8 +372,8 @@ impl PyCallClient {
         let client_settings_cstr = Python::with_gil(|py| {
             client_settings
                 .map(|settings| {
-                    let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                    let settings_string = serde_json::to_string(&settings_map).unwrap();
+                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid client settings string")
                 })
                 .or(None)
@@ -461,10 +464,9 @@ impl PyCallClient {
                 .to_string_lossy()
                 .into_owned();
 
-            let participants: HashMap<String, DictValue> =
-                serde_json::from_str(participants_string.as_str()).unwrap();
+            let participants: Value = serde_json::from_str(participants_string.as_str()).unwrap();
 
-            Python::with_gil(|py| Ok(participants.to_object(py)))
+            Python::with_gil(|py| Ok(pythonize(py, &participants).unwrap().unbind()))
         }
     }
 
@@ -492,13 +494,13 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let remote_participants_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| remote_participants.extract(py).unwrap());
-
-        let remote_participants_string = serde_json::to_string(&remote_participants_map).unwrap();
-
-        let remote_participants_cstr =
-            CString::new(remote_participants_string).expect("invalid remote participants string");
+        let remote_participants_cstr = Python::with_gil(|py| {
+            let remote_participants_obj: Value =
+                depythonize(&remote_participants.bind(py)).unwrap();
+            let remote_participants_string =
+                serde_json::to_string(&remote_participants_obj).unwrap();
+            CString::new(remote_participants_string).expect("invalid remote participants string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -573,13 +575,11 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let input_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| input_settings.extract(py).unwrap());
-
-        let input_settings_string = serde_json::to_string(&input_settings_map).unwrap();
-
-        let input_settings_cstr =
-            CString::new(input_settings_string).expect("invalid input settings string");
+        let input_settings_cstr = Python::with_gil(|py| {
+            let input_settings_obj: Value = depythonize(&input_settings.bind(py)).unwrap();
+            let input_settings_string = serde_json::to_string(&input_settings_obj).unwrap();
+            CString::new(input_settings_string).expect("invalid input settings string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -737,13 +737,13 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let publishing_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| publishing_settings.extract(py).unwrap());
-
-        let publishing_settings_string = serde_json::to_string(&publishing_settings_map).unwrap();
-
-        let publishing_settings_cstr =
-            CString::new(publishing_settings_string).expect("invalid publishing settings string");
+        let publishing_settings_cstr = Python::with_gil(|py| {
+            let publishing_settings_obj: Value =
+                depythonize(&publishing_settings.bind(py)).unwrap();
+            let publishing_settings_string =
+                serde_json::to_string(&publishing_settings_obj).unwrap();
+            CString::new(publishing_settings_string).expect("invalid publishing settings string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -793,8 +793,8 @@ impl PyCallClient {
         let participant_settings_cstr = Python::with_gil(|py| {
             participant_settings
                 .map(|settings| {
-                    let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                    let settings_string = serde_json::to_string(&settings_map).unwrap();
+                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid participant settings string")
                 })
                 .or(None)
@@ -804,8 +804,8 @@ impl PyCallClient {
         let profile_settings_cstr = Python::with_gil(|py| {
             profile_settings
                 .map(|settings| {
-                    let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                    let settings_string = serde_json::to_string(&settings_map).unwrap();
+                    let settings_obj: Value = depythonize(&settings.bind(py)).unwrap();
+                    let settings_string = serde_json::to_string(&settings_obj).unwrap();
                     CString::new(settings_string).expect("invalid profile settings string")
                 })
                 .or(None)
@@ -855,12 +855,11 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let profile_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| profile_settings.extract(py).unwrap());
-
-        let profile_settings_string = serde_json::to_string(&profile_settings_map).unwrap();
-        let profile_settings_cstr =
-            CString::new(profile_settings_string).expect("invalid profile settings string");
+        let profile_settings_cstr = Python::with_gil(|py| {
+            let profile_settings_obj: Value = depythonize(&profile_settings.bind(py)).unwrap();
+            let profile_settings_string = serde_json::to_string(&profile_settings_obj).unwrap();
+            CString::new(profile_settings_string).expect("invalid profile settings string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -891,12 +890,11 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let permissions_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| permissions.extract(py).unwrap());
-
-        let permissions_string = serde_json::to_string(&permissions_map).unwrap();
-        let permissions_cstr =
-            CString::new(permissions_string).expect("invalid permissions string");
+        let permissions_cstr = Python::with_gil(|py| {
+            let permissions_obj: Value = depythonize(&permissions.bind(py)).unwrap();
+            let permissions_string = serde_json::to_string(&permissions_obj).unwrap();
+            CString::new(permissions_string).expect("invalid permisssions string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -928,8 +926,8 @@ impl PyCallClient {
         force_new: Option<bool>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
-        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
-        let array = list.iter().map(|v| v.0.clone()).collect();
+        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)))?;
+        let array = list.iter().map(|v| v.clone()).collect();
         let endpoints = LiveStreamEndpoints::PreConfigured {
             pre_configured_endpoints: array,
         };
@@ -959,8 +957,8 @@ impl PyCallClient {
         force_new: Option<bool>,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
-        let list: Vec<DictValue> = Python::with_gil(|py| rtmp_urls.extract(py).unwrap());
-        let array = list.iter().map(|v| v.0.clone()).collect();
+        let list: Vec<Value> = Python::with_gil(|py| depythonize(&rtmp_urls.bind(py)).unwrap());
+        let array = list.iter().map(|v| v.clone()).collect();
         let endpoints = LiveStreamEndpoints::RtmpUrls { rtmp_urls: array };
 
         self.start_live_stream(
@@ -1028,11 +1026,11 @@ impl PyCallClient {
             .map(|id| CString::new(id).expect("invalid stream id string"))
             .or(None);
 
-        let update_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| update_settings.extract(py).unwrap());
-        let update_settings_string = serde_json::to_string(&update_settings_map).unwrap();
-        let update_settings_cstr =
-            CString::new(update_settings_string).expect("invalid live stream settings string");
+        let update_settings_cstr = Python::with_gil(|py| {
+            let update_settings_obj: Value = depythonize(&update_settings.bind(py)).unwrap();
+            let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
+            CString::new(update_settings_string).expect("invalid live stream settings string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1066,8 +1064,8 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
-        let array = list.iter().map(|v| v.0.clone()).collect();
+        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)).unwrap());
+        let array = list.iter().map(|v| v.clone()).collect();
         let endpoints = LiveStreamEndpoints::PreConfigured {
             pre_configured_endpoints: array,
         };
@@ -1112,8 +1110,8 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let list: Vec<DictValue> = Python::with_gil(|py| endpoints.extract(py).unwrap());
-        let array = list.iter().map(|v| v.0.clone()).collect();
+        let list: Vec<Value> = Python::with_gil(|py| depythonize(&endpoints.bind(py)).unwrap());
+        let array = list.iter().map(|v| v.clone()).collect();
         let endpoints = LiveStreamEndpoints::PreConfigured {
             pre_configured_endpoints: array,
         };
@@ -1163,8 +1161,9 @@ impl PyCallClient {
         let stream_id = stream_id.map(|id| id.to_string());
 
         let streaming_settings = streaming_settings.map(|s| {
-            let dict: HashMap<String, DictValue> = Python::with_gil(|py| s.extract(py).unwrap());
-            dict.iter().map(|(k, v)| (k.clone(), v.0.clone())).collect()
+            let dict: HashMap<String, Value> =
+                Python::with_gil(|py| depythonize(&s.bind(py)).unwrap());
+            dict.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
         });
 
         let properties = StartRecordingProperties {
@@ -1247,11 +1246,11 @@ impl PyCallClient {
             .map(|id| CString::new(id).expect("invalid stream id string"))
             .or(None);
 
-        let update_settings_map: HashMap<String, DictValue> =
-            Python::with_gil(|py| update_settings.extract(py).unwrap());
-        let update_settings_string = serde_json::to_string(&update_settings_map).unwrap();
-        let update_settings_cstr =
-            CString::new(update_settings_string).expect("invalid recording settings string");
+        let update_settings_cstr = Python::with_gil(|py| {
+            let update_settings_obj: Value = depythonize(&update_settings.bind(py)).unwrap();
+            let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
+            CString::new(update_settings_string).expect("invalid recording settings string")
+        });
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1286,9 +1285,9 @@ impl PyCallClient {
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> =
-                    Python::with_gil(|py| settings.extract(py).unwrap());
-                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                let settings_value: Value =
+                    Python::with_gil(|py| depythonize(&settings.bind(py)).unwrap());
+                let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid transcription settings string")
             })
             .or(None);
@@ -1397,8 +1396,8 @@ impl PyCallClient {
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid dialout settings string")
             })
             .or(None);
@@ -1460,8 +1459,8 @@ impl PyCallClient {
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid send DTMF settings string")
             })
             .or(None);
@@ -1498,8 +1497,8 @@ impl PyCallClient {
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid SIP call transfer settings string")
             })
             .or(None);
@@ -1534,8 +1533,8 @@ impl PyCallClient {
 
         let settings_cstr = settings
             .map(|settings| {
-                let settings_map: HashMap<String, DictValue> = settings.extract(py).unwrap();
-                let settings_string = serde_json::to_string(&settings_map).unwrap();
+                let settings_value: Value = depythonize(&settings.bind(py)).unwrap();
+                let settings_string = serde_json::to_string(&settings_value).unwrap();
                 CString::new(settings_string).expect("invalid SIP refer settings string")
             })
             .or(None);
@@ -1559,15 +1558,13 @@ impl PyCallClient {
     ///
     /// :param Any message: The message to send (should be serializable to JSON)
     /// :param Optional[str] participant_id: The participant ID to send the message to. Or `None` to broadcast the message
-    /// :param bool serialize_none: Whether `None` should be serialized to `null` (default: true)
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (message, participant_id = None , serialize_none = true, completion = None))]
+    #[pyo3(signature = (message, participant_id = None , completion = None))]
     pub fn send_app_message(
         &self,
         py: Python<'_>,
         message: PyObject,
         participant_id: Option<&str>,
-        serialize_none: bool,
         completion: Option<PyObject>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
@@ -1587,11 +1584,8 @@ impl PyCallClient {
             })?;
         }
 
-        let mut message_value: DictValue = message.extract(py)?;
-        if !serialize_none {
-            message_value.remove_null_fields();
-        }
-        let message_string = serde_json::to_string(&message_value.0).unwrap();
+        let message_value: Value = depythonize(&message.bind(py))?;
+        let message_string = serde_json::to_string(&message_value).unwrap();
         let message_cstr = CString::new(message_string).expect("invalid message string");
 
         let participant_id_cstr = participant_id
@@ -1799,19 +1793,18 @@ unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<PyObject>
         .to_string_lossy()
         .into_owned();
 
-    let active_speaker: Option<HashMap<String, DictValue>> =
-        serde_json::from_str(active_speaker_string.as_str()).unwrap();
+    let active_speaker: Value = serde_json::from_str(active_speaker_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(active_speaker.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &active_speaker).unwrap().unbind()))
 }
 
 unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<PyObject> {
     let inputs_ptr = daily_core_call_client_inputs(call_client);
     let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
 
-    let inputs: HashMap<String, DictValue> = serde_json::from_str(inputs_string.as_str()).unwrap();
+    let inputs: Value = serde_json::from_str(inputs_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(inputs.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &inputs).unwrap().unbind()))
 }
 
 unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<PyObject> {
@@ -1820,10 +1813,10 @@ unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<PyObj
         .to_string_lossy()
         .into_owned();
 
-    let participant_counts: HashMap<String, DictValue> =
+    let participant_counts: Value =
         serde_json::from_str(participant_counts_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(participant_counts.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &participant_counts).unwrap().unbind()))
 }
 
 unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<PyObject> {
@@ -1832,10 +1825,9 @@ unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<PyObject> {
         .to_string_lossy()
         .into_owned();
 
-    let publishing: HashMap<String, DictValue> =
-        serde_json::from_str(publishing_string.as_str()).unwrap();
+    let publishing: Value = serde_json::from_str(publishing_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(publishing.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &publishing).unwrap().unbind()))
 }
 
 unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<PyObject> {
@@ -1844,27 +1836,25 @@ unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<PyObject> 
         .to_string_lossy()
         .into_owned();
 
-    let subscriptions: HashMap<String, DictValue> =
-        serde_json::from_str(subscriptions_string.as_str()).unwrap();
+    let subscriptions: Value = serde_json::from_str(subscriptions_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(subscriptions.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &subscriptions).unwrap().unbind()))
 }
 
 unsafe fn get_subscription_profiles(call_client: &mut CallClient) -> PyResult<PyObject> {
     let profiles_ptr = daily_core_call_client_subscription_profiles(call_client);
     let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
 
-    let profiles: HashMap<String, DictValue> =
-        serde_json::from_str(profiles_string.as_str()).unwrap();
+    let profiles: Value = serde_json::from_str(profiles_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(profiles.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &profiles).unwrap().unbind()))
 }
 
 unsafe fn get_network_stats(call_client: &mut CallClient) -> PyResult<PyObject> {
     let stats_ptr = daily_core_call_client_get_network_stats(call_client);
     let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
 
-    let stats: HashMap<String, DictValue> = serde_json::from_str(stats_string.as_str()).unwrap();
+    let stats: Value = serde_json::from_str(stats_string.as_str()).unwrap();
 
-    Python::with_gil(|py| Ok(stats.to_object(py)))
+    Python::with_gil(|py| Ok(pythonize(py, &stats).unwrap().unbind()))
 }

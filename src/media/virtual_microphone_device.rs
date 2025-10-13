@@ -7,9 +7,9 @@ use webrtc_daily::sys::virtual_microphone_device::NativeVirtualMicrophoneDevice;
 
 use daily_core::prelude::daily_core_context_virtual_microphone_device_write_frames;
 
-use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyTuple};
+use pyo3::{exceptions, IntoPyObjectExt};
 
 /// This class represents a virtual microphone device. Virtual microphone
 /// devices are used to send audio to the meeting. Then can be created as
@@ -156,7 +156,7 @@ impl PyVirtualMicrophoneDevice {
             });
 
             if frames_written >= 0 {
-                Ok(frames_written.into_py(py))
+                Ok(frames_written.into_py_any(py).unwrap())
             } else {
                 Err(exceptions::PyIOError::new_err(
                     "error writing audio frames to device",
@@ -178,7 +178,7 @@ pub(crate) unsafe extern "C" fn on_write_frames(
         let completion = microphone.completions.lock().unwrap().remove(&request_id);
 
         if let Some(completion) = completion {
-            let args = PyTuple::new_bound(py, &[num_frames.into_py(py)]);
+            let args = PyTuple::new(py, &[num_frames.into_py_any(py).unwrap()]).unwrap();
 
             tracing::trace!(
                 "Finished writing audio frames to {} ({num_frames} frames, request {request_id})",
@@ -186,7 +186,7 @@ pub(crate) unsafe extern "C" fn on_write_frames(
             );
 
             if let Err(error) = completion.call1(py, args) {
-                error.write_unraisable_bound(py, None);
+                error.write_unraisable(py, None);
             }
         }
     })
