@@ -202,7 +202,7 @@ pub(crate) fn completion_args_from_event(
                         vec![Value::Null]
                     }
                     PyCallClientCompletion::BinaryFn(_) => {
-                        vec![request_success.clone()]
+                        vec![request_success.clone(), Value::Null]
                     }
                 };
                 Some(args)
