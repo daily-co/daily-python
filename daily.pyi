@@ -137,7 +137,7 @@ class CallClient:
         streaming_settings: Optional[Mapping[str, Any]] = None,
         stream_id: Optional[str] = None,
         force_new: Optional[bool] = None,
-        completion: Optional[Callable[[Optional[str]], None]] = None,
+        completion: Optional[Callable[[str, Optional[str]], None]] = None,
     ) -> None: ...
     def stop_recording(
         self,
@@ -167,7 +167,7 @@ class CallClient:
     def start_dialout(
         self,
         settings: Optional[Mapping[str, Any]] = None,
-        completion: Optional[Callable[[Optional[str]], None]] = None,
+        completion: Optional[Callable[[str, Optional[str]], None]] = None,
     ) -> None: ...
     def stop_dialout(
         self,

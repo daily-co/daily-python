@@ -1144,7 +1144,7 @@ impl PyCallClient {
     /// :param Optional[Mapping[str, Any]] streaming_settings: See :ref:`StreamingSettings`
     /// :param Optional[str] stream_id: A unique stream identifier. Multiple recording sessions can be started by specifying a unique ID
     /// :param Optional[bool] force_new: Whether to force a new recording, even if there is already one in progress
-    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[func] completion: An optional completion callback with two parameters: (stream_id, :ref:`CallClientError`)
     #[pyo3(signature = (streaming_settings = None, stream_id = None, force_new = None, completion = None))]
     pub fn start_recording(
         &self,
@@ -1177,7 +1177,7 @@ impl PyCallClient {
             Some(CString::new(properties_string).expect("invalid recording properties"));
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_start_recording(
@@ -1385,7 +1385,7 @@ impl PyCallClient {
     /// dial-out is enabled in the Daily domain.
     ///
     /// :param Optional[Mapping[str, Any]] settings: See :ref:`DialoutSettings`
-    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    /// :param Optional[func] completion: An optional completion callback with two parameters: (session_id, :ref:`CallClientError`)
     #[pyo3(signature = (settings = None, completion = None))]
     pub fn start_dialout(
         &self,
@@ -1405,7 +1405,7 @@ impl PyCallClient {
         };
 
         let request_id =
-            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
 
         unsafe {
             daily_core_call_client_start_dialout(

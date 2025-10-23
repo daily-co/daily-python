@@ -5,6 +5,16 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `CallClient.start_dialout()` now returns two parameters in the completion
+  callback: session ID and error. Previously, it only returned an error.
+
+- `CallClient.start_recording()` now returns two parameters in the completion
+  callback: stream ID and error. Previously, it only return an error.
+
 ## [0.20.0] - 2025-10-16
 
 ### Changed
