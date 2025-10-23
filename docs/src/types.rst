@@ -74,24 +74,6 @@ CallClientError
 A string with an error message or *None*.
 
 
-.. _CallClientJoinData:
-
-CallClientJoinData
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "meetingSession"
-     - `MeetingSession`_
-   * - "participants"
-     - `CallParticipants`_
-
-
-
 .. _CallParticipants:
 
 CallParticipants
@@ -502,6 +484,24 @@ InputSettings
      - `CameraInputSettings`_
    * - "microphone"
      - `MicrophoneInputSettings`_
+
+
+.. _JoinData:
+
+JoinData
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "meetingSession"
+     - `MeetingSession`_
+   * - "participants"
+     - `CallParticipants`_
+
 
 
 .. _LiveStreamState:

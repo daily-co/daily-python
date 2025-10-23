@@ -349,7 +349,7 @@ impl PyCallClient {
     /// :param str meeting_url: The URL of the Daily meeting to join
     /// :param Optional[str] meeting_token: Meeting token if needed. This is needed if the client is an owner of the meeting
     /// :param Optional[Mapping[str, Any]] client_settings: See :ref:`ClientSettings`
-    /// :param Optional[func] completion: An optional completion callback with two parameters: (:ref:`CallClientJoinData`, :ref:`CallClientError`)
+    /// :param Optional[func] completion: An optional completion callback with two parameters: (:ref:`JoinData`, :ref:`CallClientError`)
     #[pyo3(signature = (meeting_url, meeting_token = None, client_settings = None, completion = None))]
     pub fn join(
         &self,
