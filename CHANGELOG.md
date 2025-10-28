@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CallClient.start_recording()` now returns two parameters in the completion
   callback: stream ID and error. Previously, it only return an error.
 
+### Fixed
+
+- Fixed an issue where start recording, start transcription and start dialout
+  server error messages were ignored.
+
 ## [0.20.0] - 2025-10-16
 
 ### Changed
