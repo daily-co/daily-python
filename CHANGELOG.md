@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Increased start transcription and start dialout timeouts to 20 seconds.
+
 - `CallClient.start_dialout()` now returns two parameters in the completion
   callback: session ID and error. Previously, it only returned an error.
 
