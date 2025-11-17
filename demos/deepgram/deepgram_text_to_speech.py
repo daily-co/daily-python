@@ -11,14 +11,10 @@
 #
 
 import argparse
-import os
 import time
 
 from daily import *
-from deepgram import (
-    DeepgramClient,
-    SpeakOptions,
-)
+from deepgram import DeepgramClient
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
@@ -51,11 +47,8 @@ time.sleep(3)
 
 sentences_file = open(args.input, "r")
 
-deepgram = DeepgramClient(api_key=os.getenv("DG_API_KEY"))
-
-speak_options = SpeakOptions(
-    model="aura-asteria-en", encoding="linear16", sample_rate="16000", container="none"
-)
+# Need DEEPGRAM_API_KEY environment variable.
+deepgram = DeepgramClient()
 
 print()
 
@@ -63,12 +56,17 @@ for sentence in sentences_file.readlines():
     print(f"Processing: {sentence.strip()}")
     print()
 
-    speak_source = {"text": sentence.strip()}
-
-    response = deepgram.speak.rest.v("1").stream_raw(speak_source, speak_options)
+    response = deepgram.speak.v1.audio.generate(
+        model="aura-2-asteria-en",
+        encoding="linear16",
+        container="none",
+        sample_rate=16000,
+        text=sentence.strip(),
+    )
 
     # Send all the audio frames to the microphone.
-    microphone.write_frames(response.read())
+    for data in response:
+        microphone.write_frames(data)
 
 # Let everything finish
 time.sleep(2)

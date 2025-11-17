@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated to maturin 1.10.1.
 
+### Others
+
+- Updated demo requirements to latest versions and fix demos.
+
 ## [0.21.0] - 2025-10-28
 
 ### Changed
