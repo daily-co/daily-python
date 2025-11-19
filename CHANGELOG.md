@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated to maturin 1.10.1.
 
+### Fixed
+
+- Fixed an issue that could cause a crash when leaving a room if a video or
+  audio renderer was active.
+
 ### Others
 
 - Updated demo requirements to latest versions and fix demos.
