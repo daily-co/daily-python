@@ -1143,6 +1143,8 @@ TranscriptionMessage
      - string
    * - "timestamp"
      - string (ISO 8601)
+   * - "trackType"
+     - string
    * - "rawResponse"
      - Mapping[string, Any] (includes Deepgram's response if `includeRawResponse` was enabled)
 
