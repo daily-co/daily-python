@@ -1,0 +1,13 @@
+[project]
+name = "wav-audio-receive"
+version = "0.1.0"
+description = "Demo that joins a Pipecat Cloud call and records audio to WAV"
+requires-python = ">=3.10"
+dependencies = [
+    "daily-python",
+    "python-dotenv>=1.2.1",
+    "requests",
+]
+
+[project.scripts]
+wav-audio-receive = "wav_audio_receive:main"

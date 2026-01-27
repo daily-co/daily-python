@@ -70,3 +70,10 @@ docs/_build/
 
 # Pyenv
 .python-version
+
+# Environment variables
+.env
+
+*.wav
+
+demos/audio/uv.lock
