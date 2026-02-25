@@ -5,7 +5,7 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.24.0] - 2026-03-09
 
 ### Added
 
@@ -34,6 +34,10 @@ client.join("YOUR_DAILY_ROOM", client_settings={
 frame = bytes([255, 0, 0, 255] * 1280 * 720)  # RGBA
 video_source.write_frame(frame)
 ```
+
+### Changed
+
+- Updated to PyO3 0.28.2.
 
 ### Fixed
 
