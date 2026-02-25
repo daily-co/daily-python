@@ -93,6 +93,23 @@ class CallClient:
         track_name: str,
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
+    def add_custom_video_track(
+        self,
+        track_name: str,
+        video_track: CustomVideoTrack,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
+    def update_custom_video_track(
+        self,
+        track_name: str,
+        video_track: CustomVideoTrack,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
+    def remove_custom_video_track(
+        self,
+        track_name: str,
+        completion: Optional[Callable[[Optional[str]], None]] = None,
+    ) -> None: ...
     def start_live_stream_with_endpoints(
         self,
         endpoints: Optional[List[str]],
@@ -241,6 +258,21 @@ class CustomAudioSource:
 
 class CustomAudioTrack:
     def __init__(self, audio_source: CustomAudioSource) -> None: ...
+    @property
+    def id(self) -> str: ...
+
+class CustomVideoSource:
+    def __init__(self, width: int, height: int, color_format: str = "RGBA") -> None: ...
+    @property
+    def width(self) -> int: ...
+    @property
+    def height(self) -> int: ...
+    @property
+    def color_format(self) -> str: ...
+    def write_frame(self, frame: bytes) -> None: ...
+
+class CustomVideoTrack:
+    def __init__(self, video_source: CustomVideoSource) -> None: ...
     @property
     def id(self) -> str: ...
 

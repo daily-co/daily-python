@@ -28,7 +28,7 @@ use webrtc_daily::sys::color_format::ColorFormat;
 
 use daily_core::prelude::*;
 
-use crate::{PyCustomAudioTrack, GLOBAL_CONTEXT};
+use crate::{PyCustomAudioTrack, PyCustomVideoTrack, GLOBAL_CONTEXT};
 
 #[derive(Clone)]
 struct CallClientPtr {
@@ -600,7 +600,7 @@ impl PyCallClient {
     /// :param str track_name: The audio track name
     /// :param audio_track: The custom audio track being added
     /// :type audio_track: :class:`CustomAudioTrack`
-    /// :param Optional bool: If the audio track should be ignored by the SFU when calculating the audio level
+    /// :param Optional[bool] ignore_audio_level_value: If the audio track should be ignored by the SFU when calculating the audio level
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (track_name, audio_track, ignore_audio_level = None, completion = None))]
     pub fn add_custom_audio_track(
@@ -637,13 +637,12 @@ impl PyCallClient {
         Ok(())
     }
 
-    /// Updates an existing custom audio track with a new custom audio
-    /// source.
+    /// Updates an existing custom audio track with a new custom audio source.
     ///
     /// :param str track_name: The audio track name
     /// :param audio_track: The new custom audio track
     /// :type audio_track: :class:`CustomAudioTrack`
-    /// :param Optional bool: If the audio track should be ignored by the SFU when calculating the audio level
+    /// :param Optional[bool] ignore_audio_level_value: If the audio track should be ignored by the SFU when calculating the audio level
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
     #[pyo3(signature = (track_name, audio_track, ignore_audio_level = None, completion = None))]
     pub fn update_custom_audio_track(
@@ -700,6 +699,102 @@ impl PyCallClient {
 
         unsafe {
             daily_core_call_client_remove_custom_audio_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Adds a new custom video track with the given name. Video frames need to
+    /// be written using the video source.
+    ///
+    /// :param str track_name: The video track name
+    /// :param video_track: The custom video track being added
+    /// :type video_track: :class:`CustomVideoTrack`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, video_track, completion = None))]
+    pub fn add_custom_video_track(
+        &self,
+        track_name: &str,
+        video_track: &PyCustomVideoTrack,
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_add_custom_video_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+                video_track.video_track.as_ptr() as *const _,
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Updates an existing custom video track with a new custom video source.
+    ///
+    /// :param str track_name: The video track name
+    /// :param video_track: The new custom video track
+    /// :type video_track: :class:`CustomVideoTrack`
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, video_track, completion = None))]
+    pub fn update_custom_video_track(
+        &self,
+        track_name: &str,
+        video_track: &PyCustomVideoTrack,
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_update_custom_video_track(
+                call_client.as_mut(),
+                request_id,
+                track_name_cstr.as_ptr(),
+                video_track.video_track.as_ptr() as *const _,
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Removes an existing custom video track.
+    ///
+    /// :param str track_name: The video track name
+    /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
+    #[pyo3(signature = (track_name, completion = None))]
+    pub fn remove_custom_video_track(
+        &self,
+        track_name: &str,
+        completion: Option<Py<PyAny>>,
+    ) -> PyResult<()> {
+        // If we have already been released throw an exception.
+        let mut call_client = self.check_released()?;
+
+        let track_name_cstr = CString::new(track_name).expect("invalid track name string");
+
+        let request_id =
+            self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
+
+        unsafe {
+            daily_core_call_client_remove_custom_video_track(
                 call_client.as_mut(),
                 request_id,
                 track_name_cstr.as_ptr(),

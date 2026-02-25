@@ -5,6 +5,41 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added a new `CustomVideoTrack`. This new track can be used as an additional
+  custom video track (i.e. with custom names) or as the main camera track.
+
+```python
+video_source = CustomVideoSource(width=1280, height=720, color_format="RGBA")
+
+video_track = CustomVideoTrack(video_source)
+
+client.join("YOUR_DAILY_ROOM", client_settings={
+    "inputs": {
+        "camera": {
+            "isEnabled": True,
+            "settings": {
+               "customTrack": {
+                   "id": video_track.id
+               }
+            }
+        }
+    }
+})
+
+# Write video frames
+frame = bytes([255, 0, 0, 255] * 1280 * 720)  # RGBA
+video_source.write_frame(frame)
+```
+
+### Fixed
+
+- Avoid unnecessary signalling reconnection attempts when `leave()` is called
+  during a network failure.
+
 ## [0.23.0] - 2025-12-17
 
 ### Added

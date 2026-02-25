@@ -18,7 +18,7 @@ def get_release_version() -> str:
 
 # Project
 project = "daily-python"
-copyright = "2023-2025 Daily"
+copyright = "2023-2026 Daily"
 version = get_release_version()
 
 

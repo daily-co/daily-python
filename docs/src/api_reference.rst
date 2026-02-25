@@ -13,6 +13,12 @@ API Reference
 .. autoclass:: daily.CustomAudioTrack
     :members:
 
+.. autoclass:: daily.CustomVideoSource
+    :members:
+
+.. autoclass:: daily.CustomVideoTrack
+    :members:
+
 .. autoclass:: daily.Daily
     :members:
 
