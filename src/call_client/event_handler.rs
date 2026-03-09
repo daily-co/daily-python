@@ -11,7 +11,7 @@ use pyo3::types::PyTuple;
 /// should be created as a subclass of this class. Since event handlers are
 /// created as a subclass, there is no need implement all the handler methods.
 #[derive(Clone, Debug)]
-#[pyclass(name = "EventHandler", module = "daily", subclass)]
+#[pyclass(name = "EventHandler", module = "daily", subclass, skip_from_py_object)]
 pub struct PyEventHandler;
 
 #[pymethods]
