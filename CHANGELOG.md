@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support for `dtmf-event`.
+
 - Added `provider` field to dialout properties. Currently only supports `"daily"`.
 
 - Added `extension` and `waitBeforeExtensionDialSec` fields to dialout properties.
 
-- Added optional `method` field to send DTMF properties. Supported values are `"sip-info"`, `"telephone-event"`, and `"auto"`.
+- Added optional `method` field to send DTMF properties. Supported values are
+  `"sip-info"`, `"telephone-event"`, and `"auto"`.
 
 ## [0.24.0] - 2026-03-09
 

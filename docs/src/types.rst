@@ -422,6 +422,27 @@ DialoutSendDtmfSettings
      - "sip-info" | "telephone-event" | "auto"
 
 
+.. _DtmfEvent:
+
+DtmfEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "tone"
+     - string
+   * - "volume"
+     - number
+   * - "method"
+     - "sip-info" | "telephone-event" | "auto"
+
+
 .. _IceConfig:
 
 IceConfig

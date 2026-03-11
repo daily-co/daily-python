@@ -29,6 +29,7 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "dialout-error" => "on_dialout_error",
         "dialout-stopped" => "on_dialout_stopped",
         "dialout-warning" => "on_dialout_warning",
+        "dtmf-event" => "on_dtmf_event",
         "error" => "on_error",
         "inputs-updated" => "on_inputs_updated",
         "live-stream-error" => "on_live_stream_error",
@@ -108,6 +109,7 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<Value>> {
         "dialout-error" => Some(vec![Value::Object(object.clone())]),
         "dialout-stopped" => Some(vec![Value::Object(object.clone())]),
         "dialout-warning" => Some(vec![Value::Object(object.clone())]),
+        "dtmf-event" => Some(vec![Value::Object(object.clone())]),
         "error" => object.get("message").map(|message| vec![message.clone()]),
         "inputs-updated" => object.get("inputs").map(|inputs| vec![inputs.clone()]),
         "live-stream-error" => {

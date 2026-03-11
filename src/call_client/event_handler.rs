@@ -96,8 +96,8 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Event emitted there is a dial-in non-fatal error, such as the selected
-    /// codec not being used and a fallback codec being utilized.
+    /// Event emitted when there is a dial-in non-fatal error, such as the
+    /// selected codec not being used and a fallback codec being utilized.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
     fn on_dialin_warning(&self, data: Py<PyAny>) -> PyResult<()> {
@@ -138,8 +138,8 @@ impl PyEventHandler {
         Ok(())
     }
 
-    /// Event emitted there is a dial-out non-fatal error, such as the selected
-    /// codec not being used and a fallback codec being utilized.
+    /// Event emitted when there is a dial-out non-fatal error, such as the
+    /// selected codec not being used and a fallback codec being utilized.
     ///
     /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
     fn on_dialout_warning(&self, data: Py<PyAny>) -> PyResult<()> {
@@ -269,6 +269,13 @@ impl PyEventHandler {
     ///
     /// :param string stream_id: The ID of the live stream that was stopped
     fn on_recording_stopped(&self, stream_id: Py<PyAny>) -> PyResult<()> {
+        Ok(())
+    }
+
+    /// Event emitted when there is a DTMF event.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DtmfEvent`
+    fn on_dtmf_event(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
