@@ -397,6 +397,10 @@ DialoutSettings
      - `DialoutCodecs`_
    * - "permissions"
      - `DialoutPermissions`_
+   * - "extension"
+     - string
+   * - "waitBeforeExtensionDialSec"
+     - number
 
 
 .. _DialoutSendDtmfSettings:
