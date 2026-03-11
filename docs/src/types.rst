@@ -383,6 +383,8 @@ DialoutSettings
      - string
    * - "phoneNumber"
      - string
+   * - "provider"
+     - string
    * - "displayName"
      - string
    * - "userId"
