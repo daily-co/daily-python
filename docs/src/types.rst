@@ -414,6 +414,8 @@ DialoutSendDtmfSettings
      - string
    * - "tones"
      - string
+   * - "method"
+     - "sip-info" | "telephone-event" | "auto"
 
 
 .. _IceConfig:
