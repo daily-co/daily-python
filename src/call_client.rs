@@ -117,7 +117,7 @@ impl PyCallClient {
         let properties_string = serde_json::to_string(&properties).unwrap();
 
         let properties_cstr =
-            Some(CString::new(properties_string).expect("invalid live stream properties string"));
+            Some(CString::new(properties_string).expect("invalid live stream properties"));
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -321,7 +321,7 @@ impl PyCallClient {
         let ice_config_cstr = if let Some(ice_config) = ice_config {
             let config_value: Value = depythonize(ice_config.bind(py))?;
             let config_string = serde_json::to_string(&config_value).unwrap();
-            Some(CString::new(config_string).expect("invalid ICE config string"))
+            Some(CString::new(config_string).expect("invalid ICE config"))
         } else {
             None
         };
@@ -374,7 +374,7 @@ impl PyCallClient {
         let client_settings_cstr = if let Some(client_settings) = client_settings {
             let settings_value: Value = depythonize(client_settings.bind(py))?;
             let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid client settings string"))
+            Some(CString::new(settings_string).expect("invalid client settings"))
         } else {
             None
         };
@@ -498,7 +498,7 @@ impl PyCallClient {
         let remote_participants_obj: Value = depythonize(remote_participants.bind(py))?;
         let remote_participants_string = serde_json::to_string(&remote_participants_obj).unwrap();
         let remote_participants_cstr =
-            CString::new(remote_participants_string).expect("invalid remote participants string");
+            CString::new(remote_participants_string).expect("invalid remote participants");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -532,7 +532,7 @@ impl PyCallClient {
 
         let ids_string = serde_json::to_string(&ids).unwrap();
 
-        let ids_cstr = CString::new(ids_string).expect("invalid participant IDs string");
+        let ids_cstr = CString::new(ids_string).expect("invalid participant IDs");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -578,7 +578,7 @@ impl PyCallClient {
         let input_settings_obj: Value = depythonize(input_settings.bind(py))?;
         let input_settings_string = serde_json::to_string(&input_settings_obj).unwrap();
         let input_settings_cstr =
-            CString::new(input_settings_string).expect("invalid input settings string");
+            CString::new(input_settings_string).expect("invalid input settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -835,7 +835,7 @@ impl PyCallClient {
         let publishing_settings_obj: Value = depythonize(publishing_settings.bind(py))?;
         let publishing_settings_string = serde_json::to_string(&publishing_settings_obj).unwrap();
         let publishing_settings_cstr =
-            CString::new(publishing_settings_string).expect("invalid publishing settings string");
+            CString::new(publishing_settings_string).expect("invalid publishing settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -886,7 +886,7 @@ impl PyCallClient {
         let participant_settings_cstr = if let Some(participant_settings) = participant_settings {
             let settings_value: Value = depythonize(participant_settings.bind(py))?;
             let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid participant settings string"))
+            Some(CString::new(settings_string).expect("invalid participant settings"))
         } else {
             None
         };
@@ -895,7 +895,7 @@ impl PyCallClient {
         let profile_settings_cstr = if let Some(profile_settings) = profile_settings {
             let settings_value: Value = depythonize(profile_settings.bind(py))?;
             let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid profiles settings string"))
+            Some(CString::new(settings_string).expect("invalid profiles settings"))
         } else {
             None
         };
@@ -948,7 +948,7 @@ impl PyCallClient {
         let profile_settings_obj: Value = depythonize(profile_settings.bind(py))?;
         let profile_settings_string = serde_json::to_string(&profile_settings_obj).unwrap();
         let profile_settings_cstr =
-            CString::new(profile_settings_string).expect("invalid profile settings string");
+            CString::new(profile_settings_string).expect("invalid profile settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -982,8 +982,7 @@ impl PyCallClient {
 
         let permissions_obj: Value = depythonize(permissions.bind(py))?;
         let permissions_string = serde_json::to_string(&permissions_obj).unwrap();
-        let permissions_cstr =
-            CString::new(permissions_string).expect("invalid permisssions string");
+        let permissions_cstr = CString::new(permissions_string).expect("invalid permissions");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1123,7 +1122,7 @@ impl PyCallClient {
         let update_settings_obj: Value = depythonize(update_settings.bind(py))?;
         let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
         let update_settings_cstr =
-            CString::new(update_settings_string).expect("invalid live stream settings string");
+            CString::new(update_settings_string).expect("invalid live stream settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1345,7 +1344,7 @@ impl PyCallClient {
         let update_settings_obj: Value = depythonize(update_settings.bind(py))?;
         let update_settings_string = serde_json::to_string(&update_settings_obj).unwrap();
         let update_settings_cstr =
-            CString::new(update_settings_string).expect("invalid recording settings string");
+            CString::new(update_settings_string).expect("invalid recording settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1382,7 +1381,7 @@ impl PyCallClient {
         let settings_cstr = if let Some(settings) = settings {
             let settings_value: Value = depythonize(settings.bind(py))?;
             let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid transcription settings string"))
+            Some(CString::new(settings_string).expect("invalid transcription settings"))
         } else {
             None
         };
@@ -1450,7 +1449,7 @@ impl PyCallClient {
             .map(|v| serde_json::to_string(&v).unwrap())
             .or(None);
         let participants_cstr = participants_string
-            .map(|v| CString::new(v).expect("invalid participant IDs string"))
+            .map(|v| CString::new(v).expect("invalid participant IDs"))
             .or(None);
 
         let instance_id_cstr = instance_id
@@ -1479,25 +1478,21 @@ impl PyCallClient {
     /// Starts a dial-out service. This can be done by meeting owners when
     /// dial-out is enabled in the Daily domain.
     ///
-    /// :param Optional[Mapping[str, Any]] settings: See :ref:`DialoutSettings`
+    /// :param Mapping[str, Any] settings: See :ref:`DialoutSettings`
     /// :param Optional[func] completion: An optional completion callback with two parameters: (session_id, :ref:`CallClientError`)
-    #[pyo3(signature = (settings = None, completion = None))]
+    #[pyo3(signature = (settings, completion = None))]
     pub fn start_dialout(
         &self,
         py: Python<'_>,
-        settings: Option<Py<PyAny>>,
+        settings: Py<PyAny>,
         completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let settings_cstr = if let Some(settings) = settings {
-            let settings_value: Value = depythonize(settings.bind(py))?;
-            let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid dialout settings string"))
-        } else {
-            None
-        };
+        let settings_value: Value = depythonize(settings.bind(py))?;
+        let settings_string = serde_json::to_string(&settings_value).unwrap();
+        let settings_cstr = CString::new(settings_string).expect("invalid dialout settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::BinaryFn));
@@ -1506,7 +1501,7 @@ impl PyCallClient {
             daily_core_call_client_start_dialout(
                 call_client.as_mut(),
                 request_id,
-                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                settings_cstr.as_ptr(),
             );
         }
 
@@ -1546,25 +1541,21 @@ impl PyCallClient {
 
     /// Sends DTMF tones in an existing dial-out session.
     ///
-    /// :param Optional[Mapping[str, Any]] settings: See :ref:`DialoutSendDtmfSettings`
+    /// :param Mapping[str, Any] settings: See :ref:`DialoutSendDtmfSettings`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (settings = None, completion = None))]
+    #[pyo3(signature = (settings, completion = None))]
     pub fn send_dtmf(
         &self,
         py: Python<'_>,
-        settings: Option<Py<PyAny>>,
+        settings: Py<PyAny>,
         completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let settings_cstr = if let Some(settings) = settings {
-            let settings_value: Value = depythonize(settings.bind(py))?;
-            let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid send DTMF settings string"))
-        } else {
-            None
-        };
+        let settings_value: Value = depythonize(settings.bind(py))?;
+        let settings_string = serde_json::to_string(&settings_value).unwrap();
+        let settings_cstr = CString::new(settings_string).expect("invalid send DTMF settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1573,7 +1564,7 @@ impl PyCallClient {
             daily_core_call_client_send_dtmf(
                 call_client.as_mut(),
                 request_id,
-                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                settings_cstr.as_ptr(),
             );
         }
 
@@ -1584,25 +1575,22 @@ impl PyCallClient {
     /// room. Alternatively, transfer an initiated SIP/PSTN dial-out to another
     /// SIP URI or PSTN number.
     ///
-    /// :param Optional[Mapping[str, Any]] settings: See :ref:`SipCallTransferSettings`
+    /// :param Mapping[str, Any] settings: See :ref:`SipCallTransferSettings`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (settings = None, completion = None))]
+    #[pyo3(signature = (settings, completion = None))]
     pub fn sip_call_transfer(
         &self,
         py: Python<'_>,
-        settings: Option<Py<PyAny>>,
+        settings: Py<PyAny>,
         completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let settings_cstr = if let Some(settings) = settings {
-            let settings_value: Value = depythonize(settings.bind(py))?;
-            let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid SIP call transfer settings string"))
-        } else {
-            None
-        };
+        let settings_value: Value = depythonize(settings.bind(py))?;
+        let settings_string = serde_json::to_string(&settings_value).unwrap();
+        let settings_cstr =
+            CString::new(settings_string).expect("invalid SIP call transfer settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1611,7 +1599,7 @@ impl PyCallClient {
             daily_core_call_client_sip_call_transfer(
                 call_client.as_mut(),
                 request_id,
-                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                settings_cstr.as_ptr(),
             );
         }
 
@@ -1620,25 +1608,21 @@ impl PyCallClient {
 
     /// Transfer a SIP dial-in call to another SIP endpoint outside Daily.
     ///
-    /// :param Optional[Mapping[str, Any]] settings: See :ref:`SipCallTransferSettings`
+    /// :param Mapping[str, Any] settings: See :ref:`SipCallTransferSettings`
     /// :param Optional[func] completion: An optional completion callback with one parameter: (:ref:`CallClientError`)
-    #[pyo3(signature = (settings = None, completion = None))]
+    #[pyo3(signature = (settings, completion = None))]
     pub fn sip_refer(
         &self,
         py: Python<'_>,
-        settings: Option<Py<PyAny>>,
+        settings: Py<PyAny>,
         completion: Option<Py<PyAny>>,
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let settings_cstr = if let Some(settings) = settings {
-            let settings_value: Value = depythonize(settings.bind(py))?;
-            let settings_string = serde_json::to_string(&settings_value).unwrap();
-            Some(CString::new(settings_string).expect("invalid SIP refer settings string"))
-        } else {
-            None
-        };
+        let settings_value: Value = depythonize(settings.bind(py))?;
+        let settings_string = serde_json::to_string(&settings_value).unwrap();
+        let settings_cstr = CString::new(settings_string).expect("invalid SIP refer settings");
 
         let request_id =
             self.maybe_register_completion(completion.map(PyCallClientCompletion::UnaryFn));
@@ -1647,7 +1631,7 @@ impl PyCallClient {
             daily_core_call_client_sip_refer(
                 call_client.as_mut(),
                 request_id,
-                settings_cstr.as_ref().map_or(ptr::null(), |s| s.as_ptr()),
+                settings_cstr.as_ptr(),
             );
         }
 
@@ -1687,7 +1671,7 @@ impl PyCallClient {
 
         let message_value: Value = depythonize(message.bind(py))?;
         let message_string = serde_json::to_string(&message_value).unwrap();
-        let message_cstr = CString::new(message_string).expect("invalid message string");
+        let message_cstr = CString::new(message_string).expect("invalid message");
 
         let participant_id_cstr = participant_id
             .map(|p| CString::new(p).expect("invalid participant ID string"))
@@ -1725,7 +1709,7 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        let message_cstr = CString::new(message).expect("invalid message string");
+        let message_cstr = CString::new(message).expect("invalid message");
 
         let user_name_cstr = user_name
             .map(|p| CString::new(p).expect("invalid user name string"))

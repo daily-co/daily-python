@@ -183,7 +183,7 @@ class CallClient:
     ) -> None: ...
     def start_dialout(
         self,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any],
         completion: Optional[Callable[[str, Optional[str]], None]] = None,
     ) -> None: ...
     def stop_dialout(
@@ -193,17 +193,17 @@ class CallClient:
     ) -> None: ...
     def send_dtmf(
         self,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any],
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def sip_call_transfer(
         self,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any],
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def sip_refer(
         self,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any],
         completion: Optional[Callable[[Optional[str]], None]] = None,
     ) -> None: ...
     def send_app_message(
