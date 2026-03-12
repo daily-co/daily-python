@@ -420,6 +420,8 @@ DialoutSendDtmfSettings
      - string
    * - "method"
      - "sip-info" | "telephone-event" | "auto"
+   * - "digitDurationMs"
+     - number
 
 
 .. _DtmfEvent:
