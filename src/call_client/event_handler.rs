@@ -146,6 +146,13 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted when there is a DTMF event.
+    ///
+    /// :param Mapping[str, Any] data: See :ref:`DtmfEvent`
+    fn on_dtmf_event(&self, data: Py<PyAny>) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted when an error occurs.
     ///
     /// :param string message: The error message
@@ -269,13 +276,6 @@ impl PyEventHandler {
     ///
     /// :param string stream_id: The ID of the live stream that was stopped
     fn on_recording_stopped(&self, stream_id: Py<PyAny>) -> PyResult<()> {
-        Ok(())
-    }
-
-    /// Event emitted when there is a DTMF event.
-    ///
-    /// :param Mapping[str, Any] data: See :ref:`DtmfEvent`
-    fn on_dtmf_event(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
