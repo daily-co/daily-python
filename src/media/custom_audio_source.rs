@@ -16,6 +16,12 @@ use pyo3::{exceptions, IntoPyObjectExt};
 /// :func:`daily.CallClient.add_custom_audio_track`.
 ///
 /// The audio format used by custom audio sources is 16-bit linear PCM.
+///
+/// :param int sample_rate: The sample rate (e.g. 16000)
+/// :param int channels: The number of channels (1 for mono, 2 for stereo)
+/// :param bool auto_silence: If True (default), silence is automatically sent
+///   when no audio frames are being written. If False, no audio is sent when
+///   the source is idle.
 #[pyclass(name = "CustomAudioSource", module = "daily")]
 pub struct PyCustomAudioSource {
     pub sample_rate: u32,
@@ -43,12 +49,21 @@ impl PyCustomAudioSource {
 #[pymethods]
 impl PyCustomAudioSource {
     #[new]
-    pub fn new(sample_rate: u32, channels: u8) -> Self {
+    #[pyo3(signature = (sample_rate, channels, auto_silence=true))]
+    pub fn new(sample_rate: u32, channels: u8, auto_silence: bool) -> Self {
+        tracing::info!(
+            "Creating custom audio source (sample_rate: {sample_rate}, channels: {channels}, auto_silence: {auto_silence})"
+        );
+
         let audio_source_ptr = unsafe {
-            daily_core_context_create_custom_audio_source_with_silence(
-                sample_rate as i32,
-                channels as usize,
-            )
+            if auto_silence {
+                daily_core_context_create_custom_audio_source_with_silence(
+                    sample_rate as i32,
+                    channels as usize,
+                )
+            } else {
+                daily_core_context_create_custom_audio_source()
+            }
         };
 
         let audio_source = NativeDailyAudioSource::from(audio_source_ptr);
