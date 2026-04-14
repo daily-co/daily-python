@@ -5,11 +5,19 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.28.0] - 2026-03-31
+## [Unreleased]
 
 ### Fixed
 
+- Fixed panics in signalling reconnect paths when room lookup returns no worker.
+
 - Fixed support for cloud-audio-only recording type
+
+### Performance
+
+- Replaced `ureq` HTTP client with `hyper` + `rustls` (ring backend). Includes
+  connection timeouts, TLS configuration reuse, and per-request timing metrics
+  for DNS lookup, TCP connect, and TLS handshake.
 
 ## [0.27.0] - 2026-03-23
 
