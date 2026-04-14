@@ -29,6 +29,7 @@ uuid = { version = "1.16.0", default-features = false, features = [
 ] }
 webrtc-daily = { path = "../webrtc-daily" }
 
+# WASM pack build profiles disabled along with wasm support.
 # You might be wondering why do we need this, since `daily-python` does not
 # build for WASM.
 # Cargo's crate resolve will check the entire dependency tree regardless of the
@@ -37,8 +38,8 @@ webrtc-daily = { path = "../webrtc-daily" }
 # Because daily-python is not a member of the larger `daily-x` workspace, it
 # does not know of the patches that we apply on wasm-bindgen there, so we have
 # to tell Cargo again that we're patching all the wasm-bindgen crates.
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
-wasm-bindgen-futures = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
-js-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
-web-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+#[patch.crates-io]
+#wasm-bindgen = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+#wasm-bindgen-futures = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+#js-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
+#web-sys = { git = "https://github.com/daily-co/wasm-bindgen", branch = "daily-co" }
