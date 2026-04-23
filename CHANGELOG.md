@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adaptive Bitrate (ABR) is now enabled by default for camera tracks. It can still be disabled by setting `allow_adaptive_layers` to `False` in the camera `send_settings`.
+
 ### Fixed
 
 - Fixed panics in signalling reconnect paths when room lookup returns no worker.
