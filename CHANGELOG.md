@@ -5,17 +5,39 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.28.0] - 2026-04-27
+
+### Added
+
+- Added support for `screenVideo` custom tracks. It is now possible to send a
+  custom screen share track with:
+
+```
+{
+  "inputs": {
+      "screenVideo": {
+          "isEnabled": True,
+          "settings": {
+             "customTrack": {
+                 "id": "CUSTOM_TRACK_ID"
+             }
+          }
+      }
+  }
+}
+```
 
 ### Changed
 
-- Adaptive Bitrate (ABR) is now enabled by default for camera tracks. It can still be disabled by setting `allow_adaptive_layers` to `False` in the camera `send_settings`.
+- Adaptive Bitrate (ABR) is now enabled by default for camera tracks. It can
+  still be disabled by setting `allow_adaptive_layers` to `False` in the camera
+  `send_settings`.
 
 ### Fixed
 
 - Fixed panics in signalling reconnect paths when room lookup returns no worker.
 
-- Fixed support for cloud-audio-only recording type
+- Fixed support for cloud-audio-only recording type.
 
 ### Performance
 
