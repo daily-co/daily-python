@@ -1,9 +1,9 @@
 Types
 ====================================
 
-.. _AudioInputSettings:
+.. _AudioPublishingSettings:
 
-AudioInputSettings
+AudioPublishingSettings
 -----------------------------------
 
 .. list-table::
@@ -12,25 +12,15 @@ AudioInputSettings
 
    * - Key
      - Value
-   * - "deviceId"
-     - string
-   * - "customConstraints"
-     - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
+   * - "isPublishing"
+     - bool
+   * - "sendSettings"
+     - "speech" | "music" | `AudioSendSettings`_
 
-or
 
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
+.. _AudioSendSettings:
 
-   * - Key
-     - Value
-   * - "customTrack"
-     - `CustomTrack`_
-
-.. _AudioPublishingSettings:
-
-AudioPublishingSettings
+AudioSendSettings
 -----------------------------------
 
 .. list-table::
@@ -179,12 +169,12 @@ CameraInputSettings
    * - "isEnabled"
      - bool
    * - "settings"
-     - `VideoInputSettings`_
+     - `CameraSettings`_ or `CustomTrackSettings`_
 
 
-.. _CameraPublishingSettings:
+.. _CameraSettings:
 
-CameraPublishingSettings
+CameraSettings
 -----------------------------------
 
 .. list-table::
@@ -193,10 +183,18 @@ CameraPublishingSettings
 
    * - Key
      - Value
-   * - "isPublishing"
-     - bool
-   * - "sendSettings"
-     - `VideoPublishingSettings`_
+   * - "deviceId"
+     - string (e.g. "my-video-camera")
+   * - "width"
+     - number
+   * - "height"
+     - number
+   * - "frameRate"
+     - number
+   * - "facingMode"
+     - "user" | "environment" | "left" | "right"
+   * - "customConstraints"
+     - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
 
 
 .. _ClientSettings:
@@ -237,6 +235,38 @@ CustomTrack
      - Value
    * - "id"
      - string
+
+
+.. _CustomTrackInputSettings:
+
+CustomTrackInputSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "isEnabled"
+     - bool
+   * - "settings"
+     - `CustomTrackSettings`_
+
+
+.. _CustomTrackSettings:
+
+CustomTrackSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "customTrack"
+     - `CustomTrack`_
 
 
 .. _CustomVideoEncoding:
@@ -515,6 +545,10 @@ InputSettings
      - `CameraInputSettings`_
    * - "microphone"
      - `MicrophoneInputSettings`_
+   * - "screenVideo"
+     - `CustomTrackInputSettings`_
+   * - "screenAudio"
+     - `CustomTrackInputSettings`_
 
 
 .. _JoinData:
@@ -638,12 +672,12 @@ MicrophoneInputSettings
    * - "isEnabled"
      - bool
    * - "settings"
-     - `AudioInputSettings`_
+     - `AudioSettings`_ or `CustomTrackSettings`_
 
 
-.. _MicrophonePublishingSettings:
+.. _AudioSettings:
 
-MicrophonePublishingSettings
+AudioSettings
 -----------------------------------
 
 .. list-table::
@@ -652,10 +686,10 @@ MicrophonePublishingSettings
 
    * - Key
      - Value
-   * - "isPublishing"
-     - bool
-   * - "sendSettings"
-     - "speech" | "music" | `AudioPublishingSettings`_
+   * - "deviceId"
+     - string
+   * - "customConstraints"
+     - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
 
 
 .. _NetworkDetailedStats:
@@ -947,9 +981,13 @@ PublishingSettings
    * - Key
      - Value
    * - "camera"
-     - `CameraPublishingSettings`_
+     - `VideoPublishingSettings`_
    * - "microphone"
-     - `MicrophonePublishingSettings`_
+     - `AudioPublishingSettings`_
+   * - "screenVideo"
+     - `VideoPublishingSettings`_
+   * - "screenAudio"
+     - `AudioPublishingSettings`_
 
 
 .. _ReceiveVideoSettings:
@@ -1251,9 +1289,10 @@ TranscriptionUpdated
    * - "updatedBy"
      - string
 
-.. _VideoInputSettings:
 
-VideoInputSettings
+.. _VideoPublishingSettings:
+
+VideoPublishingSettings
 -----------------------------------
 
 .. list-table::
@@ -1262,33 +1301,15 @@ VideoInputSettings
 
    * - Key
      - Value
-   * - "deviceId"
-     - string (e.g. "my-video-camera")
-   * - "width"
-     - number
-   * - "height"
-     - number
-   * - "frameRate"
-     - number
-   * - "facingMode"
-     - "user" | "environment" | "left" | "right"
-   * - "customConstraints"
-     - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
+   * - "isPublishing"
+     - bool
+   * - "sendSettings"
+     - `VideoSendSettings`_
 
-or
 
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
+.. _VideoSendSettings:
 
-   * - Key
-     - Value
-   * - "customTrack"
-     - `CustomTrack`_
-
-.. _VideoPublishingSettings:
-
-VideoPublishingSettings
+VideoSendSettings
 -----------------------------------
 
 .. list-table::
