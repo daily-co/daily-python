@@ -5,6 +5,17 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.1] - 2026-06-04
+
+### Fixed
+
+- Fixed an issue where a room configured with `enable_recording` set to
+  `cloud-audio-only` was ignored when starting a recording, causing the
+  recording to also capture video.
+
+- Fixed an issue where `StartRecordingProperties` none properties were
+  serialized to `null`.
+
 ## [0.29.0] - 2026-06-03
 
 ### Added
