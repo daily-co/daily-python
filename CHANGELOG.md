@@ -5,11 +5,29 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.30.0] - 2026-06-12
 
 ### Added
 
-- Added automatic fallback to `dailywebrtc.com` and `dailywebrtc.net` when `daily.co` authoritative nameservers are unreachable, improving connection resilience.
+- Added automatic fallback to `dailywebrtc.com` and `dailywebrtc.net` when
+  `daily.co` authoritative nameservers are unreachable, improving connection
+  resilience.
+
+### Fixed
+
+- Fixed a use-after-free that could cause a segmentation fault in the audio
+  playout thread (e.g. `daily-speaker-p`) if a `CallClient` was released (or
+  garbage collected) while still in a call (i.e. without leaving first) and
+  participant audio renderers were registered.
+
+- Fixed a segmentation fault that could occur when a `CallClient` was released
+  (or garbage collected) while still in a call, especially right before the
+  application exited: the internal media transport teardown now completes
+  before `release()` returns, and WebRTC internals are no longer torn down at
+  process exit while SDK threads may still be running.
+
+  Note that the recommended way to terminate a call is still to `leave()` (and
+  wait for its completion) before calling `release()`.
 
 ## [0.29.1] - 2026-06-04
 
