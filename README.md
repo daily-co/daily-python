@@ -31,16 +31,16 @@ For demos on how to use `daily-python`, refer to the [demos](https://github.com/
 
 ## 🛠️ Installation
 
-`daily-python` can be easily installed using `pip`:
+`daily-python` can be easily installed using [uv](https://docs.astral.sh/uv/):
 
 ```bash
-   pip install daily-python
+uv add daily-python
 ```
 
-To upgrade:
+Or, if you prefer, with `pip`:
 
 ```bash
-   pip install -U daily-python
+pip install daily-python
 ```
 
 ## 🛟 Getting help

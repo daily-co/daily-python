@@ -17,32 +17,24 @@ Here you can find a few demos that use Daily's Python SDK:
 
 # Running
 
-The demos have a few Python dependecies. To keep things clean, it's always a
-good idea to use a virtual environment:
+The demos have a few Python dependecies, declared in the `demos` dependency group of the `daily-python` project (see `../pyproject.toml`). They are managed with [uv](https://docs.astral.sh/uv/), which takes care of creating a virtual environment for you:
 
 ```
-python3 -m venv .venv
-source .venv/bin/activate
+uv sync --group demos
 ```
 
-Once the virtual environment is activated you can install the dependencies via
-`pip`:
+ℹ️ `daily-python` is not included in the `demos` dependency group so you need to install it manually:
 
 ```
-pip3 install -r requirements.txt
+uv pip install daily-python
 ```
 
-ℹ️ `daily-python` is not included in the `requirements.txt` file so you need to
-install it manually:
+⚠️ It's possible that some dependencies fail to install because of missing system dependecies (e.g. `PyAudio` depends on the `portaudio` library). In those cases, it is necessary to install those dependencies manually (error messages might give hints on what system libraries are missing).
+
+You can then run a demo with `uv run`, for example:
 
 ```
-pip3 install daily-python
+uv run python audio/wav_audio_receive.py -m YOUR_MEETING_URL -o recording.wav
 ```
-
-⚠️ It's possible that some requirements fail to install because of missing system
-dependecies (e.g. `PyAudio` depends on the `portaudio` library). In those cases,
-it is necessary to install those dependencies manually (error messages might
-give hints on what system libraries are missing). Another alternative is to
-remove the conflicting dependecies from `requirements.txt`.
 
 Finally, view the demo files for more details, including how to run them.
