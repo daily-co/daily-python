@@ -26,7 +26,7 @@ For demos on how to use `daily-python`, refer to the [demos](https://github.com/
 
 ## 📋 Requirements
 
-- Python 3.7 or newer
+- Python 3.8 or newer
 - glibc 2.28 or newer
 
 ## 🛠️ Installation

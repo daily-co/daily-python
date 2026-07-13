@@ -5,6 +5,21 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `daily-python` now requires Python 3.8 or newer. This is a consequence of the
+  pyo3 0.29.0 upgrade (see below), which dropped support for Python 3.7 (which
+  reached end-of-life in June 2023).
+
+### Security
+
+- Upgraded pyo3 to 0.29.0 to address
+  [GHSA-36hh-v3qg-5jq4](https://github.com/advisories/GHSA-36hh-v3qg-5jq4), an
+  out-of-bounds read in the `nth` / `nth_back` implementations of `PyList` and
+  `PyTuple` iterators.
+
 ## [0.30.0] - 2026-06-16
 
 ### Added
