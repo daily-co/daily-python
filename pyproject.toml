@@ -66,5 +66,5 @@ demos = [
 [tool.uv.dependency-groups]
 # The published package supports older Pythons (`requires-python` above), but
 # the build/docs tooling and the demos need newer ones.
-dev = { requires-python = ">=3.9" }
+dev = { requires-python = ">=3.10" }
 demos = { requires-python = ">=3.11" }
