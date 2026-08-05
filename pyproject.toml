@@ -37,6 +37,7 @@ package = false
 [dependency-groups]
 dev = [
     "maturin==1.13.1",
+    "ruff>=0.12.11,<1",
     "setuptools==78.1.1",
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
