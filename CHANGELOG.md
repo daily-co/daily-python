@@ -130,6 +130,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
+- Added per-phase connection timing metrics for WebSocket signalling (DNS lookup,
+  TCP connect, TLS handshake, and WebSocket upgrade), complementing the existing
+  HTTP connection timings.
+
 - Replaced `ureq` HTTP client with `hyper` + `rustls` (ring backend). Includes
   connection timeouts, TLS configuration reuse, and per-request timing metrics
   for DNS lookup, TCP connect, and TLS handshake.
@@ -175,18 +179,14 @@ video_source = CustomVideoSource(width=1280, height=720, color_format="RGBA")
 
 video_track = CustomVideoTrack(video_source)
 
-client.join("YOUR_DAILY_ROOM", client_settings={
-    "inputs": {
-        "camera": {
-            "isEnabled": True,
-            "settings": {
-               "customTrack": {
-                   "id": video_track.id
-               }
-            }
+client.join(
+    "YOUR_DAILY_ROOM",
+    client_settings={
+        "inputs": {
+            "camera": {"isEnabled": True, "settings": {"customTrack": {"id": video_track.id}}}
         }
-    }
-})
+    },
+)
 
 # Write video frames
 frame = bytes([255, 0, 0, 255] * 1280 * 720)  # RGBA
@@ -348,18 +348,14 @@ audio_source = CustomAudioSource(...)
 
 audio_track = CustomAudioTrack(audio_source)
 
-client.join("YOUR_DAILY_ROOM", client_settings={
-    "inputs": {
-        "microphone": {
-            "isEnabled": True,
-            "settings": {
-               "customTrack": {
-                   "id": audio_track.id
-               }
-            }
+client.join(
+    "YOUR_DAILY_ROOM",
+    client_settings={
+        "inputs": {
+            "microphone": {"isEnabled": True, "settings": {"customTrack": {"id": audio_track.id}}}
         }
-    }
-})
+    },
+)
 ```
 
 - Added support for `CallClient.start_dialout()` new fields: `displayName`,
@@ -417,11 +413,11 @@ client.join("YOUR_DAILY_ROOM", client_settings={
   with `CallClient.remove_custom_audio_track()`.
 
 - Support the new `canReceive` permission, which involves:
-  - Showing the proper track state (i.e. `"off"`, with `"receivePermission"`
-    among the `"offReasons"`) when `canReceive` permission is lacking for a
-    remote track.
-  - Resuming receiving remote tracks when previously-revoked `canReceive`
-    permissions have been restored.
+    - Showing the proper track state (i.e. `"off"`, with `"receivePermission"`
+      among the `"offReasons"`) when `canReceive` permission is lacking for a
+      remote track.
+    - Resuming receiving remote tracks when previously-revoked `canReceive`
+      permissions have been restored.
 
 ### Changed
 
@@ -686,36 +682,33 @@ confidence = vad.analyze_frames(audio_frames)
 
 ```python
 class MyClient(EventHandler):
+    def __init__(self):
+        self.call_client = CallClient(event_handler=self)
 
-  def __init__(self):
-    self.call_client=CallClient(event_handler=self)
-
-  ...
+    ...
 ```
 
-  If `MyClient` is a single application there shouldn't be any issues with
-  freeing resources when the application ends. However, if we have an
-  application that wants to create and release multiple `CallClient` instances
-  the previous approach won't work with Python's garbage collection since
-  there's a circular dependency. To solve this, we can now do:
-
+If `MyClient` is a single application there shouldn't be any issues with
+freeing resources when the application ends. However, if we have an
+application that wants to create and release multiple `MyClient` instances the
+previous approach won't work with Python's garbage collection since there's a
+circular dependency. To solve this, we can now do:
 
 ```python
 class MyClient(EventHandler):
+    def __init__(self):
+        self.call_client = CallClient(event_handler=self)
 
-  def __init__(self):
-    self.call_client=CallClient(event_handler=self)
+    def leave(self):
+        self.call_client.leave()
+        self.call_client.release()
 
-  def leave(self):
-    self.call_client.leave()
-    self.call_client.release()
-
-  ...
+    ...
 ```
 
-  The new `CallClient.release()` function also blocks until all previous
-  asynchronous operations have completed, so it's another convenient way to
-  know, for example, when `CallClient.leave()` finishes.
+The new `CallClient.release()` function also blocks until all previous
+asynchronous operations have completed, so it's another convenient way to
+know, for example, when `CallClient.leave()` finishes.
 
 ### Changed
 
@@ -1013,12 +1006,12 @@ READ_INTERVAL = 0.01
 FRAMES_TO_READ = int(SAMPLE_RATE * READ_INTERVAL)
 SECONDS_TO_READ = 10.0
 
-for _ in range (int(SECONDS_TO_READ / READ_INTERVAL)):
-  buffer = speaker.read_frames(FRAMES_TO_READ)
-  time.sleep(READ_INTERVAL)
+for _ in range(int(SECONDS_TO_READ / READ_INTERVAL)):
+    buffer = speaker.read_frames(FRAMES_TO_READ)
+    time.sleep(READ_INTERVAL)
 ```
 
-   can be replaced with:
+can be replaced with:
 
 ```python
 SECONDS_TO_READ = 10
