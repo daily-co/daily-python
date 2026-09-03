@@ -1,8 +1,13 @@
+# There is deliberately no [target.aarch64-unknown-linux-gnu] linker here.
+# aarch64 Linux is cross-compiled in CI, and the linker is a property of the
+# machine doing the build, not of this project: CI sets
+# CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER instead, and environment
+# variables take precedence over this file. Naming a linker here would also
+# break anyone building natively ON an arm64 Linux box, since cargo applies this
+# section to a native build too and the path would not exist for them.
+
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["-C", "link-args=-fuse-ld=lld"]
-
-[target.aarch64-unknown-linux-gnu]
-linker = "aarch64-linux-gnu-gcc"
 
 [target.aarch64-apple-darwin]
 rustflags = [

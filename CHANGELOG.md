@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added candidate-pair round-trip time to call metrics, so latency is
   measured consistently, including for receive-only participants.
 
+### Changed
+
+- Upgraded to pyo3 0.29.2.
+
+- Upgraded libwebrtc to `branch-heads/8010` (M153). Its vendored media and
+  crypto dependencies (ffmpeg, libvpx and BoringSSL among them) are
+  substantially newer.
+
+- ⚠️ Breaking change ⚠️: macOS wheels now require macOS 13.0 or later
+  (previously 10.15), following the deployment target libwebrtc 8010 is built
+  against. Linux wheels are unaffected: they continue to require glibc 2.28.
+
 ## [0.32.0] - 2026-08-18
 
 ### Fixed
