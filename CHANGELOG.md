@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (previously 10.15), following the deployment target libwebrtc 8010 is built
   against. Linux wheels are unaffected: they continue to require glibc 2.28.
 
+### Fixed
+
+- Fixed `videoBitrate` and `audioBitrate` being ignored in a meeting token's
+  `start_cloud_recording_opts`.
+
 ## [0.32.0] - 2026-08-18
 
 ### Fixed
