@@ -26,8 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed `videoBitrate` and `audioBitrate` being ignored in a meeting token's
-  `start_cloud_recording_opts`.
+- Fixed an issue where `videoBitrate` and `audioBitrate` in a meeting token's
+  `start_cloud_recording_opts` were ignored, causing recordings started from
+  the token to use the default bitrates.
 
 ## [0.32.0] - 2026-08-18
 
