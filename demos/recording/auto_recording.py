@@ -30,8 +30,8 @@ class DailyStreamingOptions(BaseModel):
     width: Optional[int] = Field(default=None, description="Width of the video stream.")
     height: Optional[int] = Field(default=None, description="Height of the video stream.")
     fps: Optional[int] = Field(default=None, description="Frames per second of the video stream.")
-    videobitrate: Optional[int] = Field(default=None, description="Video bitrate in kbps.")
-    audiobitrate: Optional[int] = Field(default=None, description="Audio bitrate in kbps.")
+    videoBitrate: Optional[int] = Field(default=None, description="Video bitrate in kbps.")
+    audioBitrate: Optional[int] = Field(default=None, description="Audio bitrate in kbps.")
     min_idle_timeout: Optional[int] = Field(
         default=None, description="Minimum idle timeout in seconds."
     )
@@ -252,8 +252,8 @@ async def create_access_token(room_url: str) -> str:
                         width=1920,
                         height=1080,
                         fps=30,
-                        videobitrate=4000,
-                        audiobitrate=128,
+                        videoBitrate=4000,
+                        audioBitrate=128,
                         max_duration=3600,
                     ),
                 ),
