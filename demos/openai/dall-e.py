@@ -32,6 +32,8 @@ args = parser.parse_args()
 
 Daily.init()
 
+# DALL-E only generates a fixed set of image sizes, so the virtual camera
+# dimensions need to match the size we request below.
 CAMERA_WIDTH = 1024
 CAMERA_HEIGHT = 1024
 
@@ -70,7 +72,7 @@ print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...
 
 # We are creating a WAV file in memory so we can later grab the whole buffer and
 # send it to Google Speech-To-Text API.
-content = io.BufferedRandom(io.BytesIO())
+content = io.BytesIO()
 
 out_wave = wave.open(content, "wb")
 out_wave.setnchannels(1)
@@ -113,22 +115,26 @@ if len(response.results) > 0 and len(response.results[0].alternatives) > 0:
     print(f"Generating image with OpenAI for '{prompt}' ...")
 
     response = openai_client.images.generate(
-        prompt=prompt, n=1, size=f"{CAMERA_WIDTH}x{CAMERA_HEIGHT}", response_format="b64_json"
+        prompt=prompt, n=1, size="1024x1024", response_format="b64_json"
     )
 
-    dalle_png = b64decode(response.data[0].b64_json)
+    image_data = response.data[0].b64_json if response.data else None
+    if not image_data:
+        print("No image was generated!")
+    else:
+        dalle_png = b64decode(image_data)
 
-    dalle_stream = io.BytesIO(dalle_png)
+        dalle_stream = io.BytesIO(dalle_png)
 
-    dalle_im = Image.open(dalle_stream)
+        dalle_im = Image.open(dalle_stream)
 
-    try:
-        # This is a live video stream so we need to keep drawing the image.
-        while True:
-            camera.write_frame(dalle_im.tobytes())
-            time.sleep(0.033)
-    except KeyboardInterrupt:
-        pass
+        try:
+            # This is a live video stream so we need to keep drawing the image.
+            while True:
+                camera.write_frame(dalle_im.tobytes())
+                time.sleep(0.033)
+        except KeyboardInterrupt:
+            pass
 
 client.leave()
 client.release()

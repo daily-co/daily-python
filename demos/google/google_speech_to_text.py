@@ -47,7 +47,7 @@ print(f"Now, say something in the meeting for {int(SECONDS_TO_READ)} seconds ...
 
 # We are creating a WAV file in memory so we can later grab the whole buffer and
 # send it to Google Speech-To-Text API.
-content = io.BufferedRandom(io.BytesIO())
+content = io.BytesIO()
 
 out_wave = wave.open(content, "wb")
 out_wave.setnchannels(1)

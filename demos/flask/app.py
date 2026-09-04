@@ -42,7 +42,7 @@ def create_bot(bot_name, meeting_url):
 
 @app.route("/", methods=["POST"])
 def new_bot():
-    content = request.get_json(silent=True)
+    content = request.get_json()
     bot_name = content["bot_name"]
     meeting_url = content["meeting_url"]
     create_bot.delay(bot_name, meeting_url)

@@ -56,11 +56,14 @@ class DailyYOLO(EventHandler):
             image = Image.frombytes(
                 "RGBA", (video_frame.width, video_frame.height), video_frame.buffer
             )
-            results = self.__model.track(image)
+            # ultralytics accepts PIL images even though its type hints only list
+            # paths, arrays and tensors.
+            results = self.__model.track(image)  # pyright: ignore[reportArgumentType]
 
             pil = Image.fromarray(results[0].plot(), mode="RGB").tobytes()
 
-            self.__camera.write_frame(pil)
+            if self.__camera:
+                self.__camera.write_frame(pil)
 
     def on_video_frame(self, participant_id, video_frame, video_source):
         # Process ~15 frames per second (considering incoming frames at 30fps).

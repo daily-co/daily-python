@@ -1,25 +1,32 @@
 #
-# This demo will join a Daily meeting and send a given image at the specified
-# framerate using a virtual camera device.
+# This demo will join a Daily meeting with a meeting token that automatically
+# starts a cloud recording, and will send an image using a virtual camera device
+# so the recording has some content.
 #
-# Usage: python3 auto_recording.py -m MEETING_URL -i IMAGE -f FRAME_RATE
+# It needs a Daily API key to create the meeting token, read from the
+# DAILY_API_KEY environment variable (a .env file is also loaded, see
+# env.example).
+#
+# Usage: python3 auto_recording.py -m MEETING_URL
 #
 
-import asyncio
 import argparse
-import time
-import threading
-from typing import Optional
-
-from daily import Daily, CallClient
-from PIL import Image
+import asyncio
 import os
+import threading
+import time
+
 import aiohttp
+from daily import CallClient, Daily
 from dotenv import load_dotenv
-from pydantic import Field, BaseModel
+from PIL import Image
+from pydantic import BaseModel, Field
 
 # Load environment variables from .env file
 load_dotenv(override=True)
+
+SAMPLE_IMAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.jpg")
+FRAME_RATE = 30
 
 
 class DailyStreamingOptions(BaseModel):
@@ -27,18 +34,18 @@ class DailyStreamingOptions(BaseModel):
     DailyStreamingOptions equivalent in Python.
     """
 
-    width: Optional[int] = Field(default=None, description="Width of the video stream.")
-    height: Optional[int] = Field(default=None, description="Height of the video stream.")
-    fps: Optional[int] = Field(default=None, description="Frames per second of the video stream.")
-    videoBitrate: Optional[int] = Field(default=None, description="Video bitrate in kbps.")
-    audioBitrate: Optional[int] = Field(default=None, description="Audio bitrate in kbps.")
-    min_idle_timeout: Optional[int] = Field(
+    width: int | None = Field(default=None, description="Width of the video stream.")
+    height: int | None = Field(default=None, description="Height of the video stream.")
+    fps: int | None = Field(default=None, description="Frames per second of the video stream.")
+    videoBitrate: int | None = Field(default=None, description="Video bitrate in kbps.")
+    audioBitrate: int | None = Field(default=None, description="Audio bitrate in kbps.")
+    min_idle_timeout: int | None = Field(
         default=None, description="Minimum idle timeout in seconds."
     )
-    max_duration: Optional[int] = Field(
+    max_duration: int | None = Field(
         default=None, description="Maximum duration of the streaming in seconds."
     )
-    background_color: Optional[str] = Field(
+    background_color: str | None = Field(
         default=None, description="Background color for the stream."
     )
 
@@ -52,19 +59,19 @@ class DailyMeetingTokenProperties(BaseModel):
     https://docs.daily.co/reference/rest-api/meeting-tokens/create-meeting-token#properties
     """
 
-    exp: Optional[int] = Field(
+    exp: int | None = Field(
         default=None,
         description="Expiration time (unix timestamp in seconds). We strongly recommend setting this value for security. If not set, the token will not expire. Refer docs for more info.",
     )
-    is_owner: Optional[bool] = Field(
+    is_owner: bool | None = Field(
         default=None,
         description="If `true`, the token will grant owner privileges in the room. Defaults to `false`.",
     )
-    start_cloud_recording: Optional[bool] = Field(
+    start_cloud_recording: bool | None = Field(
         default=None,
         description="Start cloud recording when the user joins the room. This can be used to always record and archive meetings, for example in a customer support context.",
     )
-    start_cloud_recording_opts: Optional[DailyStreamingOptions] = Field(
+    start_cloud_recording_opts: DailyStreamingOptions | None = Field(
         default=None,
         description="Start cloud recording options for configuring automatic cloud recording when the user joins the room.",
     )
@@ -106,7 +113,7 @@ class DailyRESTHelper:
         room_url: str,
         expiry_time: float = 60 * 60,
         owner: bool = True,
-        params: Optional[DailyMeetingTokenParams] = None,
+        params: DailyMeetingTokenParams | None = None,
     ) -> str:
         """Generate a meeting token for user to join a Daily room.
 
@@ -133,12 +140,7 @@ class DailyRESTHelper:
 
         if params is None:
             params = DailyMeetingTokenParams(
-                **{
-                    "properties": {
-                        "is_owner": owner,
-                        "exp": int(expiration),
-                    }
-                }
+                properties=DailyMeetingTokenProperties(is_owner=owner, exp=int(expiration))
             )
         else:
             params.properties.exp = int(expiration)
@@ -207,6 +209,9 @@ class AutoRecordingApp:
 
     def leave(self):
         self.__app_quit = True
+        # Unblock the sender thread in case we are leaving before the join
+        # completed, otherwise it would wait forever.
+        self.__start_event.set()
         self.__thread.join()
         self.__client.leave()
         self.__client.release()
@@ -215,7 +220,7 @@ class AutoRecordingApp:
         self.__start_event.wait()
 
         if self.__app_error:
-            print("Unable to send audio!")
+            print("Unable to send image!")
             return
 
         sleep_time = 1.0 / self.__framerate
@@ -265,17 +270,20 @@ async def create_access_token(room_url: str) -> str:
     return token
 
 
-async def main():
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--meeting", required=True, help="Meeting URL")
     args = parser.parse_args()
 
-    meeting_token = await create_access_token(args.meeting)
+    # Only creating the token is async. The rest of the demo blocks, so we run
+    # it outside of asyncio: this way a Ctrl-C is delivered directly as a
+    # KeyboardInterrupt instead of going through asyncio's signal handling.
+    meeting_token = asyncio.run(create_access_token(args.meeting))
     print(f"Meeting token: {meeting_token}")
 
     Daily.init()
 
-    app = AutoRecordingApp("sample.jpg", 30)
+    app = AutoRecordingApp(SAMPLE_IMAGE, FRAME_RATE)
 
     try:
         app.run(args.meeting, meeting_token)
@@ -286,4 +294,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

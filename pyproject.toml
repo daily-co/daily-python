@@ -43,6 +43,7 @@ dev = [
     "sphinx-rtd-theme==2.0.0",
     "toml==0.10.2",
     "patchelf==0.17.2.2; sys_platform == 'linux'",
+    "pyright==1.1.411",
 ]
 demos = [
     "celery~=5.5.3",

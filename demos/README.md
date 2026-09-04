@@ -38,3 +38,11 @@ uv run python audio/wav_audio_receive.py -m YOUR_MEETING_URL -o recording.wav
 ```
 
 Finally, view the demo files for more details, including how to run them.
+
+# Type checking
+
+The demos are type checked with [pyright](https://github.com/microsoft/pyright), configured in `../pyrightconfig.json`. It is part of the `dev` dependency group, which `uv sync` installs by default, so once the demos are set up as described above you can run:
+
+```
+uv run pyright
+```

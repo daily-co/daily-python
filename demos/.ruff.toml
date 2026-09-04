@@ -1,0 +1,4 @@
+# The demos need a newer Python than the daily-python package itself (see the
+# `demos` dependency group in ../pyproject.toml), so they can use newer syntax.
+extend = "../.ruff.toml"
+target-version = "py311"

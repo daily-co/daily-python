@@ -14,7 +14,7 @@ import gi
 # autopep8: off
 gi.require_version("Gst", "1.0")
 gi.require_version("GstApp", "1.0")
-from gi.repository import Gst, GstApp, GLib
+from gi.repository import Gst, GstApp, GLib  # pyright: ignore[reportAttributeAccessIssue]
 # autopep8: on
 
 VIDEO_WIDTH = 1280
@@ -37,6 +37,8 @@ class GstApp:
         self.__client.update_subscription_profiles(
             {"base": {"camera": "unsubscribed", "microphone": "unsubscribed"}}
         )
+
+        self.__app_quit = False
 
         self.__player = Gst.Pipeline.new("player")
 
@@ -90,12 +92,15 @@ class GstApp:
         self.__loop.run()
 
     def leave(self):
-        if self.__client:
-            self.__client.leave()
-            self.__client.release()
-            self.__player.set_state(Gst.State.NULL)
-            self.__loop.quit()
-            self.__client = None
+        # leave() is called both when the media finishes (or fails) and when the
+        # application exits, so make sure we only do this once.
+        if self.__app_quit:
+            return
+        self.__app_quit = True
+        self.__client.leave()
+        self.__client.release()
+        self.__player.set_state(Gst.State.NULL)
+        self.__loop.quit()
 
     def on_message(self, bus, message):
         t = message.type

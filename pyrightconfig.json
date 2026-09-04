@@ -1,0 +1,10 @@
+{
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.11",
+  "pythonPlatform": "All",
+  "include": ["demos"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "exclude": ["**/__pycache__"],
+  "reportMissingImports": false
+}
