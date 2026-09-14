@@ -1246,6 +1246,10 @@ TranscriptionSettings
      - Mapping[string, Any] (any additional Deepgram settings)
    * - "includeRawResponse"
      - bool (whether Deepgram's raw response should be included in all transcription messages)
+   * - "participants"
+     - list[string] (session IDs of the participants to transcribe; everyone is transcribed when omitted)
+   * - "instanceId"
+     - string (UUID identifying this transcription instance; needed to run multiple transcriptions in the same room)
 
 .. _TranscriptionStatus:
 

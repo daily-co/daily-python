@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support to automatically start transcription when joining a room if the
+  `auto_start_transcription` meeting token property is set, using the room's
+  `auto_transcription_settings`.
+
 - Added candidate-pair round-trip time to call metrics, so latency is
   measured consistently, including for receive-only participants.
 
