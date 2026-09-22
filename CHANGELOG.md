@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `start_cloud_recording_opts` were ignored, causing recordings started from
   the token to use the default bitrates.
 
+- Fixed a leak when a joined `CallClient` was released without a completed
+  `leave()`: the call's peer connection and microphone stayed alive, and could
+  crash `Daily.deinit()`.
+
 ## [0.32.0] - 2026-08-18
 
 ### Fixed
