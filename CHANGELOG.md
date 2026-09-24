@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a rare deadlock that could freeze the process while a `CallClient` was
   being released shortly after another one.
 
+- Fixed a native memory leak that grew with the length of a call, about
+  0.7 MB per minute with one published and one subscribed track. Processes
+  that run many calls, such as bots, no longer grow by several MB per call.
+
 ## [0.32.0] - 2026-08-18
 
 ### Fixed
