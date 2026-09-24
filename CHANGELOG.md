@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   connection and microphone stayed alive and were used after `deinit()` had
   destroyed the WebRTC threads.
 
+- Fixed a rare deadlock that could freeze the process while a `CallClient` was
+  being released shortly after another one.
+
 ## [0.32.0] - 2026-08-18
 
 ### Fixed
