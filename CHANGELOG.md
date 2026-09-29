@@ -5,6 +5,17 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a memory leak in `CallClient.participants()`, which leaked the
+  participants' JSON on every call. Creating a `CallClient` also leaked its
+  initial inputs, publishing settings, subscriptions and other state.
+
+- `CallClient.participants()` now raises a `RuntimeError` if the participants
+  can't be retrieved, instead of crashing.
+
 ## [0.33.0] - 2026-08-25
 
 ### Added

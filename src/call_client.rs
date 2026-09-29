@@ -156,13 +156,23 @@ impl PyCallClient {
         let call_client = unsafe { daily_core_call_client_create() };
         if !call_client.is_null() {
             // Get initial values
-            let active_speaker = unsafe { get_active_speaker(&mut (*call_client))? };
-            let inputs = unsafe { get_inputs(&mut (*call_client))? };
-            let participant_counts = unsafe { get_participant_counts(&mut (*call_client))? };
-            let publishing = unsafe { get_publishing(&mut (*call_client))? };
-            let subscriptions = unsafe { get_subscriptions(&mut (*call_client))? };
-            let subscription_profiles = unsafe { get_subscription_profiles(&mut (*call_client))? };
-            let network_stats = unsafe { get_network_stats(&mut (*call_client))? };
+            let active_speaker =
+                unsafe { json_to_py(daily_core_call_client_active_speaker(&mut *call_client))? };
+            let inputs = unsafe { json_to_py(daily_core_call_client_inputs(&mut *call_client))? };
+            let participant_counts = unsafe {
+                json_to_py(daily_core_call_client_participant_counts(&mut *call_client))?
+            };
+            let publishing =
+                unsafe { json_to_py(daily_core_call_client_publishing(&mut *call_client))? };
+            let subscriptions =
+                unsafe { json_to_py(daily_core_call_client_subscriptions(&mut *call_client))? };
+            let subscription_profiles = unsafe {
+                json_to_py(daily_core_call_client_subscription_profiles(
+                    &mut *call_client,
+                ))?
+            };
+            let network_stats =
+                unsafe { json_to_py(daily_core_call_client_get_network_stats(&mut *call_client))? };
 
             let inner = Arc::new(PyCallClientInner {
                 event_handler_callback: Mutex::new(event_handler),
@@ -458,16 +468,7 @@ impl PyCallClient {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
 
-        unsafe {
-            let participants_ptr = daily_core_call_client_participants(call_client.as_mut());
-            let participants_string = CStr::from_ptr(participants_ptr)
-                .to_string_lossy()
-                .into_owned();
-
-            let participants: Value = serde_json::from_str(participants_string.as_str()).unwrap();
-
-            Python::attach(|py| Ok(pythonize(py, &participants).unwrap().unbind()))
-        }
+        unsafe { json_to_py(daily_core_call_client_participants(call_client.as_mut())) }
     }
 
     /// Returns the number of hidden and non-hidden participants in the meeting.
@@ -1872,74 +1873,17 @@ impl Drop for PyCallClient {
     }
 }
 
-unsafe fn get_active_speaker(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let active_speaker_ptr = daily_core_call_client_active_speaker(call_client);
-    let active_speaker_string = CStr::from_ptr(active_speaker_ptr)
-        .to_string_lossy()
-        .into_owned();
+/// Converts a JSON string returned by daily-core into a Python object, then
+/// frees the string. daily-core returns null, and logs why, if it fails.
+unsafe fn json_to_py(json: *const libc::c_char) -> PyResult<Py<PyAny>> {
+    if json.is_null() {
+        return Err(exceptions::PyRuntimeError::new_err(
+            "daily-core returned no data",
+        ));
+    }
 
-    let active_speaker: Value = serde_json::from_str(active_speaker_string.as_str()).unwrap();
+    let value: Value = serde_json::from_slice(CStr::from_ptr(json).to_bytes()).unwrap();
+    daily_core_string_free(json);
 
-    Python::attach(|py| Ok(pythonize(py, &active_speaker).unwrap().unbind()))
-}
-
-unsafe fn get_inputs(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let inputs_ptr = daily_core_call_client_inputs(call_client);
-    let inputs_string = CStr::from_ptr(inputs_ptr).to_string_lossy().into_owned();
-
-    let inputs: Value = serde_json::from_str(inputs_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &inputs).unwrap().unbind()))
-}
-
-unsafe fn get_participant_counts(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let participant_counts_ptr = daily_core_call_client_participant_counts(call_client);
-    let participant_counts_string = CStr::from_ptr(participant_counts_ptr)
-        .to_string_lossy()
-        .into_owned();
-
-    let participant_counts: Value =
-        serde_json::from_str(participant_counts_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &participant_counts).unwrap().unbind()))
-}
-
-unsafe fn get_publishing(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let publishing_ptr = daily_core_call_client_publishing(call_client);
-    let publishing_string = CStr::from_ptr(publishing_ptr)
-        .to_string_lossy()
-        .into_owned();
-
-    let publishing: Value = serde_json::from_str(publishing_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &publishing).unwrap().unbind()))
-}
-
-unsafe fn get_subscriptions(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let subscriptions_ptr = daily_core_call_client_subscriptions(call_client);
-    let subscriptions_string = CStr::from_ptr(subscriptions_ptr)
-        .to_string_lossy()
-        .into_owned();
-
-    let subscriptions: Value = serde_json::from_str(subscriptions_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &subscriptions).unwrap().unbind()))
-}
-
-unsafe fn get_subscription_profiles(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let profiles_ptr = daily_core_call_client_subscription_profiles(call_client);
-    let profiles_string = CStr::from_ptr(profiles_ptr).to_string_lossy().into_owned();
-
-    let profiles: Value = serde_json::from_str(profiles_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &profiles).unwrap().unbind()))
-}
-
-unsafe fn get_network_stats(call_client: &mut CallClient) -> PyResult<Py<PyAny>> {
-    let stats_ptr = daily_core_call_client_get_network_stats(call_client);
-    let stats_string = CStr::from_ptr(stats_ptr).to_string_lossy().into_owned();
-
-    let stats: Value = serde_json::from_str(stats_string.as_str()).unwrap();
-
-    Python::attach(|py| Ok(pythonize(py, &stats).unwrap().unbind()))
+    Python::attach(|py| Ok(pythonize(py, &value).unwrap().unbind()))
 }
