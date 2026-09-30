@@ -50,7 +50,10 @@ class TimedReceiveWavApp(EventHandler):
 
     def run(self, meeting_url):
         self.__client.join(meeting_url)
-        self.__thread.join()
+        # Join with a timeout: on Windows, a join without one can't be
+        # interrupted, so Ctrl-C would never be handled.
+        while self.__thread.is_alive():
+            self.__thread.join(0.1)
 
     def leave(self):
         self.__thread.join()
