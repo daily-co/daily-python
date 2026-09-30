@@ -56,7 +56,8 @@ demos = [
     "pillow~=12.2.0",
     "pyaudio~=0.2.14",
     "pycairo~=1.29.0",
-    "pygobject~=3.54.5",
+    # GTK: no Windows wheels, and building it needs GTK installed.
+    "pygobject~=3.54.5; sys_platform != 'win32'",
     "pyside6~=6.10.0",
     "redis~=7.0.1",
     "yolov5~=7.0.14",
