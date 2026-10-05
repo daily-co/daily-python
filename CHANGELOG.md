@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CallClient.participants()` now raises a `RuntimeError` if the participants
   can't be retrieved, instead of crashing.
 
+- Fixed `Daily.select_speaker_device()` failing with `unable to select virtual
+  speaker device` after a `CallClient` had left a call.
+
+- Fixed a virtual microphone selected in the inputs being ignored after a
+  `CallClient` had left a call: the previously selected microphone was still the
+  one recorded.
+
 ## [0.33.0] - 2026-08-25
 
 ### Added
