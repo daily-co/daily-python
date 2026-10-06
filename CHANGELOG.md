@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `CallClient` had left a call: the previously selected microphone was still the
   one recorded.
 
+- Fixed an `INFO` log line, `CallManager event loop terminating`, being printed
+  when a `CallClient` was released, whatever the log level.
+
 ## [0.33.0] - 2026-08-25
 
 ### Added
