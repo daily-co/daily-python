@@ -77,7 +77,7 @@ struct PyDaily;
 
 /// Logging levels for controlling application output verbosity.
 #[pyclass(name = "LogLevel", module = "daily", from_py_object)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum PyLogLevel {
     /// No logging.
     Off,
