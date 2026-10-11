@@ -5,6 +5,18 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `VideoFrame.buffer` holding only the Y plane of the frames of a video
+  renderer with `color_format="I420"`. It now holds the whole frame: the Y
+  plane, then the U and V planes.
+
+- Fixed `I420` frames with an odd width or height: `CustomVideoSource` rejected
+  them, and the ones written to a `VirtualCameraDevice` were sent with the wrong
+  colors.
+
 ## [0.34.0] - 2026-10-06
 
 ### Added
