@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them, and the ones written to a `VirtualCameraDevice` were sent with the wrong
   colors.
 
+### Other
+
+- The Qt and Gtk demos can now render `I420` video frames (`-c I420`). The Gtk
+  demo needs Gtk 4.20 or newer for it.
+
 ## [0.34.0] - 2026-10-06
 
 ### Added
