@@ -34,7 +34,7 @@ impl PyCustomVideoSource {
         let w = self.width as usize;
         let h = self.height as usize;
         match self.color_format {
-            ColorFormat::I420 => w * h * 3 / 2,
+            ColorFormat::I420 => w * h + 2 * w.div_ceil(2) * h.div_ceil(2),
             _ => w * h * self.bytes_per_pixel(),
         }
     }
