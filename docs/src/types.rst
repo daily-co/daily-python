@@ -1191,7 +1191,7 @@ SubscriptionVideoSettings
      - Value
    * - "subscriptionState"
      - "subscribed" | "unsubscribed"
-   * - "settings"
+   * - "receiveSettings"
      - `ReceiveVideoSettings`_
 
 
