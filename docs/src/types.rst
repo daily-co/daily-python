@@ -1325,8 +1325,12 @@ VideoSendSettings
    * - "maxQuality"
      - "low" | "medium" | "high"
    * - "preferredCodec"
-     - "VP8" | "H264" | "H265"
+     - "VP8" | "VP9" | "H264" | "H265"
    * - "encodings"
      - "adaptiveHEVC" | [ `CustomVideoEncoding`_ ]
    * - "allowAdaptiveLayers"
      - bool
+   * - "startBitrate"
+     - int (bits per second the video encoder starts sending at before bandwidth estimation adapts it, at least 1000; defaults to 1000000)
+   * - "adaptiveLayerMaxBitrate"
+     - int | None (caps, in bits per second, the bitrate adaptive bitrate can ramp up to; None removes a cap set before)

@@ -70,3 +70,6 @@ docs/_build/
 
 # Pyenv
 .python-version
+
+# Video for demos/video/send_settings_test.py (kept out of git)
+demos/video/test_video.mp4

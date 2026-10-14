@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added experimental support for `VP9` as a `preferredCodec`. VP8 remains the
+  default: VP9 is only used when an application explicitly sets it, and the
+  SFU's router offers VP9. It is sent as a single SVC encoding, so the SFU can
+  still forward a lower spatial layer to each receiver. Recording and RTMP
+  streaming do not support VP9 yet. libwebrtc is now built with VP9
+  (`rtc_libvpx_build_vp9`), so VP9 can be both sent and received.
+
+- Added `startBitrate` to `VideoSendSettings`, so the bitrate the camera,
+  custom video and screen video tracks start sending at can be configured. It
+  is in bits per second and defaults to 1000000, the value previously
+  hardcoded.
+
+- Added `adaptiveLayerMaxBitrate` to `VideoSendSettings`, to cap, in bits per
+  second, the bitrate adaptive bitrate ramps up to. It never goes below 200000
+  and can be changed during a call; `None` removes it.
+
 ### Fixed
+
+- Fixed video sent with `preferredCodec` `H265` never reaching other
+  participants: the SFU rejected it. H265 is now sent as a single encoding.
+
+- Fixed per-stream bitrates in the network stats (`videoSendBitsPerSecond`,
+  `videoRecvBitsPerSecond`) being 1,000 times too small.
+
+- Fixed `videoSendBitsPerSecond`, `sendBitsPerSecond` and the other send-side
+  network stats always reading 0: libwebrtc 8010's stats no longer include a
+  field the parser required, so all stats for the sending connection were
+  discarded.
+
+- Fixed the top simulcast layer not being sent at the start of a call.
+  `maxQuality` was passed to libmediasoupclient off by one, so `high` turned
+  the high layer off, `medium` turned the medium layer off and `low` had no
+  effect. With adaptive layers off, receivers got at most the medium layer
+  (360p for a 720p camera) until the camera track was next updated, for
+  example by switching or toggling the camera. With adaptive layers on, it
+  lasted only until the first adaptive-layer update, a second or two in.
 
 - Fixed `VideoFrame.buffer` holding only the Y plane of the frames of a video
   renderer with `color_format="I420"`. It now holds the whole frame: the Y
