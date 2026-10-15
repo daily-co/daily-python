@@ -37,6 +37,7 @@ pub(crate) fn method_name_from_event_action(action: &str) -> Option<&str> {
         "live-stream-stopped" => "on_live_stream_stopped",
         "live-stream-updated" => "on_live_stream_updated",
         "live-stream-warning" => "on_live_stream_warning",
+        "network-connection-status-updated" => "on_network_connection_status_updated",
         "network-stats-updated" => "on_network_stats_updated",
         "participant-counts-updated" => "on_participant_counts_updated",
         "participant-joined" => "on_participant_joined",
@@ -135,6 +136,7 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<Value>> {
                 None
             }
         }
+        "network-connection-status-updated" => Some(vec![Value::Object(object.clone())]),
         "network-stats-updated" => Some(vec![Value::Object(object.clone())]),
         "participant-counts-updated" => Some(vec![Value::Object(object.clone())]),
         "participant-joined" => object

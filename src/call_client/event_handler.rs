@@ -209,6 +209,16 @@ impl PyEventHandler {
         Ok(())
     }
 
+    /// Event emitted when one of the network connections needed for the call
+    /// is interrupted or connects. The signalling connection, which carries
+    /// call state and app messages, reports `connected` when the client joins
+    /// and again each time it reconnects after an interruption.
+    ///
+    /// :param Mapping[str, Any] status: See :ref:`NetworkConnectionStatus`
+    fn on_network_connection_status_updated(&self, status: Py<PyAny>) -> PyResult<()> {
+        Ok(())
+    }
+
     /// Event emitted when the logging & telemetry backend updates the network
     /// statistics.
     ///

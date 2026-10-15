@@ -709,6 +709,23 @@ AudioSettings
      - `MediaTrackConstraints <https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#properties>`_
 
 
+.. _NetworkConnectionStatus:
+
+NetworkConnectionStatus
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "connection"
+     - "signalling" | "sendtransport" | "recvtransport"
+   * - "event"
+     - "connected" | "interrupted"
+
+
 .. _NetworkDetailedStats:
 
 NetworkDetailedStats
