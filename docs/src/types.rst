@@ -212,6 +212,8 @@ ClientSettings
      - `InputSettings`_
    * - "publishing"
      - `PublishingSettings`_
+   * - "connection"
+     - `ConnectionSettings`_
 
 
 .. _ColorFormat:
@@ -220,6 +222,21 @@ ColorFormat
 -----------------------------------
 
 "ABGR" | "ARGB" | "BGRA" | "RGBA" | "RGB" | "I420"
+
+
+.. _ConnectionSettings:
+
+ConnectionSettings
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "initialReceiveBitrate"
+     - int (your expected download bandwidth, in bits per second, between 30000 and 4294967295; the SFU starts its estimate of what it can send you from this value, and defaults to 1000000; applied when joining and when reconnecting)
 
 
 .. _CustomTrack:

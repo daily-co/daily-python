@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   second, the bitrate adaptive bitrate ramps up to. It never goes below 200000
   and can be changed during a call; `None` removes it.
 
+- Added `connection` to the client settings passed to `join()`, with
+  `initialReceiveBitrate`: your expected download bandwidth, in bits per
+  second. The SFU starts its estimate of what it can send you from this value
+  (1000000 by default), which also sets the first `targetBitrate` other
+  participants get.
+
 ### Fixed
 
 - Fixed video sent with `preferredCodec` `H265` never reaching other
