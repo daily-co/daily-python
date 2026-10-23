@@ -60,8 +60,9 @@ class DailyYOLO(EventHandler):
                 "RGBA", (video_frame.width, video_frame.height), video_frame.buffer
             )
             # ultralytics accepts PIL images even though its type hints only list
-            # paths, arrays and tensors.
-            results = self.__model.track(image)  # pyright: ignore[reportArgumentType]
+            # paths, arrays and tensors. Without stream=True it returns a list, but
+            # it's typed as list-or-iterator.
+            results = list(self.__model.track(image))  # pyright: ignore[reportArgumentType]
 
             pil = Image.fromarray(results[0].plot(), mode="RGB").tobytes()
 

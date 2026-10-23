@@ -13,7 +13,7 @@ Here you can find a few demos that use Daily's Python SDK:
 - **qt**: A native [Qt](https://www.qt.io/qt-for-python) application that shows how to receive and render video frames for a participant.
 - **vad**: Voice Activity Detection (VAD) examples.
 - **video**: Examples on how to send and receive video or images.
-- **yolo**: A demo that detects objects in a participant's video feed using [YOLOv5](https://pypi.org/project/yolov5/).
+- **yolo**: A demo that detects objects in a participant's video feed using [Ultralytics YOLO](https://pypi.org/project/ultralytics/).
 
 # Running
 

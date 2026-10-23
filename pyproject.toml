@@ -38,7 +38,7 @@ package = false
 dev = [
     "maturin==1.13.1",
     "ruff>=0.12.11,<1",
-    "setuptools==78.1.1",
+    "setuptools==84.2.1",
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
     "toml==0.10.2",
@@ -53,15 +53,18 @@ demos = [
     "google-cloud-texttospeech~=2.33.0",
     "numpy~=2.3.5",
     "openai~=2.8.0",
-    "pillow~=12.2.0",
+    "pillow~=13.0.0",
     "pyaudio~=0.2.14",
     "pycairo~=1.29.0",
     # GTK: no Windows wheels, and building it needs GTK installed.
     "pygobject~=3.54.5; sys_platform != 'win32'",
     "pyside6~=6.10.0",
     "redis~=7.0.1",
-    "yolov5~=7.0.14",
-    "aiohttp~=3.13.2",
+    "ultralytics~=8.4.184",
+    # Needed by ultralytics for tracking; it would otherwise try to pip-install
+    # it at runtime, which fails in a uv venv.
+    "lap~=0.5.13",
+    "aiohttp~=3.14.5",
     "pydantic~=2.12.4",
     "python-dotenv~=1.2.1",
 ]
