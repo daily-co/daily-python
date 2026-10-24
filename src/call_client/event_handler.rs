@@ -75,7 +75,7 @@ impl PyEventHandler {
     /// fatal to the media/SIP pipeline and will result in dialin-error being
     /// triggered.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialinErrorEvent`
     fn on_dialin_error(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
@@ -84,8 +84,8 @@ impl PyEventHandler {
     /// connected to the SIP endpoint and the system is ready to receive dial-in
     /// calls.
     ///
-    /// :param string sip_endpoint: The SIP endpoint the room has connected to
-    fn on_dialin_ready(&self, sip_endpoint: Py<PyAny>) -> PyResult<()> {
+    /// :param Mapping[str, Any] data: See :ref:`DialinReadyEvent`
+    fn on_dialin_ready(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
 
@@ -99,7 +99,7 @@ impl PyEventHandler {
     /// Event emitted when there is a dial-in non-fatal error, such as the
     /// selected codec not being used and a fallback codec being utilized.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DialinEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialinWarningEvent`
     fn on_dialin_warning(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
@@ -125,7 +125,7 @@ impl PyEventHandler {
     /// fatal to the media/SIP pipeline and will result in dialout-error being
     /// triggered.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutErrorEvent`
     fn on_dialout_error(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
@@ -133,7 +133,7 @@ impl PyEventHandler {
     /// Event emitted when the dial-out remote end disconnects the call or the
     /// call is stopped by calling :func:`daily.CallClient.stop_dialout`.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutStoppedEvent`
     fn on_dialout_stopped(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }
@@ -141,7 +141,7 @@ impl PyEventHandler {
     /// Event emitted when there is a dial-out non-fatal error, such as the
     /// selected codec not being used and a fallback codec being utilized.
     ///
-    /// :param Mapping[str, Any] data: See :ref:`DialoutEvent`
+    /// :param Mapping[str, Any] data: See :ref:`DialoutWarningEvent`
     fn on_dialout_warning(&self, data: Py<PyAny>) -> PyResult<()> {
         Ok(())
     }

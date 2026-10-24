@@ -99,9 +99,7 @@ pub(crate) fn args_from_event(event: &Event) -> Option<Vec<Value>> {
             .map(|devices| vec![devices.clone()]),
         "call-state-updated" => object.get("state").map(|state| vec![state.clone()]),
         "dialin-connected" => Some(vec![Value::Object(object.clone())]),
-        "dialin-ready" => object
-            .get("sipEndpoint")
-            .map(|sip_endpoint| vec![sip_endpoint.clone()]),
+        "dialin-ready" => Some(vec![Value::Object(object.clone())]),
         "dialin-error" => Some(vec![Value::Object(object.clone())]),
         "dialin-stopped" => Some(vec![Value::Object(object.clone())]),
         "dialin-warning" => Some(vec![Value::Object(object.clone())]),

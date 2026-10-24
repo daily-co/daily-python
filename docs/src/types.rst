@@ -303,25 +303,6 @@ CustomVideoEncoding
      - `RTCRtpEncodingParameters <https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpEncodingParameters>`_
 
 
-.. _DialinEvent:
-
-DialinEvent
------------------------------------
-
-.. list-table::
-   :widths: 25 75
-   :header-rows: 1
-
-   * - Key
-     - Value
-   * - "sessionId"
-     - string
-   * - "actionTraceId"
-     - string
-   * - "message"
-     - string
-
-
 .. _DialinConnectedEvent:
 
 DialinConnectedEvent
@@ -335,14 +316,88 @@ DialinConnectedEvent
      - Value
    * - "sessionId"
      - string
+   * - "userId"
+     - string
    * - "actionTraceId"
      - string
-   * - "displayName"
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "sipEndpoint"
      - string
    * - "sipFrom"
      - string
    * - "sipHeaders"
      - Mapping[string, Any]
+   * - "displayName"
+     - string
+
+
+.. _DialinErrorDetails:
+
+DialinErrorDetails
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sipEndpoint"
+     - string
+   * - "sipStatusCode"
+     - number
+   * - "sipReasonPhrase"
+     - string
+
+
+.. _DialinErrorEvent:
+
+DialinErrorEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string (not set when "type" is "start-failed")
+   * - "userId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "errorMsg"
+     - string
+   * - "type"
+     - string (e.g. "start-failed")
+   * - "details"
+     - `DialinErrorDetails`_
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+
+
+.. _DialinReadyEvent:
+
+DialinReadyEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sipEndpoint"
+     - string
+   * - "provider"
+     - string
+
 
 .. _DialinStoppedEvent:
 
@@ -357,12 +412,50 @@ DialinStoppedEvent
      - Value
    * - "sessionId"
      - string
+   * - "userId"
+     - string
    * - "actionTraceId"
+     - string
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "sipEndpoint"
      - string
    * - "sipFrom"
      - string
    * - "sipHeaders"
      - Mapping[string, Any]
+
+
+.. _DialinWarningEvent:
+
+DialinWarningEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "userId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "errorMsg"
+     - string
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "sipEndpoint"
+     - string
+   * - "sipFrom"
+     - string
+
 
 .. _DialoutCodecs:
 
@@ -381,9 +474,30 @@ DialoutCodecs
      - [ "H264" | "VP8" ]
 
 
-.. _DialoutEvent:
+.. _DialoutErrorDetails:
 
-DialoutEvent
+DialoutErrorDetails
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "destination"
+     - string
+   * - "sipHeaders"
+     - Mapping[string, string]
+   * - "sipStatusCode"
+     - number
+   * - "sipReasonPhrase"
+     - string
+
+
+.. _DialoutErrorEvent:
+
+DialoutErrorEvent
 -----------------------------------
 
 .. list-table::
@@ -394,9 +508,48 @@ DialoutEvent
      - Value
    * - "sessionId"
      - string
+   * - "userId"
+     - string
    * - "actionTraceId"
      - string
-   * - "message"
+   * - "errorMsg"
+     - string
+   * - "details"
+     - `DialoutErrorDetails`_
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+
+
+.. _DialoutEvent:
+
+DialoutEvent
+-----------------------------------
+
+Used by the dial-out connected and answered events.
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "userId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "origin"
+     - string
+   * - "destination"
+     - string
+   * - "callerId"
      - string
 
 
@@ -469,6 +622,70 @@ DialoutSendDtmfSettings
      - "sip-info" | "telephone-event" | "auto"
    * - "digitDurationMs"
      - number
+
+
+.. _DialoutStoppedEvent:
+
+DialoutStoppedEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "userId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "origin"
+     - string
+   * - "destination"
+     - string
+   * - "callerId"
+     - string
+   * - "sipStatusCode"
+     - number
+   * - "sipReasonPhrase"
+     - string
+
+
+.. _DialoutWarningEvent:
+
+DialoutWarningEvent
+-----------------------------------
+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Key
+     - Value
+   * - "sessionId"
+     - string
+   * - "userId"
+     - string
+   * - "actionTraceId"
+     - string
+   * - "errorMsg"
+     - string
+   * - "provider"
+     - string
+   * - "sipCallId"
+     - string
+   * - "origin"
+     - string
+   * - "destination"
+     - string
+   * - "callerId"
+     - string
 
 
 .. _DtmfEvent:

@@ -5,6 +5,51 @@ All notable changes to the **daily-python** SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Dial-in and dial-out events now include `userId`, `provider` and
+  `sipCallId`. Dial-out events also include `origin`, `destination` and
+  `callerId`, and dial-in events include `sipEndpoint` and `sipFrom`. See the
+  dial-in and dial-out event types in the reference for the full list.
+
+- `dialout-error` and `dialin-error` now include a `details` object with
+  `sipStatusCode` and `sipReasonPhrase`, plus `destination` and `sipHeaders`
+  for dial-out and `sipEndpoint` for dial-in. `dialin-error` also includes
+  `type` (e.g. `"start-failed"`).
+
+- `dialout-stopped` now includes `sipStatusCode` and `sipReasonPhrase` when
+  the server reports why the call ended.
+
+- Added the missing `on_dialin_connected()`, `on_dialin_error()`,
+  `on_dialin_stopped()` and `on_dialin_warning()` handlers to `daily.pyi`.
+
+### Changed
+
+- ⚠️ Breaking change ⚠️: `EventHandler.on_dialin_ready()` now receives the
+  whole event (`sipEndpoint` and `provider`) instead of just the SIP endpoint
+  string.
+
+- ⚠️ Breaking change ⚠️: `on_dialin_error()`, `on_dialin_warning()`,
+  `on_dialout_error()` and `on_dialout_warning()` now report the error in
+  `errorMsg` instead of `message`. Read `errorMsg` where you used to read
+  `message`.
+
+- `on_dialin_error()` does not include `sessionId` when the dial-in fails to
+  start (`type` is `"start-failed"`), since no session exists yet.
+
+### Removed
+
+- ⚠️ Breaking change ⚠️: Removed `message` from the `on_dialout_stopped()`
+  data. To find out why a dial-out ended, use the new `sipStatusCode` and
+  `sipReasonPhrase` in `on_dialout_stopped()`, or `details` in
+  `on_dialout_error()`.
+
+### Fixed
+
+- Fixed `on_dialin_error()` not being called when a dial-in fails to start.
+
 ## [0.36.0] - 2026-10-16
 
 ### Added
