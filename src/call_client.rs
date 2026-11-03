@@ -1750,7 +1750,7 @@ impl PyCallClient {
     /// :param func callback: A callback to be called when audio data is available. It receives three arguments: the participant ID, the :class:`AudioData` and the audio source
     /// :param str audio_source: The audio source of the remote participant to receive (e.g. `microphone`, `screenAudio` or a custom track name)
     /// :param str sample_rate: The sample rate the audio should be resampled to
-    /// :param str callback_interval_ms: How often the callback should be called (multiple of 10ms)
+    /// :param int callback_interval_ms: How often the callback should be called, in milliseconds. It must be a positive multiple of 10
     /// :param str logging_interval_ms: Set logging internal (only with debug logging)
     #[pyo3(signature = (participant_id, callback, audio_source = "microphone", sample_rate = 16000, callback_interval_ms = 20, logging_interval_ms = 10000))]
     pub fn set_audio_renderer(
@@ -1764,6 +1764,15 @@ impl PyCallClient {
     ) -> PyResult<()> {
         // If we have already been released throw an exception.
         let mut call_client = self.check_released()?;
+
+        // Audio arrives in 10ms chunks, so the callback can only be called at
+        // multiples of 10ms. Any other interval would never be reached, and
+        // the audio would be buffered forever.
+        if callback_interval_ms == 0 || !callback_interval_ms.is_multiple_of(10) {
+            return Err(exceptions::PyValueError::new_err(format!(
+                "invalid callback interval '{callback_interval_ms}', it must be a positive multiple of 10ms"
+            )));
+        }
 
         let participant_cstr = CString::new(participant_id).expect("invalid participant ID string");
         let audio_source_cstr = CString::new(audio_source).expect("invalid audio source string");

@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `on_dialin_error()` not being called when a dial-in fails to start.
 
+- `CallClient.set_audio_renderer()` now raises a `ValueError` if
+  `callback_interval_ms` is not a positive multiple of 10. Before, the callback
+  was never called and the audio was buffered indefinitely.
+
 ## [0.36.0] - 2026-10-16
 
 ### Added
