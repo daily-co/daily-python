@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.38.0] - 2026-11-12
 
+### Changed
+
+- The minimum supported Python version is now 3.9.
+
+- Upgraded to pyo3 0.30.1.
+
 ### Fixed
 
 - Fix a deadlock that occurred when reconnecting the signalling channel.

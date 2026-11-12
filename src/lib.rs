@@ -72,7 +72,7 @@ unsafe extern "C" fn create_audio_device_module(
 }
 
 /// This class is used to initialize the SDK and create virtual devices.
-#[pyclass(name = "Daily", module = "daily", skip_from_py_object)]
+#[pyclass(name = "Daily", module = "daily")]
 struct PyDaily;
 
 /// Logging levels for controlling application output verbosity.
